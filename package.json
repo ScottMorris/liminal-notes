@@ -1,0 +1,17 @@
+{
+  "name": "liminal-notes",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Local-first, Markdown-based note-taking app with Obsidian-style linking, built with Tauri + React + TypeScript.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "echo \"(lint to be added by tooling)\"",
+    "test": "echo \"(tests to be added by tooling)\""
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
