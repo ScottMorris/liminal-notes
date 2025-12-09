@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "lint": "echo \"(lint to be added by tooling)\"",
-    "test": "echo \"(tests to be added by tooling)\""
+    "test": "echo \"(tests to be added by tooling)\"",
+    "tauri": "pnpm --filter @liminal-notes/desktop tauri",
+    "dev:desktop": "pnpm --filter @liminal-notes/desktop tauri dev"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
