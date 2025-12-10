@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use tauri::{AppHandle, Manager};
 use walkdir::{DirEntry, WalkDir};
 
@@ -32,6 +32,25 @@ fn get_config_path(app: &AppHandle) -> Result<PathBuf, String> {
         fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
     }
     Ok(config_dir.join("vault.json"))
+}
+
+// Helper to safely resolve a relative path within the vault root
+fn resolve_safe_path(root: &Path, relative_path: &str) -> Result<PathBuf, String> {
+    let path = Path::new(relative_path);
+    if path.is_absolute() {
+        return Err("Path must be relative".to_string());
+    }
+
+    // Check for path traversal attempts
+    for component in path.components() {
+        match component {
+            Component::Normal(_) => {},
+            Component::CurDir => {}, // '.' is fine
+            _ => return Err(format!("Invalid path component in '{}': only normal components allowed", relative_path)),
+        }
+    }
+
+    Ok(root.join(path))
 }
 
 #[tauri::command]
@@ -111,4 +130,74 @@ pub fn list_markdown_files(app: AppHandle) -> Result<Vec<FileEntry>, String> {
     entries.sort_by(|a, b| a.path.cmp(&b.path));
 
     Ok(entries)
+}
+
+#[tauri::command]
+pub fn read_note_command(app: AppHandle, relative_path: String) -> Result<String, String> {
+    let config = get_vault_config(app.clone()).ok_or("No vault configured".to_string())?;
+    let root = Path::new(&config.root_path);
+
+    if !root.exists() {
+        return Err("Vault root does not exist".to_string());
+    }
+
+    let full_path = resolve_safe_path(root, &relative_path)?;
+
+    if !full_path.exists() {
+        return Err("File does not exist".to_string());
+    }
+
+    fs::read_to_string(full_path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn write_note_command(app: AppHandle, relative_path: String, contents: String) -> Result<(), String> {
+    let config = get_vault_config(app.clone()).ok_or("No vault configured".to_string())?;
+    let root = Path::new(&config.root_path);
+
+    if !root.exists() {
+        return Err("Vault root does not exist".to_string());
+    }
+
+    let full_path = resolve_safe_path(root, &relative_path)?;
+
+    // Create parent directories if needed
+    if let Some(parent) = full_path.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+    }
+
+    fs::write(full_path, contents).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn test_resolve_safe_path() {
+        // We use a dummy root. On Windows this might be tricky if we use /vault, but Path handles it.
+        // We just check the logic of joining and validation.
+        let root = Path::new("vault_root");
+
+        // Valid paths
+        let p1 = resolve_safe_path(root, "note.md");
+        assert!(p1.is_ok());
+        assert_eq!(p1.unwrap(), root.join("note.md"));
+
+        let p2 = resolve_safe_path(root, "sub/note.md");
+        assert!(p2.is_ok());
+        assert_eq!(p2.unwrap(), root.join("sub").join("note.md"));
+
+        // Invalid paths
+        assert!(resolve_safe_path(root, "/absolute.md").is_err());
+        #[cfg(not(windows))]
+        assert!(resolve_safe_path(root, "/etc/passwd").is_err());
+
+        assert!(resolve_safe_path(root, "../outside.md").is_err());
+        assert!(resolve_safe_path(root, "folder/../escape.md").is_err());
+        assert!(resolve_safe_path(root, "..").is_err());
+    }
 }

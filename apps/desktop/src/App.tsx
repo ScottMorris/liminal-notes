@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import "./App.css";
-import { getVaultConfig, listMarkdownFiles, resetVaultConfig } from "./commands";
+import { getVaultConfig, listMarkdownFiles, resetVaultConfig, readNote, writeNote } from "./commands";
 import { VaultConfig, FileEntry } from "./types";
 import { VaultPicker } from "./components/VaultPicker";
 import { FileTree } from "./components/FileTree";
@@ -13,6 +14,13 @@ function App() {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Note State
+  const [noteContent, setNoteContent] = useState<string>("");
+  const [isDirty, setIsDirty] = useState<boolean>(false);
+  const [isLoadingNote, setIsLoadingNote] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect(() => {
     loadVault();
@@ -56,13 +64,46 @@ function App() {
       setFiles([]);
       setSelectedFile(null);
       setError(null);
+      setNoteContent("");
+      setIsDirty(false);
     } catch (err) {
       setError("Failed to reset vault: " + String(err));
     }
   };
 
-  const handleFileSelect = (path: string) => {
+  const handleFileSelect = async (path: string) => {
+    // If previously selected, simple discard unsaved changes (as per Milestone 2 reqs)
     setSelectedFile(path);
+    setLoadError(null);
+    setIsLoadingNote(true);
+    setNoteContent("");
+    setIsDirty(false);
+
+    try {
+      const content = await readNote(path);
+      setNoteContent(content);
+    } catch (err) {
+      console.error("Failed to read note:", err);
+      setLoadError(String(err));
+    } finally {
+      setIsLoadingNote(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!selectedFile) return;
+
+    setIsSaving(true);
+    setLoadError(null);
+    try {
+      await writeNote(selectedFile, noteContent);
+      setIsDirty(false);
+    } catch (err) {
+      console.error("Failed to save note:", err);
+      setLoadError("Failed to save: " + String(err));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (loading) {
@@ -102,10 +143,44 @@ function App() {
       </aside>
       <main className="main-content">
         {error && <div className="error-banner">{error} <button onClick={() => setError(null)}>Dismiss</button></div>}
+
         {selectedFile ? (
-          <div className="preview-placeholder">
-            <h2>{selectedFile}</h2>
-            <p>(Content rendering coming in Milestone 2)</p>
+          <div className="editor-container">
+            <div className="editor-header">
+              <div className="file-info">
+                <span className="file-name">{selectedFile}</span>
+                {isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
+              </div>
+              <div className="editor-actions">
+                {loadError && <span className="editor-error">{loadError}</span>}
+                <button onClick={handleSave} disabled={isSaving || isLoadingNote}>
+                  {isSaving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+
+            <div className="split-pane">
+              <div className="editor-pane">
+                {isLoadingNote ? (
+                  <div className="loading-indicator">Loading...</div>
+                ) : (
+                  <textarea
+                    className="markdown-editor"
+                    value={noteContent}
+                    onChange={(e) => {
+                      setNoteContent(e.target.value);
+                      setIsDirty(true);
+                    }}
+                    disabled={isLoadingNote}
+                  />
+                )}
+              </div>
+              <div className="preview-pane">
+                <div className="markdown-preview">
+                  <ReactMarkdown>{noteContent}</ReactMarkdown>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="empty-state">

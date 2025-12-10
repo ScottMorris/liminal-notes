@@ -9,7 +9,9 @@ pub fn run() {
             vault::get_vault_config,
             vault::set_vault_config,
             vault::reset_vault_config,
-            vault::list_markdown_files
+            vault::list_markdown_files,
+            vault::read_note_command,
+            vault::write_note_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
