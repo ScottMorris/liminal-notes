@@ -14,3 +14,16 @@ export interface FileNode {
   isDir: boolean;
   children?: FileNode[];
 }
+
+export type NotePath = string;
+
+export interface Wikilink {
+  source: NotePath;
+  targetRaw: string;
+  targetPath?: NotePath;
+}
+
+export interface LinkIndex {
+  outbound: Map<NotePath, Wikilink[]>;
+  backlinks: Map<NotePath, NotePath[]>;
+}
