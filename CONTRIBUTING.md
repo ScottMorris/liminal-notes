@@ -100,6 +100,8 @@ pnpm tauri dev
 
 If you use VS Code and Docker, you can open the repo in VS Code and use "Reopen in Container" to get a preconfigured environment with Node.js, pnpm, Rust, and Tauri dependencies. See `.devcontainer/devcontainer.json` for details.
 
+Once the container is running, you can use the standard commands (e.g., `pnpm tauri dev`) from the integrated terminal.
+
 ---
 
 ## 4. Development Workflow
