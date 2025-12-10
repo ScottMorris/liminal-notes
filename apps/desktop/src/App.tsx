@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import "./App.css";
 import { getVaultConfig, listMarkdownFiles, resetVaultConfig, readNote, writeNote } from "./commands";
@@ -6,9 +6,12 @@ import { VaultConfig, FileEntry } from "./types";
 import { VaultPicker } from "./components/VaultPicker";
 import { FileTree } from "./components/FileTree";
 import { useTheme, ThemeId } from "./theme";
+import { useLinkIndex } from "./components/LinkIndexContext";
+import { BacklinksPanel } from "./components/BacklinksPanel";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
+  const { rebuildIndex, updateNote, resolvePath, isLoadingIndex } = useLinkIndex();
   const [vaultConfig, setVaultConfigState] = useState<VaultConfig | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -35,6 +38,8 @@ function App() {
         setVaultConfigState(config);
         const fileList = await listMarkdownFiles();
         setFiles(fileList);
+        // Build initial index
+        rebuildIndex(fileList);
       } else {
         setVaultConfigState(null);
       }
@@ -51,6 +56,7 @@ function App() {
     try {
       const fileList = await listMarkdownFiles();
       setFiles(fileList);
+      rebuildIndex(fileList);
     } catch (err) {
       console.error("Failed to list files:", err);
       setError("Failed to list files: " + String(err));
@@ -98,6 +104,7 @@ function App() {
     try {
       await writeNote(selectedFile, noteContent);
       setIsDirty(false);
+      updateNote(selectedFile, noteContent);
     } catch (err) {
       console.error("Failed to save note:", err);
       setLoadError("Failed to save: " + String(err));
@@ -105,6 +112,49 @@ function App() {
       setIsSaving(false);
     }
   };
+
+  // Wikilink support
+  const preprocessContent = (content: string) => {
+    // Replace [[target]] with [target](wikilink:target)
+    // Using a capture group for target.
+    return content.replace(/\[\[([^\]]+)\]\]/g, (match, target) => {
+       return `[${target}](wikilink:${target})`;
+    });
+  };
+
+  const MarkdownComponents = {
+    a: ({ href, children, ...props }: any) => {
+      if (href && href.startsWith('wikilink:')) {
+        const targetRaw = href.replace('wikilink:', '');
+        const targetPath = resolvePath(targetRaw);
+
+        if (targetPath) {
+          return (
+            <a
+              href="#"
+              className="wikilink resolved"
+              onClick={(e) => {
+                e.preventDefault();
+                handleFileSelect(targetPath);
+              }}
+              title={`Go to ${targetPath}`}
+            >
+              {children}
+            </a>
+          );
+        } else {
+          return (
+            <span className="wikilink unresolved" title="Unresolved link">
+              {children}
+            </span>
+          );
+        }
+      }
+      return <a href={href} {...props}>{children}</a>;
+    }
+  };
+
+  const processedContent = useMemo(() => preprocessContent(noteContent), [noteContent]);
 
   if (loading) {
     return <div className="container center">Loading...</div>;
@@ -150,6 +200,7 @@ function App() {
               <div className="file-info">
                 <span className="file-name">{selectedFile}</span>
                 {isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
+                {isLoadingIndex && <span className="indexing-indicator" title="Indexing vault..."> (Indexing...)</span>}
               </div>
               <div className="editor-actions">
                 {loadError && <span className="editor-error">{loadError}</span>}
@@ -177,10 +228,17 @@ function App() {
               </div>
               <div className="preview-pane">
                 <div className="markdown-preview">
-                  <ReactMarkdown>{noteContent}</ReactMarkdown>
+                  <ReactMarkdown
+                    components={MarkdownComponents}
+                    urlTransform={(url) => url}
+                  >
+                    {processedContent}
+                  </ReactMarkdown>
                 </div>
               </div>
             </div>
+
+            <BacklinksPanel currentFile={selectedFile} onNavigate={handleFileSelect} />
           </div>
         ) : (
           <div className="empty-state">

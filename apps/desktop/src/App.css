@@ -203,6 +203,13 @@ body {
   font-size: 0.8rem;
 }
 
+.indexing-indicator {
+  color: var(--ln-muted);
+  font-size: 0.8rem;
+  margin-left: 8px;
+  font-style: italic;
+}
+
 .editor-actions {
   display: flex;
   align-items: center;
@@ -261,6 +268,22 @@ body {
 
 .markdown-preview a {
   color: var(--ln-accent);
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview a.wikilink.resolved {
+  color: var(--ln-accent);
+  cursor: pointer;
+}
+
+.markdown-preview .wikilink.unresolved {
+  color: var(--ln-muted);
+  text-decoration: underline dotted;
+  cursor: default;
 }
 
 .markdown-preview blockquote {
@@ -282,4 +305,52 @@ body {
   padding: 10px;
   border-radius: 5px;
   overflow-x: auto;
+}
+
+/* Backlinks Panel */
+.backlinks-panel {
+  border-top: 1px solid var(--ln-border);
+  padding: 10px 20px;
+  background-color: var(--ln-sidebar-bg);
+  color: var(--ln-sidebar-fg);
+  min-height: 100px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.backlinks-panel h3 {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  border-bottom: 1px solid var(--ln-border);
+  padding-bottom: 5px;
+}
+
+.backlinks-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.backlinks-list li {
+  margin-bottom: 5px;
+}
+
+.backlink-item {
+  background: none;
+  border: none;
+  color: var(--ln-accent);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.backlink-item:hover {
+  text-decoration: underline;
+}
+
+.no-backlinks {
+  color: var(--ln-muted);
+  font-size: 0.9rem;
+  font-style: italic;
 }
