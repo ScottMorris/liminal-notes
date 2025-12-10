@@ -16,3 +16,11 @@ export const resetVaultConfig = async (): Promise<void> => {
 export const listMarkdownFiles = async (): Promise<FileEntry[]> => {
   return await invoke("list_markdown_files");
 };
+
+export const readNote = async (relativePath: string): Promise<string> => {
+  return await invoke("read_note_command", { relativePath });
+};
+
+export const writeNote = async (relativePath: string, contents: string): Promise<void> => {
+  return await invoke("write_note_command", { relativePath, contents });
+};

@@ -173,3 +173,113 @@ body {
   border-color: var(--ln-accent);
   color: var(--ln-accent);
 }
+
+/* Editor Layout */
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--ln-border);
+  background-color: var(--ln-bg);
+  flex-shrink: 0;
+}
+
+.file-info {
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.unsaved-indicator {
+  color: var(--ln-accent);
+  margin-left: 8px;
+  font-size: 0.8rem;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.editor-error {
+  color: #cc0000;
+  font-size: 0.8rem;
+}
+
+.split-pane {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.editor-pane, .preview-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-pane {
+  border-right: 1px solid var(--ln-border);
+}
+
+.markdown-editor {
+  flex: 1;
+  border: none;
+  resize: none;
+  padding: 20px;
+  font-family: monospace;
+  font-size: 1rem;
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+  outline: none;
+}
+
+.preview-pane {
+  background-color: var(--ln-bg);
+  overflow-y: auto;
+}
+
+.markdown-preview {
+  padding: 20px;
+  color: var(--ln-fg);
+  line-height: 1.6;
+}
+
+.markdown-preview h1, .markdown-preview h2, .markdown-preview h3 {
+  border-bottom: 1px solid var(--ln-border);
+  padding-bottom: 0.3em;
+}
+
+.markdown-preview a {
+  color: var(--ln-accent);
+}
+
+.markdown-preview blockquote {
+  border-left: 4px solid var(--ln-muted);
+  padding-left: 1em;
+  color: var(--ln-muted);
+  margin-left: 0;
+}
+
+.markdown-preview code {
+  background-color: var(--ln-sidebar-bg);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.markdown-preview pre {
+  background-color: var(--ln-sidebar-bg);
+  padding: 10px;
+  border-radius: 5px;
+  overflow-x: auto;
+}
