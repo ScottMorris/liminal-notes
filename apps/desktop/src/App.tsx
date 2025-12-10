@@ -4,8 +4,10 @@ import { getVaultConfig, listMarkdownFiles, resetVaultConfig } from "./commands"
 import { VaultConfig, FileEntry } from "./types";
 import { VaultPicker } from "./components/VaultPicker";
 import { FileTree } from "./components/FileTree";
+import { useTheme, ThemeId } from "./theme";
 
 function App() {
+  const { themeId, setThemeId, availableThemes } = useTheme();
   const [vaultConfig, setVaultConfigState] = useState<VaultConfig | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -81,6 +83,19 @@ function App() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h3>{vaultConfig.name}</h3>
+          <select
+            className="theme-selector"
+            value={themeId}
+            onChange={(e) => setThemeId(e.target.value as ThemeId)}
+            title="Select Theme"
+          >
+            <option value="system">System</option>
+            {availableThemes.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
           <button className="reset-btn" onClick={handleResetVault} title="Switch Vault">⚙</button>
         </div>
         <FileTree files={files} onFileSelect={handleFileSelect} />
