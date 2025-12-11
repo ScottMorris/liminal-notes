@@ -12,6 +12,7 @@ interface SearchIndexContextProps {
   buildIndex: (files: FileEntry[]) => Promise<void>;
   updateEntry: (path: string, content: string) => void;
   search: (query: string) => NoteIndexEntry[];
+  getEntry: (path: string) => NoteIndexEntry | undefined;
   isIndexing: boolean;
 }
 
@@ -110,8 +111,12 @@ export const SearchIndexProvider = ({ children }: { children: ReactNode }) => {
     return results.map(r => r.entry);
   }, [index]);
 
+  const getEntry = useCallback((path: string): NoteIndexEntry | undefined => {
+    return index.get(path);
+  }, [index]);
+
   return (
-    <SearchIndexContext.Provider value={{ buildIndex, updateEntry, search, isIndexing }}>
+    <SearchIndexContext.Provider value={{ buildIndex, updateEntry, search, getEntry, isIndexing }}>
       {children}
     </SearchIndexContext.Provider>
   );
