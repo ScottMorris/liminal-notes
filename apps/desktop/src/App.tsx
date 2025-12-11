@@ -1,8 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import "./App.css";
-import { getVaultConfig, listMarkdownFiles, resetVaultConfig, readNote, writeNote } from "./commands";
-import { VaultConfig, FileEntry } from "./types";
 import { VaultPicker } from "./components/VaultPicker";
 import { FileTree } from "./components/FileTree";
 import { useTheme, ThemeId } from "./theme";
@@ -15,145 +13,65 @@ import { usePluginHost } from "./plugins/PluginHostProvider";
 import { StatusBar } from "./components/StatusBar";
 import { PluginsSettings } from "./components/PluginsSettings";
 import { AiSidebar } from "./features/ai/AiSidebar";
+import { HelpModal } from "./components/HelpModal";
+import { useVault } from "./hooks/useVault";
+import { useNote } from "./hooks/useNote";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
-  const { rebuildIndex, updateNote, resolvePath, isLoadingIndex } = useLinkIndex();
-  const { buildIndex: buildSearchIndex, updateEntry: updateSearchEntry, isIndexing: isSearchIndexing } = useSearchIndex();
-  const { notifyNoteOpened, notifyNoteContentChanged, notifyNoteSaved, enabledPlugins } = usePluginHost();
+  const { resolvePath, isLoadingIndex } = useLinkIndex();
+  const { isIndexing: isSearchIndexing } = useSearchIndex();
+  const { enabledPlugins } = usePluginHost();
 
-  const [vaultConfig, setVaultConfigState] = useState<VaultConfig | null>(null);
-  const [files, setFiles] = useState<FileEntry[]>([]);
+  const {
+    vaultConfig,
+    files,
+    isLoading: isVaultLoading,
+    handleResetVault: resetVault,
+    handleVaultConfigured
+  } = useVault();
+
+  const {
+    selectedFile,
+    noteContent,
+    isDirty,
+    isLoadingNote,
+    isSaving,
+    handleFileSelect,
+    handleSave,
+    updateContent,
+    clearSelection
+  } = useNote();
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPluginsOpen, setIsPluginsOpen] = useState(false);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'notes' | 'graph'>('notes');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Note State
-  const [noteContent, setNoteContent] = useState<string>("");
-  const [isDirty, setIsDirty] = useState<boolean>(false);
-  const [isLoadingNote, setIsLoadingNote] = useState<boolean>(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-
-  useEffect(() => {
-    loadVault();
-  }, []);
+  // Handle Vault Reset wrapper to also clear note selection
+  const onResetVault = async () => {
+    await resetVault();
+    clearSelection();
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+      // Search / Quick Open: Ctrl+Shift+F
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setIsSearchOpen(true);
+      }
+
+      // Save: Ctrl+S
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSave();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const loadVault = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const config = await getVaultConfig();
-      if (config) {
-        setVaultConfigState(config);
-        const fileList = await listMarkdownFiles();
-        setFiles(fileList);
-        // Build initial index
-        rebuildIndex(fileList);
-        buildSearchIndex(fileList);
-      } else {
-        setVaultConfigState(null);
-      }
-    } catch (err) {
-      console.error("Failed to load vault:", err);
-      setError("Unable to load vault: " + String(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVaultConfigured = async (config: VaultConfig) => {
-    setVaultConfigState(config);
-    try {
-      const fileList = await listMarkdownFiles();
-      setFiles(fileList);
-      rebuildIndex(fileList);
-      buildSearchIndex(fileList);
-    } catch (err) {
-      console.error("Failed to list files:", err);
-      setError("Failed to list files: " + String(err));
-    }
-  };
-
-  const handleResetVault = async () => {
-    try {
-      await resetVaultConfig();
-      setVaultConfigState(null);
-      setFiles([]);
-      setSelectedFile(null);
-      setError(null);
-      setNoteContent("");
-      setIsDirty(false);
-    } catch (err) {
-      setError("Failed to reset vault: " + String(err));
-    }
-  };
-
-  const handleFileSelect = async (path: string) => {
-    // If previously selected, simple discard unsaved changes (as per Milestone 2 reqs)
-    setSelectedFile(path);
-    setLoadError(null);
-    setIsLoadingNote(true);
-    setNoteContent("");
-    setIsDirty(false);
-
-    try {
-      const content = await readNote(path);
-      setNoteContent(content);
-
-      // Notify plugins
-      notifyNoteOpened({
-        path,
-        title: path.split('/').pop()?.replace('.md', '') || path, // Simple title derivation
-        content
-      });
-    } catch (err) {
-      console.error("Failed to read note:", err);
-      setLoadError(String(err));
-    } finally {
-      setIsLoadingNote(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!selectedFile) return;
-
-    setIsSaving(true);
-    setLoadError(null);
-    try {
-      await writeNote(selectedFile, noteContent);
-      setIsDirty(false);
-      updateNote(selectedFile, noteContent);
-      updateSearchEntry(selectedFile, noteContent);
-
-      // Notify plugins
-      notifyNoteSaved({
-        path: selectedFile,
-        title: selectedFile.split('/').pop()?.replace('.md', '') || selectedFile,
-        content: noteContent
-      });
-    } catch (err) {
-      console.error("Failed to save note:", err);
-      setLoadError("Failed to save: " + String(err));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  }, [handleSave]);
 
   // Wikilink support
   const preprocessContent = (content: string) => {
@@ -198,7 +116,7 @@ function App() {
 
   const processedContent = useMemo(() => preprocessContent(noteContent), [noteContent]);
 
-  if (loading) {
+  if (isVaultLoading) {
     return <div className="container center">Loading...</div>;
   }
 
@@ -206,7 +124,6 @@ function App() {
     return (
       <div className="container center">
         <VaultPicker onVaultConfigured={handleVaultConfigured} />
-        {error && <div className="error-banner">{error} <button onClick={handleResetVault}>Reset</button></div>}
       </div>
     );
   }
@@ -215,7 +132,7 @@ function App() {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h3>{vaultConfig.name}</h3>
+          <h3 title={vaultConfig.name}>{vaultConfig.name}</h3>
           <select
             className="theme-selector"
             value={themeId}
@@ -229,9 +146,10 @@ function App() {
               </option>
             ))}
           </select>
-          <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+P)">🔍</button>
+          <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)">🔍</button>
           <button className="reset-btn" onClick={() => setIsPluginsOpen(true)} title="Plugins">🧩</button>
-          <button className="reset-btn" onClick={handleResetVault} title="Switch Vault">⚙</button>
+          <button className="reset-btn" onClick={() => setIsHelpOpen(true)} title="Help">?</button>
+          <button className="reset-btn" onClick={onResetVault} title="Switch Vault">⚙</button>
           <div className="view-toggle">
             <button
               className={`toggle-btn ${viewMode === 'notes' ? 'active' : ''}`}
@@ -262,7 +180,7 @@ function App() {
           />
         )}
         {isPluginsOpen && <PluginsSettings onClose={() => setIsPluginsOpen(false)} />}
-        {error && <div className="error-banner">{error} <button onClick={() => setError(null)}>Dismiss</button></div>}
+        {isHelpOpen && <HelpModal onClose={() => setIsHelpOpen(false)} />}
 
         {viewMode === 'graph' ? (
            <GraphView selectedFile={selectedFile} onSelect={handleFileSelect} />
@@ -285,7 +203,6 @@ function App() {
                         🤖 AI
                       </button>
                   )}
-                  {loadError && <span className="editor-error">{loadError}</span>}
                   <button onClick={handleSave} disabled={isSaving || isLoadingNote}>
                     {isSaving ? "Saving..." : "Save"}
                   </button>
@@ -300,18 +217,7 @@ function App() {
                     <textarea
                       className="markdown-editor"
                       value={noteContent}
-                      onChange={(e) => {
-                        setNoteContent(e.target.value);
-                        setIsDirty(true);
-
-                         if (selectedFile) {
-                             notifyNoteContentChanged({
-                                path: selectedFile,
-                                title: selectedFile.split('/').pop()?.replace('.md', '') || selectedFile,
-                                content: e.target.value
-                             });
-                        }
-                      }}
+                      onChange={(e) => updateContent(e.target.value)}
                       disabled={isLoadingNote}
                     />
                   )}

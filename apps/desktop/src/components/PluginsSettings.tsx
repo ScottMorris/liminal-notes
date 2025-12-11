@@ -1,4 +1,3 @@
-import React from 'react';
 import { usePluginHost } from '../plugins/PluginHostProvider';
 import { builtInPlugins } from '../plugins/registry';
 

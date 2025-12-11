@@ -63,6 +63,14 @@ export function FileTree({ files, onFileSelect }: FileTreeProps) {
     return root;
   }, [files]);
 
+  if (files.length === 0) {
+    return (
+      <div className="file-tree empty-state-sidebar" style={{ padding: '20px', textAlign: 'center', color: 'var(--ln-muted)', fontStyle: 'italic' }}>
+        <p style={{ margin: 0 }}>This vault is empty.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="file-tree">
       {tree.map(node => (

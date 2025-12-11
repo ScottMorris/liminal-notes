@@ -1,7 +1,7 @@
 {
   "name": "liminal-notes",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Local-first, Markdown-based note-taking app with Obsidian-style linking, built with Tauri + React + TypeScript.",
   "workspaces": [
     "apps/*",
@@ -11,7 +11,8 @@
     "lint": "echo \"(lint to be added by tooling)\"",
     "test": "echo \"(tests to be added by tooling)\"",
     "tauri": "pnpm --filter @liminal-notes/desktop tauri",
-    "dev:desktop": "pnpm --filter @liminal-notes/desktop tauri dev"
+    "dev:desktop": "pnpm --filter @liminal-notes/desktop tauri dev",
+    "build:desktop": "pnpm --filter @liminal-notes/desktop tauri build"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode, useRef } from 'react';
-import { LiminalPlugin, PluginContext, PluginId, NoteSnapshot, PluginStatusItem } from './types';
+import { createContext, useContext, useEffect, useState, useMemo, ReactNode, useRef } from 'react';
+import { PluginContext, PluginId, NoteSnapshot, PluginStatusItem } from './types';
 import { builtInPlugins } from './registry';
 
 interface PluginHostState {
