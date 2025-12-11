@@ -163,8 +163,33 @@ export const GraphView = ({ selectedFile, onSelect }: GraphViewProps) => {
           graphData={graphData}
           backgroundColor={colours.bg}
           nodeLabel="title"
-          nodeColor={(node: any) => node.id === selectedFile ? colours.accent : colours.fg}
-          nodeRelSize={4}
+          nodeCanvasObject={(node: any, ctx, globalScale) => {
+            const isSelected = node.id === selectedFile;
+            const color = isSelected ? colours.accent : colours.fg;
+            const label = node.title;
+            const fontSize = 12 / globalScale;
+
+            // Draw Node
+            const radius = 4; // Base radius, could be dynamic based on node.val
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // Draw Label
+            ctx.font = `${fontSize}px Sans-Serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = colours.fg; // Always use foreground color for text
+            ctx.fillText(label, node.x, node.y + radius + fontSize);
+          }}
+          nodePointerAreaPaint={(node: any, color, ctx) => {
+            const radius = 4;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
+            ctx.fillStyle = color;
+            ctx.fill();
+          }}
           linkColor={() => colours.border}
           linkDirectionalArrowLength={3.5}
           linkDirectionalArrowRelPos={1}
