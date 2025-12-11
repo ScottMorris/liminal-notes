@@ -56,10 +56,8 @@ export const SearchIndexProvider = ({ children }: { children: ReactNode }) => {
     const newIndex = new Map<string, NoteIndexEntry>();
     const mdFiles = files.filter(f => !f.is_dir && f.path.endsWith('.md'));
 
-    // We process sequentially to avoid overwhelming the backend,
-    // though Promise.all could be faster if the backend handles concurrency well.
-    // Given it's a local FS, sequential is safer for now.
-    for (const file of mdFiles) {
+    // Process files in parallel to speed up indexing.
+    await Promise.all(mdFiles.map(async (file) => {
       try {
         const content = await readNote(file.path);
         const title = parseTitle(file.path, content);
@@ -67,7 +65,7 @@ export const SearchIndexProvider = ({ children }: { children: ReactNode }) => {
       } catch (err) {
         console.error(`Failed to index ${file.path}:`, err);
       }
-    }
+    }));
 
     setIndex(newIndex);
     setIsIndexing(false);
