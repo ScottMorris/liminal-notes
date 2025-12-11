@@ -16,6 +16,8 @@ import { AiSidebar } from "./features/ai/AiSidebar";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
 import { useNote } from "./hooks/useNote";
+import { useRef } from "react";
+import { updateFrontmatter } from "./utils/frontmatter";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
@@ -43,6 +45,7 @@ function App() {
     clearSelection
   } = useNote();
 
+  const editorRef = useRef<HTMLTextAreaElement>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPluginsOpen, setIsPluginsOpen] = useState(false);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
@@ -53,6 +56,30 @@ function App() {
   const onResetVault = async () => {
     await resetVault();
     clearSelection();
+  };
+
+  const handleInsertAtCursor = (text: string) => {
+    if (editorRef.current) {
+      const textarea = editorRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newContent = noteContent.substring(0, start) + text + noteContent.substring(end);
+      updateContent(newContent);
+
+      // Restore cursor after insertion
+      requestAnimationFrame(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        textarea.focus();
+      });
+    } else {
+      // Fallback if ref is not available (e.g. view mode not ready), append to end
+      updateContent(noteContent + "\n" + text);
+    }
+  };
+
+  const handleUpdateFrontmatter = (updater: (data: any) => void) => {
+    const newContent = updateFrontmatter(noteContent, updater);
+    updateContent(newContent);
   };
 
   useEffect(() => {
@@ -215,6 +242,7 @@ function App() {
                     <div className="loading-indicator">Loading...</div>
                   ) : (
                     <textarea
+                      ref={editorRef}
                       className="markdown-editor"
                       value={noteContent}
                       onChange={(e) => updateContent(e.target.value)}
@@ -253,6 +281,8 @@ function App() {
             } : null}
             onNavigate={handleFileSelect}
             onClose={() => setIsAiSidebarOpen(false)}
+            onInsertAtCursor={handleInsertAtCursor}
+            onUpdateFrontmatter={handleUpdateFrontmatter}
           />
       )}
     </div>
