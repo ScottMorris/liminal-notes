@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useRef, ReactNode } from 'react';
 import { readNote } from '../commands';
 import { FileEntry, Wikilink, LinkIndex, NotePath } from '../types';
 
