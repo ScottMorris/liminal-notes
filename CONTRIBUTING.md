@@ -12,7 +12,7 @@ Liminal Notes is a **local-first, Markdown-based** note-taking app with:
 * Plain `.md` files in a vault folder.
 * `[[wikilinks]]` and backlinks between notes.
 * A cross-platform desktop app built with **Tauri (Rust + TypeScript/React)**.
-* A planned **plugin system** and optional **local AI assistants** (via `transformers.js`).
+* A planned **plugin system** and optional **local AI assistants** (using the `@huggingface/transformers` JavaScript library).
 
 Early milestones focus on:
 
