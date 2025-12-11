@@ -1,27 +1,70 @@
 # Liminal Notes
 
-Liminal Notes is a local-first, Markdown-based note-taking app inspired by tools like Obsidian.
+Liminal Notes is a local-first, Markdown-based note-taking app that treats your data as the source of truth. Built with Tauri, React, and Rust, it is designed to be fast, private, and extensible, with future support for local AI and plugins.
 
-It aims to:
+## Features
 
-- Store notes as plain `.md` files in a folder (a “vault”).
-- Support `[[wikilinks]]` and backlinks between notes.
-- Run as a desktop app on Linux, Windows, and macOS using **Tauri**.
-- Use **TypeScript** for all application code on the frontend and plugin side.
-- Use **Rust** for the backend core (vault access, indexing, etc.).
-- Eventually support an extensible plugin system and a local AI assistant powered by **transformers.js**.
+- **Local-First Vaults:** Your notes live in a standard folder on your disk. No proprietary databases.
+- **Markdown Editor:** Write in standard Markdown with instant preview.
+- **Wikilinks & Backlinks:** Connect thoughts using `[[wikilinks]]`. See what links to the current note in the Backlinks panel.
+- **Search & Quick Open:** Instantly find notes by title or content.
+- **Graph View:** Visualize the connections between your notes.
+- **Plugin Ready:** (In Progress) Built-in plugin host and AI Assistant scaffolding.
 
-The first milestones focus on:
+## Keyboard Shortcuts
 
-- Single-vault support.
-- File tree sidebar.
-- Markdown editing + preview.
-- Wikilinks + backlinks.
-- Simple search.
+| Action | Shortcut |
+| :--- | :--- |
+| **Save Note** | `Ctrl` / `Cmd` + `S` |
+| **Search / Quick Open** | `Ctrl` / `Cmd` + `Shift` + `F` |
+| **Toggle Graph View** | (Sidebar Button) |
+| **Toggle AI Sidebar** | (Toolbar Button, if enabled) |
 
-Future milestones add:
+## Running in Development
 
-- Plugin host.
-- Local AI assistant plugin (summaries, tag suggestions, classification, related notes).
+We recommend using the VS Code **Dev Container** for a zero-config setup.
 
-See the `docs/` folder for architecture and build plans.
+1.  **Install Dependencies:**
+    ```bash
+    pnpm install
+    ```
+
+2.  **Run Development Mode:**
+    ```bash
+    pnpm tauri dev
+    ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+
+## Building a Release
+
+To create an installable package for your platform (Linux .deb/.AppImage, Windows .msi, macOS .app/.dmg):
+
+> **Note:** Tauri builds rely on the host OS. To build for Windows, run this command on Windows. To build for macOS, run on macOS.
+
+```bash
+pnpm build:desktop
+```
+
+The built artifacts will be available in `apps/desktop/src-tauri/target/release/bundle/`.
+
+**Artifacts created:**
+*   **Linux:** `.deb` (Debian/Ubuntu installer), `.AppImage` (portable executable), `.rpm` (Fedora/RHEL installer).
+    *   To install `.deb`: `sudo dpkg -i <path-to-deb>`
+    *   To run `.AppImage`: `chmod +x <path>; ./<path>`
+*   **Windows:** `.msi` installer.
+*   **macOS:** `.app` bundle, `.dmg` disk image.
+
+**Note:** Binaries are currently unsigned. You may see OS warnings when installing.
+
+## Status & Roadmap
+
+Current Version: **0.1.0** (Milestone 8 - Polish & Packaging)
+
+- [x] Core Note Editing & Linking
+- [x] Search & Graph View
+- [x] Basic Theming
+- [ ] Advanced Plugin System
+- [ ] Local AI Assistant Features
+
+See `docs/` for detailed architecture and specs.

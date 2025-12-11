@@ -1,0 +1,42 @@
+
+> liminal-notes@0.1.0 build:desktop /app
+> pnpm --filter @liminal-notes/desktop tauri build
+
+
+> @liminal-notes/desktop@0.1.0 tauri /app/apps/desktop
+> tauri build
+
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `pnpm build`
+
+> @liminal-notes/desktop@0.1.0 build /app/apps/desktop
+> tsc && vite build
+
+vite v7.2.7 building client environment for production...
+transforming...
+✓ 1268 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                             0.47 kB │ gzip:     0.30 kB
+dist/assets/ort-wasm-simd-threaded.jsep-B0T3yYHD.wasm  21,596.02 kB │ gzip: 5,087.10 kB
+dist/assets/index-7BlWc09p.css                             10.25 kB │ gzip:     2.34 kB
+dist/assets/index-D_BB1eJX.js                           1,400.60 kB │ gzip:   398.31 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 10.13s
+   Compiling appsdesktop v0.1.0 (/app/apps/desktop/src-tauri)
+    Finished `release` profile [optimized] target(s) in 50.96s
+       Built application at: /app/apps/desktop/src-tauri/target/release/appsdesktop
+        Info Patching binary "/app/apps/desktop/src-tauri/target/release/appsdesktop" for type deb
+    Bundling Liminal Notes_0.1.0_amd64.deb (/app/apps/desktop/src-tauri/target/release/bundle/deb/Liminal Notes_0.1.0_amd64.deb)
+        Info Patching binary "/app/apps/desktop/src-tauri/target/release/appsdesktop" for type rpm
+    Bundling Liminal Notes-0.1.0-1.x86_64.rpm (/app/apps/desktop/src-tauri/target/release/bundle/rpm/Liminal Notes-0.1.0-1.x86_64.rpm)
+        Info Patching binary "/app/apps/desktop/src-tauri/target/release/appsdesktop" for type appimage
+    Bundling Liminal Notes_0.1.0_amd64.AppImage (/app/apps/desktop/src-tauri/target/release/bundle/appimage/Liminal Notes_0.1.0_amd64.AppImage)
+    Finished 3 bundles at:
+        /app/apps/desktop/src-tauri/target/release/bundle/deb/Liminal Notes_0.1.0_amd64.deb
+        /app/apps/desktop/src-tauri/target/release/bundle/rpm/Liminal Notes-0.1.0-1.x86_64.rpm
+        /app/apps/desktop/src-tauri/target/release/bundle/appimage/Liminal Notes_0.1.0_amd64.AppImage

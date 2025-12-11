@@ -23,7 +23,7 @@ export const wordCountPlugin: LiminalPlugin = {
     ctx.log('[word-count] Deactivated');
   },
 
-  onNoteContentChanged(ctx: PluginContext, note) {
+  onNoteContentChanged(_ctx: PluginContext, _note) {
     // Just logging for verification, the actual update happens when the host
     // re-renders status items by calling getStatusItems
     // ctx.log(`[word-count] Content changed for ${note.path}`);
