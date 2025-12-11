@@ -1,6 +1,7 @@
 # Contributing to Liminal Notes
 
 Thanks for your interest in contributing to **Liminal Notes** 💚
+
 This document is a quick guide for humans *and* code agents (AI tools) on how to work in this repo. For more detailed norms and project context, see **AGENTS.md** and the files in the `docs/` directory.
 
 ---
