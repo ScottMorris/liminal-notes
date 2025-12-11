@@ -14,17 +14,19 @@ import { GraphView } from "./components/GraphView";
 import { usePluginHost } from "./plugins/PluginHostProvider";
 import { StatusBar } from "./components/StatusBar";
 import { PluginsSettings } from "./components/PluginsSettings";
+import { AiSidebar } from "./features/ai/AiSidebar";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
   const { rebuildIndex, updateNote, resolvePath, isLoadingIndex } = useLinkIndex();
   const { buildIndex: buildSearchIndex, updateEntry: updateSearchEntry, isIndexing: isSearchIndexing } = useSearchIndex();
-  const { notifyNoteOpened, notifyNoteContentChanged, notifyNoteSaved } = usePluginHost();
+  const { notifyNoteOpened, notifyNoteContentChanged, notifyNoteSaved, enabledPlugins } = usePluginHost();
 
   const [vaultConfig, setVaultConfigState] = useState<VaultConfig | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPluginsOpen, setIsPluginsOpen] = useState(false);
+  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'notes' | 'graph'>('notes');
   const [loading, setLoading] = useState(true);
@@ -274,6 +276,15 @@ function App() {
                   {(isLoadingIndex || isSearchIndexing) && <span className="indexing-indicator" title="Indexing vault..."> (Indexing...)</span>}
                 </div>
                 <div className="editor-actions">
+                  {enabledPlugins.has('ai-assistant') && (
+                      <button
+                        className={`action-btn ${isAiSidebarOpen ? 'active' : ''}`}
+                        onClick={() => setIsAiSidebarOpen(!isAiSidebarOpen)}
+                        title="Toggle AI Assistant"
+                      >
+                        🤖 AI
+                      </button>
+                  )}
                   {loadError && <span className="editor-error">{loadError}</span>}
                   <button onClick={handleSave} disabled={isSaving || isLoadingNote}>
                     {isSaving ? "Saving..." : "Save"}
@@ -327,6 +338,17 @@ function App() {
         )}
         <StatusBar />
       </main>
+      {enabledPlugins.has('ai-assistant') && isAiSidebarOpen && (
+          <AiSidebar
+            currentNote={selectedFile ? {
+              path: selectedFile,
+              title: selectedFile.split('/').pop()?.replace('.md', '') || selectedFile,
+              content: noteContent
+            } : null}
+            onNavigate={handleFileSelect}
+            onClose={() => setIsAiSidebarOpen(false)}
+          />
+      )}
     </div>
   );
 }
