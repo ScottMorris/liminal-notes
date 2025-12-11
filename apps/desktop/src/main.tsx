@@ -4,13 +4,16 @@ import App from "./App";
 import { ThemeProvider } from "./theme";
 import { LinkIndexProvider } from "./components/LinkIndexContext";
 import { SearchIndexProvider } from "./components/SearchIndexContext";
+import { PluginHostProvider } from "./plugins/PluginHostProvider";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ThemeProvider>
       <LinkIndexProvider>
         <SearchIndexProvider>
-          <App />
+          <PluginHostProvider>
+            <App />
+          </PluginHostProvider>
         </SearchIndexProvider>
       </LinkIndexProvider>
     </ThemeProvider>
