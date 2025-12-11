@@ -46,6 +46,13 @@ pnpm build:desktop
 
 The built artifacts will be available in `apps/desktop/src-tauri/target/release/bundle/`.
 
+**Artifacts created:**
+*   **Linux:** `.deb` (Debian/Ubuntu installer), `.AppImage` (portable executable), `.rpm` (Fedora/RHEL installer).
+    *   To install `.deb`: `sudo dpkg -i <path-to-deb>`
+    *   To run `.AppImage`: `chmod +x <path>; ./<path>`
+*   **Windows:** `.msi` installer.
+*   **macOS:** `.app` bundle, `.dmg` disk image.
+
 **Note:** Binaries are currently unsigned. You may see OS warnings when installing.
 
 ## Status & Roadmap
