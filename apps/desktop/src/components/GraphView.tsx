@@ -53,8 +53,8 @@ export const GraphView = ({ selectedFile, onSelect }: GraphViewProps) => {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Theme colors
-  const [colors, setColors] = useState({
+  // Theme colours
+  const [colours, setColours] = useState({
     bg: '#ffffff',
     fg: '#333333',
     accent: '#007bff',
@@ -64,7 +64,7 @@ export const GraphView = ({ selectedFile, onSelect }: GraphViewProps) => {
 
   useEffect(() => {
     const style = getComputedStyle(document.documentElement);
-    setColors({
+    setColours({
       bg: style.getPropertyValue('--ln-bg').trim() || '#ffffff',
       fg: style.getPropertyValue('--ln-fg').trim() || '#333333',
       accent: style.getPropertyValue('--ln-accent').trim() || '#007bff',
@@ -154,18 +154,18 @@ export const GraphView = ({ selectedFile, onSelect }: GraphViewProps) => {
   };
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', overflow: 'hidden', background: colors.bg }}>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', overflow: 'hidden', background: colours.bg }}>
       {dimensions.width > 0 && (
         <ForceGraph2D
           ref={graphRef}
           width={dimensions.width}
           height={dimensions.height}
           graphData={graphData}
-          backgroundColor={colors.bg}
+          backgroundColor={colours.bg}
           nodeLabel="title"
-          nodeColor={(node: any) => node.id === selectedFile ? colors.accent : colors.fg}
+          nodeColor={(node: any) => node.id === selectedFile ? colours.accent : colours.fg}
           nodeRelSize={4}
-          linkColor={() => colors.border}
+          linkColor={() => colours.border}
           linkDirectionalArrowLength={3.5}
           linkDirectionalArrowRelPos={1}
           onNodeClick={(node) => {
