@@ -90,6 +90,38 @@ body {
   color: var(--ln-accent);
 }
 
+.view-toggle {
+  display: flex;
+  background-color: var(--ln-bg);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--ln-border);
+  margin-left: 10px;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--ln-muted);
+}
+
+.toggle-btn:hover {
+  background-color: var(--ln-item-hover-bg);
+}
+
+.toggle-btn.active {
+  background-color: var(--ln-accent);
+  color: white; /* Force white for active state if accent is dark, or adjust logic */
+}
+
+/* Adjust active text color based on assumed accent brightness or use a safe color */
+.toggle-btn.active {
+    color: #ffffff;
+}
+
 .main-content {
   flex: 1;
   padding: 20px;

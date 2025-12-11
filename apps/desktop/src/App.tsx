@@ -10,6 +10,7 @@ import { useLinkIndex } from "./components/LinkIndexContext";
 import { BacklinksPanel } from "./components/BacklinksPanel";
 import { useSearchIndex } from "./components/SearchIndexContext";
 import { SearchModal } from "./components/SearchModal";
+import { GraphView } from "./components/GraphView";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
@@ -19,6 +20,7 @@ function App() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'notes' | 'graph'>('notes');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -207,6 +209,22 @@ function App() {
           </select>
           <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+P)">🔍</button>
           <button className="reset-btn" onClick={handleResetVault} title="Switch Vault">⚙</button>
+          <div className="view-toggle">
+            <button
+              className={`toggle-btn ${viewMode === 'notes' ? 'active' : ''}`}
+              onClick={() => setViewMode('notes')}
+              title="Notes View"
+            >
+              📝
+            </button>
+            <button
+              className={`toggle-btn ${viewMode === 'graph' ? 'active' : ''}`}
+              onClick={() => setViewMode('graph')}
+              title="Graph View"
+            >
+              🕸️
+            </button>
+          </div>
         </div>
         <FileTree files={files} onFileSelect={handleFileSelect} />
       </aside>
@@ -222,56 +240,60 @@ function App() {
         )}
         {error && <div className="error-banner">{error} <button onClick={() => setError(null)}>Dismiss</button></div>}
 
-        {selectedFile ? (
-          <div className="editor-container">
-            <div className="editor-header">
-              <div className="file-info">
-                <span className="file-name">{selectedFile}</span>
-                {isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
-                {(isLoadingIndex || isSearchIndexing) && <span className="indexing-indicator" title="Indexing vault..."> (Indexing...)</span>}
-              </div>
-              <div className="editor-actions">
-                {loadError && <span className="editor-error">{loadError}</span>}
-                <button onClick={handleSave} disabled={isSaving || isLoadingNote}>
-                  {isSaving ? "Saving..." : "Save"}
-                </button>
-              </div>
-            </div>
-
-            <div className="split-pane">
-              <div className="editor-pane">
-                {isLoadingNote ? (
-                  <div className="loading-indicator">Loading...</div>
-                ) : (
-                  <textarea
-                    className="markdown-editor"
-                    value={noteContent}
-                    onChange={(e) => {
-                      setNoteContent(e.target.value);
-                      setIsDirty(true);
-                    }}
-                    disabled={isLoadingNote}
-                  />
-                )}
-              </div>
-              <div className="preview-pane">
-                <div className="markdown-preview">
-                  <ReactMarkdown
-                    components={MarkdownComponents}
-                    urlTransform={(url) => url}
-                  >
-                    {processedContent}
-                  </ReactMarkdown>
+        {viewMode === 'graph' ? (
+           <GraphView selectedFile={selectedFile} onSelect={handleFileSelect} />
+        ) : (
+          selectedFile ? (
+            <div className="editor-container">
+              <div className="editor-header">
+                <div className="file-info">
+                  <span className="file-name">{selectedFile}</span>
+                  {isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
+                  {(isLoadingIndex || isSearchIndexing) && <span className="indexing-indicator" title="Indexing vault..."> (Indexing...)</span>}
+                </div>
+                <div className="editor-actions">
+                  {loadError && <span className="editor-error">{loadError}</span>}
+                  <button onClick={handleSave} disabled={isSaving || isLoadingNote}>
+                    {isSaving ? "Saving..." : "Save"}
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <BacklinksPanel currentFile={selectedFile} onNavigate={handleFileSelect} />
-          </div>
-        ) : (
-          <div className="empty-state">
-            <p>Select a file to view</p>
-          </div>
+              <div className="split-pane">
+                <div className="editor-pane">
+                  {isLoadingNote ? (
+                    <div className="loading-indicator">Loading...</div>
+                  ) : (
+                    <textarea
+                      className="markdown-editor"
+                      value={noteContent}
+                      onChange={(e) => {
+                        setNoteContent(e.target.value);
+                        setIsDirty(true);
+                      }}
+                      disabled={isLoadingNote}
+                    />
+                  )}
+                </div>
+                <div className="preview-pane">
+                  <div className="markdown-preview">
+                    <ReactMarkdown
+                      components={MarkdownComponents}
+                      urlTransform={(url) => url}
+                    >
+                      {processedContent}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+
+              <BacklinksPanel currentFile={selectedFile} onNavigate={handleFileSelect} />
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>Select a file to view</p>
+            </div>
+          )
         )}
       </main>
     </div>
