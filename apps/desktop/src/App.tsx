@@ -11,14 +11,20 @@ import { BacklinksPanel } from "./components/BacklinksPanel";
 import { useSearchIndex } from "./components/SearchIndexContext";
 import { SearchModal } from "./components/SearchModal";
 import { GraphView } from "./components/GraphView";
+import { usePluginHost } from "./plugins/PluginHostProvider";
+import { StatusBar } from "./components/StatusBar";
+import { PluginsSettings } from "./components/PluginsSettings";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
   const { rebuildIndex, updateNote, resolvePath, isLoadingIndex } = useLinkIndex();
   const { buildIndex: buildSearchIndex, updateEntry: updateSearchEntry, isIndexing: isSearchIndexing } = useSearchIndex();
+  const { notifyNoteOpened, notifyNoteContentChanged, notifyNoteSaved } = usePluginHost();
+
   const [vaultConfig, setVaultConfigState] = useState<VaultConfig | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isPluginsOpen, setIsPluginsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'notes' | 'graph'>('notes');
   const [loading, setLoading] = useState(true);
@@ -107,6 +113,13 @@ function App() {
     try {
       const content = await readNote(path);
       setNoteContent(content);
+
+      // Notify plugins
+      notifyNoteOpened({
+        path,
+        title: path.split('/').pop()?.replace('.md', '') || path, // Simple title derivation
+        content
+      });
     } catch (err) {
       console.error("Failed to read note:", err);
       setLoadError(String(err));
@@ -125,6 +138,13 @@ function App() {
       setIsDirty(false);
       updateNote(selectedFile, noteContent);
       updateSearchEntry(selectedFile, noteContent);
+
+      // Notify plugins
+      notifyNoteSaved({
+        path: selectedFile,
+        title: selectedFile.split('/').pop()?.replace('.md', '') || selectedFile,
+        content: noteContent
+      });
     } catch (err) {
       console.error("Failed to save note:", err);
       setLoadError("Failed to save: " + String(err));
@@ -208,6 +228,7 @@ function App() {
             ))}
           </select>
           <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+P)">🔍</button>
+          <button className="reset-btn" onClick={() => setIsPluginsOpen(true)} title="Plugins">🧩</button>
           <button className="reset-btn" onClick={handleResetVault} title="Switch Vault">⚙</button>
           <div className="view-toggle">
             <button
@@ -238,6 +259,7 @@ function App() {
             }}
           />
         )}
+        {isPluginsOpen && <PluginsSettings onClose={() => setIsPluginsOpen(false)} />}
         {error && <div className="error-banner">{error} <button onClick={() => setError(null)}>Dismiss</button></div>}
 
         {viewMode === 'graph' ? (
@@ -270,6 +292,14 @@ function App() {
                       onChange={(e) => {
                         setNoteContent(e.target.value);
                         setIsDirty(true);
+
+                         if (selectedFile) {
+                             notifyNoteContentChanged({
+                                path: selectedFile,
+                                title: selectedFile.split('/').pop()?.replace('.md', '') || selectedFile,
+                                content: e.target.value
+                             });
+                        }
                       }}
                       disabled={isLoadingNote}
                     />
@@ -295,6 +325,7 @@ function App() {
             </div>
           )
         )}
+        <StatusBar />
       </main>
     </div>
   );

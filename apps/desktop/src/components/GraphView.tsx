@@ -30,7 +30,7 @@ export const GraphView = ({ selectedFile, onSelect }: GraphViewProps) => {
   const { getEntry } = useSearchIndex();
   const { themeId } = useTheme();
 
-  const graphRef = useRef<ForceGraphMethods>();
+  const graphRef = useRef<ForceGraphMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -161,6 +161,7 @@ export const GraphView = ({ selectedFile, onSelect }: GraphViewProps) => {
           width={dimensions.width}
           height={dimensions.height}
           graphData={graphData}
+          // @ts-ignore
           backgroundColor={colours.bg}
           nodeLabel="title"
           nodeCanvasObject={(node: any, ctx, globalScale) => {
