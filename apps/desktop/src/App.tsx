@@ -8,12 +8,16 @@ import { FileTree } from "./components/FileTree";
 import { useTheme, ThemeId } from "./theme";
 import { useLinkIndex } from "./components/LinkIndexContext";
 import { BacklinksPanel } from "./components/BacklinksPanel";
+import { useSearchIndex } from "./components/SearchIndexContext";
+import { SearchModal } from "./components/SearchModal";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
   const { rebuildIndex, updateNote, resolvePath, isLoadingIndex } = useLinkIndex();
+  const { buildIndex: buildSearchIndex, updateEntry: updateSearchEntry, isIndexing: isSearchIndexing } = useSearchIndex();
   const [vaultConfig, setVaultConfigState] = useState<VaultConfig | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +33,17 @@ function App() {
     loadVault();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const loadVault = async () => {
     try {
       setLoading(true);
@@ -40,6 +55,7 @@ function App() {
         setFiles(fileList);
         // Build initial index
         rebuildIndex(fileList);
+        buildSearchIndex(fileList);
       } else {
         setVaultConfigState(null);
       }
@@ -57,6 +73,7 @@ function App() {
       const fileList = await listMarkdownFiles();
       setFiles(fileList);
       rebuildIndex(fileList);
+      buildSearchIndex(fileList);
     } catch (err) {
       console.error("Failed to list files:", err);
       setError("Failed to list files: " + String(err));
@@ -105,6 +122,7 @@ function App() {
       await writeNote(selectedFile, noteContent);
       setIsDirty(false);
       updateNote(selectedFile, noteContent);
+      updateSearchEntry(selectedFile, noteContent);
     } catch (err) {
       console.error("Failed to save note:", err);
       setLoadError("Failed to save: " + String(err));
@@ -117,7 +135,7 @@ function App() {
   const preprocessContent = (content: string) => {
     // Replace [[target]] with [target](wikilink:target)
     // Using a capture group for target.
-    return content.replace(/\[\[([^\]]+)\]\]/g, (match, target) => {
+    return content.replace(/\[\[([^\]]+)\]\]/g, (_match, target) => {
        return `[${target}](wikilink:${target})`;
     });
   };
@@ -187,11 +205,21 @@ function App() {
               </option>
             ))}
           </select>
+          <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+P)">🔍</button>
           <button className="reset-btn" onClick={handleResetVault} title="Switch Vault">⚙</button>
         </div>
         <FileTree files={files} onFileSelect={handleFileSelect} />
       </aside>
       <main className="main-content">
+        {isSearchOpen && (
+          <SearchModal
+            onClose={() => setIsSearchOpen(false)}
+            onSelect={(path) => {
+              handleFileSelect(path);
+              setIsSearchOpen(false);
+            }}
+          />
+        )}
         {error && <div className="error-banner">{error} <button onClick={() => setError(null)}>Dismiss</button></div>}
 
         {selectedFile ? (
@@ -200,7 +228,7 @@ function App() {
               <div className="file-info">
                 <span className="file-name">{selectedFile}</span>
                 {isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
-                {isLoadingIndex && <span className="indexing-indicator" title="Indexing vault..."> (Indexing...)</span>}
+                {(isLoadingIndex || isSearchIndexing) && <span className="indexing-indicator" title="Indexing vault..."> (Indexing...)</span>}
               </div>
               <div className="editor-actions">
                 {loadError && <span className="editor-error">{loadError}</span>}
