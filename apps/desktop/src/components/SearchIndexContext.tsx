@@ -57,6 +57,7 @@ export const SearchIndexProvider = ({ children }: { children: ReactNode }) => {
     const mdFiles = files.filter(f => !f.is_dir && f.path.endsWith('.md'));
 
     // Process files in parallel to speed up indexing.
+    // The Tauri backend handles these concurrent requests using a thread pool.
     await Promise.all(mdFiles.map(async (file) => {
       try {
         const content = await readNote(file.path);
