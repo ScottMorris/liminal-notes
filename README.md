@@ -40,6 +40,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 To create an installable package for your platform (Linux .deb/.AppImage, Windows .msi, macOS .app/.dmg):
 
+> **Note:** Tauri builds rely on the host OS. To build for Windows, run this command on Windows. To build for macOS, run on macOS.
+
 ```bash
 pnpm build:desktop
 ```
