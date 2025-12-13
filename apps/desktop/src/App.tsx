@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import "./App.css";
 import { VaultPicker } from "./components/VaultPicker";
@@ -86,17 +86,17 @@ function App() {
     updateContent(newContent);
   };
 
-  const handleStartCreate = () => {
+  const handleStartCreate = useCallback(() => {
     setIsCreating(true);
     setEditingPath(null);
-  };
+  }, []);
 
-  const handleCreateCancel = () => {
+  const handleCreateCancel = useCallback(() => {
     setIsCreating(false);
     setEditingPath(null);
-  };
+  }, []);
 
-  const handleCreateCommit = async (name: string) => {
+  const handleCreateCommit = useCallback(async (name: string) => {
     if (!name) {
         handleCreateCancel();
         return;
@@ -119,9 +119,9 @@ function App() {
         alert("Failed to create note: " + String(e));
         setIsCreating(false);
     }
-  };
+  }, [files, handleCreateCancel, refreshFiles, handleFileSelect]);
 
-  const handleRenameCommit = async (oldPath: string, newName: string) => {
+  const handleRenameCommit = useCallback(async (oldPath: string, newName: string) => {
       if (!newName || !newName.trim()) {
           setEditingPath(null);
           return;
@@ -154,7 +154,7 @@ function App() {
       } finally {
           setEditingPath(null);
       }
-  };
+  }, [refreshFiles, selectedFile, handleFileSelect]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

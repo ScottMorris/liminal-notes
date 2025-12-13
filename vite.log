@@ -3,3 +3,5 @@
 
   ➜  Local:   http://localhost:1420/
 8:13:11 AM [vite] (client) hmr update /src/components/FileTree.tsx
+8:24:15 AM [vite] (client) hmr update /src/App.tsx
+8:24:20 AM [vite] (client) hmr update /src/components/FileTree.tsx
