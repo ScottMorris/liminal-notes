@@ -35,24 +35,34 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
   const handleDragStart = (e: React.DragEvent, tabId: string) => {
       setDraggedTabId(tabId);
       e.dataTransfer.effectAllowed = 'move';
-      // Set drag image if desired, otherwise uses default ghost
+      // Dim the element being dragged for visual feedback
+      (e.target as HTMLElement).style.opacity = '0.5';
   };
 
-  const handleDragOver = (e: React.DragEvent, targetTabId: string) => {
+  const handleDragEnd = (e: React.DragEvent) => {
+      (e.target as HTMLElement).style.opacity = '';
+      setDraggedTabId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
       e.preventDefault(); // Necessary to allow dropping
       e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent, targetTabId: string) => {
+  const handleDragEnter = (e: React.DragEvent, targetTabId: string) => {
       e.preventDefault();
       if (!draggedTabId || draggedTabId === targetTabId) return;
 
       const fromIndex = tabs.findIndex(t => t.id === draggedTabId);
       const toIndex = tabs.findIndex(t => t.id === targetTabId);
 
-      if (fromIndex !== -1 && toIndex !== -1) {
+      if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
           reorderTabs(fromIndex, toIndex);
       }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
       setDraggedTabId(null);
   };
 
@@ -68,8 +78,10 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
                 key={tab.id}
                 draggable
                 onDragStart={(e) => handleDragStart(e, tab.id)}
-                onDragOver={(e) => handleDragOver(e, tab.id)}
-                onDrop={(e) => handleDrop(e, tab.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+                onDragEnter={(e) => handleDragEnter(e, tab.id)}
+                onDrop={handleDrop}
                 className="draggable-tab-wrapper"
             >
                 <Tab
