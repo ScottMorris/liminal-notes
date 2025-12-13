@@ -1,5 +1,9 @@
 # TODO
 
+## Font Management
+
+- Replace build-time font download with a checked-in asset or a more robust font management strategy. The current implementation downloads `Noto Color Emoji` during the `postinstall` phase to avoid committing a large binary (~24MB) to the repository.
+
 ## Thoughts on Printing
 
 We should consider adding a printing feature for notes.
