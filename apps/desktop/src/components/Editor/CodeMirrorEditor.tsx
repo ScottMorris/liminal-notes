@@ -10,19 +10,38 @@ import { useTheme } from '../../theme';
 export interface EditorHandle {
   insertAtCursor: (text: string) => void;
   focus: () => void;
+  getEditorState: () => string;
 }
 
 interface CodeMirrorEditorProps {
   value: string;
+  initialState?: string;
   onChange: (value: string) => void;
   onSave: () => void;
+  onBlur?: () => void;
 }
 
 export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
-  ({ value, onChange, onSave }, ref) => {
+  ({ value, initialState, onChange, onSave, onBlur }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
+    const onSaveRef = useRef(onSave);
+    const onChangeRef = useRef(onChange);
+    const onBlurRef = useRef(onBlur);
     const { themeId } = useTheme();
+
+    // Keep refs up to date
+    useEffect(() => {
+        onSaveRef.current = onSave;
+    }, [onSave]);
+
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
+
+    useEffect(() => {
+        onBlurRef.current = onBlur;
+    }, [onBlur]);
 
     useImperativeHandle(ref, () => ({
       insertAtCursor: (text: string) => {
@@ -40,42 +59,84 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       focus: () => {
         viewRef.current?.focus();
       },
+      getEditorState: () => {
+        if (!viewRef.current) return '';
+        const state = viewRef.current.state;
+        return JSON.stringify({
+          doc: state.doc.toString(),
+          selection: {
+            anchor: state.selection.main.anchor,
+            head: state.selection.main.head,
+          },
+        });
+      },
     }));
 
     // Initialize Editor
     useEffect(() => {
       if (!editorRef.current) return;
 
-      const state = EditorState.create({
-        doc: value,
-        extensions: [
-          lineNumbers(),
-          highlightActiveLine(),
-          history(),
-          closeBrackets(),
-          markdown(),
-          createEditorTheme(),
-          keymap.of([
-            ...defaultKeymap,
-            ...historyKeymap,
-            {
-              key: 'Mod-s',
-              run: () => {
-                onSave();
-                return true;
-              },
+      let startState: EditorState;
+      const extensions = [
+        lineNumbers(),
+        highlightActiveLine(),
+        history(),
+        closeBrackets(),
+        markdown(),
+        createEditorTheme(),
+        keymap.of([
+          ...defaultKeymap,
+          ...historyKeymap,
+          {
+            key: 'Mod-s',
+            run: () => {
+              // Call the current onSave from ref
+              onSaveRef.current();
+              return true;
             },
-          ]),
-          EditorView.updateListener.of((update) => {
-            if (update.docChanged) {
-              onChange(update.state.doc.toString());
+          },
+        ]),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            onChangeRef.current(update.state.doc.toString());
+          }
+        }),
+        EditorView.domEventHandlers({
+            blur: () => {
+                if (onBlurRef.current) {
+                    onBlurRef.current();
+                }
             }
-          }),
-        ],
-      });
+        })
+      ];
+
+      if (initialState) {
+        try {
+          const parsed = JSON.parse(initialState);
+          startState = EditorState.create({
+            doc: parsed.doc,
+            selection: {
+                anchor: parsed.selection.anchor,
+                head: parsed.selection.head
+            },
+            extensions,
+          });
+        } catch (e) {
+          console.error("Failed to restore editor state:", e);
+           startState = EditorState.create({
+            doc: value,
+            extensions,
+          });
+        }
+      } else {
+        startState = EditorState.create({
+          doc: value,
+          extensions,
+        });
+      }
 
       const view = new EditorView({
-        state,
+        state: startState,
         parent: editorRef.current,
       });
 
@@ -106,7 +167,6 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     // Handle Theme Changes
     useEffect(() => {
       // Since we use CSS variables in our theme definition, styles update automatically.
-      // We keep this effect hook in case future theme requirements need explicit JS reconfiguration.
     }, [themeId]);
 
     return <div ref={editorRef} style={{ height: '100%', width: '100%' }} className="cm-editor-container" />;

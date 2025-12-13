@@ -58,11 +58,13 @@ Examples:
   - Encapsulate filesystem access, vault management, and Tauri commands in clear modules.
   - Aim for small, composable functions and descriptive types.
 
-- **Tests & checks** (to be fleshed out later, but aim towards):
+- **Tests & checks** (REQUIRED):
 
   - `pnpm lint` – static checks for TS/React (when configured).
-  - `pnpm test` – unit/integration tests.
+  - `pnpm test` – unit/integration tests (using Vitest/React Testing Library).
   - `cargo test` in `src-tauri` when Rust code becomes more substantial.
+  - **Persistent Verification**: When verifying features, write persistent tests (e.g., unit tests for logic, component tests) that can be re-run later to ensure no regressions. Do not rely solely on manual verification.
+  - **E2E Scripts**: Python Playwright scripts for verifying complex flows are located in `apps/desktop/scripts/e2e/`. Run them against a local dev server (default `http://localhost:1420`).
 
 - **Run the app frequently**:
 
