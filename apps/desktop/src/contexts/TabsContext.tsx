@@ -5,13 +5,14 @@ type TabsAction =
   | { type: 'OPEN_TAB'; tab: OpenTab }
   | { type: 'CLOSE_TAB'; tabId: string }
   | { type: 'SWITCH_TAB'; tabId: string }
-  | { type: 'KEEP_TAB'; tabId: string } // Convert preview to permanent
+  | { type: 'KEEP_TAB'; tabId: string }
   | { type: 'UPDATE_TAB_DIRTY'; tabId: string; isDirty: boolean }
   | { type: 'UPDATE_TAB_STATE'; tabId: string; editorState: string }
   | { type: 'UPDATE_TAB_TITLE'; tabId: string; title: string }
   | { type: 'UPDATE_TAB_PATH'; tabId: string; path: string; isUnsaved: boolean }
   | { type: 'UPDATE_TAB_AI_STATE'; tabId: string; aiState: AiState }
-  | { type: 'LOAD_TABS'; tabs: OpenTab[]; activeTabId: string | null };
+  | { type: 'LOAD_TABS'; tabs: OpenTab[]; activeTabId: string | null }
+  | { type: 'REORDER_TABS'; fromIndex: number; toIndex: number };
 
 export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
   switch (action.type) {
@@ -19,11 +20,6 @@ export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
       // Check if already open
       const existing = state.openTabs.find(t => t.id === action.tab.id);
       if (existing) {
-        // If it was preview and we are "opening" it again, check if we need to promote it?
-        // Usually clicking an existing tab just focuses it.
-        // But if we double-clicked a file that was already open as preview, we should promote it.
-        // We rely on 'KEEP_TAB' for explicit promotion, or logic here.
-        // If new request is NOT preview, promote existing?
         let updatedTabs = state.openTabs;
         if (existing.isPreview && !action.tab.isPreview) {
              updatedTabs = state.openTabs.map(t => t.id === existing.id ? { ...t, isPreview: false } : t);
@@ -32,13 +28,9 @@ export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
       }
 
       // Logic for replacing Preview tab
-      // If the new tab is a Preview tab...
       if (action.tab.isPreview) {
           const existingPreview = state.openTabs.find(t => t.isPreview);
           if (existingPreview) {
-              // Replace existing preview with new tab
-              // Ensure we replace it in place or just filter out old and add new?
-              // Replacing in place preserves position.
               const newTabs = state.openTabs.map(t => t.id === existingPreview.id ? action.tab : t);
               return {
                   openTabs: newTabs,
@@ -63,11 +55,9 @@ export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
     case 'CLOSE_TAB': {
       const newTabs = state.openTabs.filter(t => t.id !== action.tabId);
 
-      // If we closed the active tab, switch to another one
       let newActiveId = state.activeTabId;
       if (state.activeTabId === action.tabId) {
         if (newTabs.length > 0) {
-           // Switch to the last opened tab (or adjacent one)
            newActiveId = newTabs[newTabs.length - 1].id;
         } else {
            newActiveId = null;
@@ -80,7 +70,6 @@ export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
       };
     }
     case 'SWITCH_TAB': {
-      // Validate that tab exists
       const exists = state.openTabs.some(t => t.id === action.tabId);
       if (!exists) return state;
       return { ...state, activeTabId: action.tabId };
@@ -131,6 +120,20 @@ export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
         activeTabId: action.activeTabId,
       };
     }
+    case 'REORDER_TABS': {
+        const { fromIndex, toIndex } = action;
+        if (fromIndex < 0 || fromIndex >= state.openTabs.length ||
+            toIndex < 0 || toIndex >= state.openTabs.length) {
+            return state;
+        }
+        const newTabs = [...state.openTabs];
+        const [movedTab] = newTabs.splice(fromIndex, 1);
+        newTabs.splice(toIndex, 0, movedTab);
+        return {
+            ...state,
+            openTabs: newTabs
+        };
+    }
     default:
       return state;
   }
@@ -147,6 +150,7 @@ interface TabsContextValue extends TabsState {
   updateTabTitle: (tabId: string, title: string) => void;
   updateTabPath: (tabId: string, path: string, isUnsaved: boolean) => void;
   updateTabAiState: (tabId: string, aiState: AiState) => void;
+  reorderTabs: (fromIndex: number, toIndex: number) => void;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -163,7 +167,6 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     if (saved) {
       try {
         const { tabs, activeTabId } = JSON.parse(saved);
-        // Ensure tabs is an array and activeTabId is valid or null
         if (Array.isArray(tabs)) {
             dispatch({ type: 'LOAD_TABS', tabs, activeTabId });
         }
@@ -190,6 +193,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const updateTabTitle = (tabId: string, title: string) => dispatch({ type: 'UPDATE_TAB_TITLE', tabId, title });
   const updateTabPath = (tabId: string, path: string, isUnsaved: boolean) => dispatch({ type: 'UPDATE_TAB_PATH', tabId, path, isUnsaved });
   const updateTabAiState = (tabId: string, aiState: AiState) => dispatch({ type: 'UPDATE_TAB_AI_STATE', tabId, aiState });
+  const reorderTabs = (fromIndex: number, toIndex: number) => dispatch({ type: 'REORDER_TABS', fromIndex, toIndex });
 
   const value = {
     ...state,
@@ -202,7 +206,8 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     updateTabState,
     updateTabTitle,
     updateTabPath,
-    updateTabAiState
+    updateTabAiState,
+    reorderTabs
   };
 
   return <TabsContext.Provider value={value}>{children}</TabsContext.Provider>;
