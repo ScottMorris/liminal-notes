@@ -293,8 +293,9 @@ function App() {
             onCancel={handleCreateCancel}
         />
       </aside>
-      <main className="main-content">
-        {isSearchOpen && (
+      <div className="content-wrapper">
+        <main className="main-content">
+          {isSearchOpen && (
           <SearchModal
             onClose={() => setIsSearchOpen(false)}
             onSelect={(path) => {
@@ -369,8 +370,9 @@ function App() {
             </div>
           )
         )}
+        </main>
         <StatusBar />
-      </main>
+      </div>
       {enabledPlugins.has('ai-assistant') && isAiSidebarOpen && (
           <AiSidebar
             currentNote={selectedFile ? {
