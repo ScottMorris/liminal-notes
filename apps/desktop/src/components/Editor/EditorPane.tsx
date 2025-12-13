@@ -12,6 +12,7 @@ import { CodeMirrorEditor, EditorHandle } from './CodeMirrorEditor';
 import { SparklesIcon } from '../Icons';
 import { AiSidebar } from '../../features/ai/AiSidebar';
 import { updateFrontmatter } from '../../utils/frontmatter';
+import { BacklinksPanel } from '../BacklinksPanel';
 
 // Confirm Dialog (Simple implementation for now)
 const confirmCloseDirty = async (title: string): Promise<'Save' | 'Don\'t Save' | 'Cancel'> => {
@@ -47,6 +48,9 @@ export function EditorPane() {
   });
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
 
+  // Track which tab the current 'content' belongs to to prevent data bleed
+  const [loadedTabId, setLoadedTabId] = useState<string | null>(null);
+
   // Dirty Confirm Modal State
   const [closingTabId, setClosingTabId] = useState<string | null>(null);
 
@@ -60,27 +64,39 @@ export function EditorPane() {
   useEffect(() => {
     if (!activeTab) {
       setContent('');
+      setLoadedTabId(null);
       return;
     }
 
+    // If we are already loaded for this tab ID, and it's not a reload, skip.
+    // But we need to be careful. If activeTab changed, we must run.
+    if (activeTab.id === loadedTabId) return;
+
     const loadTabContent = async () => {
+        let nextContent = '';
+        let needDiskLoad = false;
+
         // If tab has editorState, restore from it (fastest)
         if (activeTab.editorState) {
             try {
                 const state = JSON.parse(activeTab.editorState);
-                setContent(state.doc);
-                return;
+                nextContent = state.doc;
             } catch (e) {
                 console.error("Failed to parse editor state", e);
             }
+        } else if (activeTab.path && !activeTab.isUnsaved) {
+             // If tab has path (and is saved), load from disk
+            needDiskLoad = true;
         }
 
-        // If tab has path (and is saved), load from disk
-        if (activeTab.path && !activeTab.isUnsaved) {
+        if (needDiskLoad) {
             setIsLoading(true);
+            // Clear content to prevent bleed during async load
+            setContent('');
+
             try {
                 const body = await readNote(activeTab.path);
-                setContent(body);
+                nextContent = body;
 
                 // Initialize editor state for this tab so we don't re-fetch on switch back
                 const initialState = JSON.stringify({
@@ -97,13 +113,14 @@ export function EditorPane() {
             } catch (err) {
                 notify("Failed to read note: " + String(err), 'error');
             } finally {
+                setContent(nextContent);
+                setLoadedTabId(activeTab.id);
                 setIsLoading(false);
             }
-        } else if (activeTab.isUnsaved) {
-            // Unsaved (new) note
-            if (!activeTab.editorState) {
-                setContent('');
-            }
+        } else {
+            // Immediate (memory or new unsaved)
+            setContent(nextContent);
+            setLoadedTabId(activeTab.id);
         }
     };
 
@@ -311,6 +328,31 @@ export function EditorPane() {
     }
   };
 
+  const handleNavigate = (path: string) => {
+      const existing = openTabs.find(t => t.path === path);
+      if (existing) {
+          switchTab(existing.id);
+      } else {
+          const title = path.split('/').pop()?.replace('.md', '') || path;
+          dispatch({
+              type: 'OPEN_TAB',
+              tab: {
+                  id: path,
+                  path: path,
+                  title: title,
+                  mode: 'source',
+                  isDirty: false,
+                  isLoading: false,
+                  isUnsaved: false,
+                  editorState: ''
+              }
+          });
+      }
+  };
+
+  // Ensure we don't render the editor until the content state matches the active tab
+  const isReady = activeTab && activeTab.id === loadedTabId;
+
   return (
     <div className="editor-container">
        <TabBar
@@ -353,63 +395,63 @@ export function EditorPane() {
                 </div>
            </div>
 
-           <div className="split-pane">
-                <div className="editor-pane">
-                  {isLoading ? (
-                    <div className="loading-indicator">Loading...</div>
-                  ) : (
-                    <CodeMirrorEditor
-                      key={activeTab.id}
-                      ref={editorRef}
-                      value={content}
-                      initialState={activeTab.editorState}
-                      onChange={handleContentChange}
-                      onSave={handleSave}
-                      onBlur={handleEditorBlur}
-                    />
-                  )}
-                </div>
-                {showPreview && (
-                  <div className="preview-pane">
-                    <div className="markdown-preview">
-                      <ReactMarkdown
-                        components={MarkdownComponents}
-                        urlTransform={(url) => url}
-                      >
-                        {preprocessContent(content)}
-                      </ReactMarkdown>
+           <div className="editor-workspace" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+               <div className="document-column" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+                   <div className="split-pane">
+                        <div className="editor-pane">
+                        {isLoading || !isReady ? (
+                            <div className="loading-indicator">Loading...</div>
+                        ) : (
+                            <CodeMirrorEditor
+                            key={activeTab.id}
+                            ref={editorRef}
+                            value={content}
+                            initialState={activeTab.editorState}
+                            onChange={handleContentChange}
+                            onSave={handleSave}
+                            onBlur={handleEditorBlur}
+                            />
+                        )}
+                        </div>
+                        {showPreview && isReady && (
+                        <div className="preview-pane">
+                            <div className="markdown-preview">
+                            <ReactMarkdown
+                                components={MarkdownComponents}
+                                urlTransform={(url) => url}
+                            >
+                                {preprocessContent(content)}
+                            </ReactMarkdown>
+                            </div>
+                        </div>
+                        )}
                     </div>
-                  </div>
+                    {/* Backlinks Panel restored here, inside document column */}
+                    <BacklinksPanel
+                        currentFile={activeTab.path || null}
+                        onNavigate={handleNavigate}
+                    />
+                </div>
+
+                {enabledPlugins.has('ai-assistant') && isAiSidebarOpen && activeTab && (
+                    <AiSidebar
+                        currentNote={{
+                        path: activeTab.path || '',
+                        title: activeTab.title,
+                        content: content
+                        }}
+                        onNavigate={handleNavigate}
+                        onClose={() => setIsAiSidebarOpen(false)}
+                        onInsertAtCursor={handleInsertAtCursor}
+                        onUpdateFrontmatter={handleUpdateFrontmatter}
+                    />
                 )}
-            </div>
+           </div>
          </>
        ) : (
         <div className="empty-state">
             <p>Select a file to view or create a new note (Ctrl+N)</p>
         </div>
-       )}
-
-       {enabledPlugins.has('ai-assistant') && isAiSidebarOpen && activeTab && (
-          <AiSidebar
-            currentNote={{
-              path: activeTab.path || '',
-              title: activeTab.title,
-              content: content
-            }}
-            onNavigate={(path) => {
-                 const existing = openTabs.find(t => t.path === path);
-                 if (existing) switchTab(existing.id);
-                 else {
-                     const title = path.split('/').pop()?.replace('.md', '') || path;
-                     dispatch({ type: 'OPEN_TAB', tab: {
-                         id: path, path, title, mode: 'source', isDirty: false, isLoading: false, isUnsaved: false, editorState: ''
-                     }});
-                 }
-            }}
-            onClose={() => setIsAiSidebarOpen(false)}
-            onInsertAtCursor={handleInsertAtCursor}
-            onUpdateFrontmatter={handleUpdateFrontmatter}
-          />
        )}
 
        {/* Dirty Confirmation Modal */}
