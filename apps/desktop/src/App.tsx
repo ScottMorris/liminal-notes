@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import "./App.css";
 import { VaultPicker } from "./components/VaultPicker";
@@ -16,8 +16,8 @@ import { AiSidebar } from "./features/ai/AiSidebar";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
 import { useNote } from "./hooks/useNote";
-import { useRef } from "react";
 import { updateFrontmatter } from "./utils/frontmatter";
+import { writeNote, renameItem } from "./commands";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
@@ -30,7 +30,8 @@ function App() {
     files,
     isLoading: isVaultLoading,
     handleResetVault: resetVault,
-    handleVaultConfigured
+    handleVaultConfigured,
+    refreshFiles
   } = useVault();
 
   const {
@@ -51,6 +52,9 @@ function App() {
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'notes' | 'graph'>('notes');
+
+  const [editingPath, setEditingPath] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Handle Vault Reset wrapper to also clear note selection
   const onResetVault = async () => {
@@ -82,6 +86,76 @@ function App() {
     updateContent(newContent);
   };
 
+  const handleStartCreate = useCallback(() => {
+    setIsCreating(true);
+    setEditingPath(null);
+  }, []);
+
+  const handleCreateCancel = useCallback(() => {
+    setIsCreating(false);
+    setEditingPath(null);
+  }, []);
+
+  const handleCreateCommit = useCallback(async (name: string) => {
+    if (!name) {
+        handleCreateCancel();
+        return;
+    }
+    let filename = name.trim();
+    if (!filename.endsWith('.md')) filename += '.md';
+
+    // Check for duplicates
+    if (files.some(f => f.path === filename)) {
+        alert(`A file named "${filename}" already exists.`);
+        return;
+    }
+
+    try {
+        await writeNote(filename, "");
+        await refreshFiles();
+        handleFileSelect(filename);
+        setIsCreating(false);
+    } catch (e) {
+        alert("Failed to create note: " + String(e));
+        setIsCreating(false);
+    }
+  }, [files, handleCreateCancel, refreshFiles, handleFileSelect]);
+
+  const handleRenameCommit = useCallback(async (oldPath: string, newName: string) => {
+      if (!newName || !newName.trim()) {
+          setEditingPath(null);
+          return;
+      }
+
+      const parts = oldPath.split('/');
+      parts.pop();
+      const parent = parts.join('/');
+      let newFilename = newName.trim();
+
+      if (oldPath.endsWith('.md') && !newFilename.endsWith('.md')) {
+          newFilename += '.md';
+      }
+
+      const newPath = parent ? `${parent}/${newFilename}` : newFilename;
+
+      if (newPath === oldPath) {
+          setEditingPath(null);
+          return;
+      }
+
+      try {
+          await renameItem(oldPath, newPath);
+          await refreshFiles();
+          if (selectedFile === oldPath) {
+              handleFileSelect(newPath);
+          }
+      } catch (e) {
+          alert("Failed to rename: " + String(e));
+      } finally {
+          setEditingPath(null);
+      }
+  }, [refreshFiles, selectedFile, handleFileSelect]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Search / Quick Open: Ctrl+Shift+F
@@ -95,10 +169,22 @@ function App() {
         e.preventDefault();
         handleSave();
       }
+
+      // New Note: Ctrl+N
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        handleStartCreate();
+      }
+
+      // Rename: F2
+      if (e.key === 'F2' && selectedFile) {
+         e.preventDefault();
+         setEditingPath(selectedFile);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave]);
+  }, [handleSave, selectedFile]);
 
   // Wikilink support
   const preprocessContent = (content: string) => {
@@ -173,6 +259,7 @@ function App() {
               </option>
             ))}
           </select>
+          <button className="reset-btn" onClick={handleStartCreate} title="New Note (Ctrl+N)">➕</button>
           <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)">🔍</button>
           <button className="reset-btn" onClick={() => setIsPluginsOpen(true)} title="Plugins">🧩</button>
           <button className="reset-btn" onClick={() => setIsHelpOpen(true)} title="Help">?</button>
@@ -194,7 +281,16 @@ function App() {
             </button>
           </div>
         </div>
-        <FileTree files={files} onFileSelect={handleFileSelect} />
+        <FileTree
+            files={files}
+            onFileSelect={handleFileSelect}
+            editingPath={editingPath}
+            isCreating={isCreating}
+            onRename={handleRenameCommit}
+            onCreate={handleCreateCommit}
+            onStartCreate={handleStartCreate}
+            onCancel={handleCreateCancel}
+        />
       </aside>
       <main className="main-content">
         {isSearchOpen && (

@@ -1,10 +1,7 @@
 
-> @liminal-notes/desktop@0.1.0 dev /app/apps/desktop
-> vite
-
-
-  VITE v7.2.7  ready in 259 ms
+  VITE v7.2.7  ready in 532 ms
 
   ➜  Local:   http://localhost:1420/
-7:25:53 PM [vite] (client) page reload src/main.tsx
-7:28:36 PM [vite] (client) hmr update /src/App.tsx
+8:13:11 AM [vite] (client) hmr update /src/components/FileTree.tsx
+8:24:15 AM [vite] (client) hmr update /src/App.tsx
+8:24:20 AM [vite] (client) hmr update /src/components/FileTree.tsx

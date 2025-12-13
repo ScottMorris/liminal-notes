@@ -14,9 +14,10 @@ Focus: **fast local editing + basic linking + simple search**.
 
 ## 2. User Stories (MVP 0.1)
 
-1. **Create & Edit Notes**
+1. **Create, Edit & Rename Notes**
 
    - As a user, I can create a new note in my vault and edit it in a Markdown editor.
+   - As a user, I can rename an existing note or folder.
    - As a user, I can see my note rendered in a basic reading view.
 
 2. **Browse Notes via File Tree**
@@ -186,6 +187,7 @@ fn set_vault_root(path: String) -> Result<(), Error>;
 fn list_files() -> Result<Vec<FileEntry>, Error>;
 fn read_note(path: String) -> Result<NotePayload, Error>;
 fn write_note(path: String, body: String) -> Result<(), Error>;
+ fn rename_item(old_path: String, new_path: String) -> Result<(), Error>;
 ```
 
 For MVP, **link extraction and search can run in the frontend** to keep the Rust side slim.
