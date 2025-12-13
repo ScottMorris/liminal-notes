@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NoteSnapshot } from '../../plugins/types';
 import {
   summariseCurrentNote,
@@ -28,6 +28,13 @@ export function AiSidebar({ currentNote, onNavigate, onClose, onInsertAtCursor, 
   const [error, setError] = useState<string | null>(null);
 
   const { search } = useSearchIndex();
+
+  // Reset state when current note changes
+  useEffect(() => {
+    setResult(null);
+    setError(null);
+    setIsLoading(false);
+  }, [currentNote?.path]);
 
   const handleAction = async (actionName: string, actionFn: (note: NoteSnapshot) => Promise<AiResult>) => {
     if (!currentNote) return;
