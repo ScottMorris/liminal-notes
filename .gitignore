@@ -7,3 +7,7 @@ dist/
 .vscode/
 build/
 apps/desktop/src-tauri/target/
+
+# User Vault
+vault/*
+!vault/.gitkeep
