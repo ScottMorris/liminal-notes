@@ -1,8 +1,571 @@
 
+> liminal-notes@0.1.0 tauri /app
+> pnpm --filter @liminal-notes/desktop tauri dev
+
+
+> @liminal-notes/desktop@0.1.0 tauri /app/apps/desktop
+> tauri dev
+
+     Running BeforeDevCommand (`pnpm dev`)
+
 > @liminal-notes/desktop@0.1.0 dev /app/apps/desktop
 > vite
 
 
-  VITE v7.2.7  ready in 244 ms
+  VITE v7.2.7  ready in 366 ms
 
   ➜  Local:   http://localhost:1420/
+     Running DevCommand (`cargo  run --no-default-features --color always --`)
+        Info Watching /app/apps/desktop/src-tauri for changes...
+[1m[92m    Updating[0m crates.io index
+[1m[96m       Fetch[0m [==============>                  ] 66 complete; 137 pending     [1m[96m       Fetch[0m [=================>               ] 203 complete; 130 pending    [1m[96m       Fetch[0m [====================>            ] 333 complete; 68 pending     [1m[96m       Fetch[0m [=======================>         ] 413 complete; 16 pending     [1m[96m       Fetch[0m [=============================>   ] 444 complete; 1 pending      [1m[96m Downloading[0m 1 crate                                                          [1m[96m Downloading[0m 2 crates                                                         [1m[96m Downloading[0m 3 crates                                                         [1m[96m Downloading[0m 4 crates                                                         [1m[96m Downloading[0m 5 crates                                                         [1m[96m Downloading[0m 6 crates                                                         [1m[96m Downloading[0m 7 crates                                                         [1m[96m Downloading[0m 8 crates                                                         [1m[96m Downloading[0m 9 crates                                                         [1m[96m Downloading[0m 10 crates                                                        [1m[96m Downloading[0m 11 crates                                                        [1m[96m Downloading[0m 12 crates                                                        [1m[96m Downloading[0m 13 crates                                                        [1m[96m Downloading[0m 14 crates                                                        [1m[96m Downloading[0m 15 crates                                                        [1m[96m Downloading[0m 16 crates                                                        [1m[96m Downloading[0m 17 crates                                                        [1m[96m Downloading[0m 18 crates                                                        [1m[96m Downloading[0m 19 crates                                                        [1m[96m Downloading[0m 20 crates                                                        [1m[96m Downloading[0m 21 crates                                                        [1m[96m Downloading[0m 22 crates                                                        [1m[96m Downloading[0m 23 crates                                                        [1m[96m Downloading[0m 24 crates                                                        [1m[96m Downloading[0m 25 crates                                                        [1m[96m Downloading[0m 26 crates                                                        [1m[96m Downloading[0m 27 crates                                                        [1m[96m Downloading[0m 28 crates                                                        [1m[96m Downloading[0m 29 crates                                                        [1m[96m Downloading[0m 30 crates                                                        [1m[96m Downloading[0m 31 crates                                                        [1m[96m Downloading[0m 32 crates                                                        [1m[96m Downloading[0m 33 crates                                                        [1m[96m Downloading[0m 34 crates                                                        [1m[96m Downloading[0m 35 crates                                                        [1m[96m Downloading[0m 36 crates                                                        [1m[96m Downloading[0m 37 crates                                                        [1m[96m Downloading[0m 38 crates                                                        [1m[96m Downloading[0m 39 crates                                                        [1m[96m Downloading[0m 40 crates                                                        [1m[96m Downloading[0m 41 crates                                                        [1m[96m Downloading[0m 42 crates                                                        [1m[96m Downloading[0m 43 crates                                                        [1m[96m Downloading[0m 44 crates                                                        [1m[96m Downloading[0m 45 crates                                                        [1m[96m Downloading[0m 46 crates                                                        [1m[96m Downloading[0m 47 crates                                                        [1m[96m Downloading[0m 48 crates                                                        [1m[96m Downloading[0m 49 crates                                                        [1m[96m Downloading[0m 50 crates                                                        [1m[96m Downloading[0m 51 crates                                                        [1m[96m Downloading[0m 52 crates                                                        [1m[96m Downloading[0m 53 crates                                                        [1m[96m Downloading[0m 54 crates                                                        [1m[96m Downloading[0m 55 crates                                                        [1m[96m Downloading[0m 56 crates                                                        [1m[96m Downloading[0m 57 crates                                                        [1m[96m Downloading[0m 58 crates                                                        [1m[96m Downloading[0m 59 crates                                                        [1m[96m Downloading[0m 60 crates                                                        [1m[96m Downloading[0m 61 crates                                                        [1m[96m Downloading[0m 62 crates                                                        [1m[96m Downloading[0m 63 crates                                                        [1m[96m Downloading[0m 64 crates                                                        [1m[96m Downloading[0m 65 crates                                                        [1m[96m Downloading[0m 66 crates                                                        [1m[96m Downloading[0m 67 crates                                                        [1m[96m Downloading[0m 68 crates                                                        [1m[96m Downloading[0m 69 crates                                                        [1m[96m Downloading[0m 70 crates                                                        [1m[96m Downloading[0m 71 crates                                                        [1m[96m Downloading[0m 72 crates                                                        [1m[96m Downloading[0m 73 crates                                                        [1m[96m Downloading[0m 74 crates                                                        [1m[96m Downloading[0m 75 crates                                                        [1m[96m Downloading[0m 76 crates                                                        [1m[96m Downloading[0m 77 crates                                                        [1m[96m Downloading[0m 78 crates                                                        [1m[96m Downloading[0m 79 crates                                                        [1m[96m Downloading[0m 80 crates                                                        [1m[96m Downloading[0m 81 crates                                                        [1m[96m Downloading[0m 82 crates                                                        [1m[96m Downloading[0m 83 crates                                                        [1m[96m Downloading[0m 84 crates                                                        [1m[96m Downloading[0m 85 crates                                                        [1m[96m Downloading[0m 86 crates                                                        [1m[96m Downloading[0m 87 crates                                                        [1m[96m Downloading[0m 88 crates                                                        [1m[96m Downloading[0m 89 crates                                                        [1m[96m Downloading[0m 90 crates                                                        [1m[96m Downloading[0m 91 crates                                                        [1m[96m Downloading[0m 92 crates                                                        [1m[96m Downloading[0m 93 crates                                                        [1m[96m Downloading[0m 94 crates                                                        [1m[96m Downloading[0m 95 crates                                                        [1m[96m Downloading[0m 96 crates                                                        [1m[96m Downloading[0m 97 crates                                                        [1m[96m Downloading[0m 98 crates                                                        [1m[96m Downloading[0m 99 crates                                                        [1m[96m Downloading[0m 100 crates                                                       [1m[96m Downloading[0m 101 crates                                                       [1m[96m Downloading[0m 102 crates                                                       [1m[96m Downloading[0m 103 crates                                                       [1m[96m Downloading[0m 104 crates                                                       [1m[96m Downloading[0m 105 crates                                                       [1m[96m Downloading[0m 106 crates                                                       [1m[96m Downloading[0m 107 crates                                                       [1m[96m Downloading[0m 108 crates                                                       [1m[96m Downloading[0m 109 crates                                                       [1m[96m Downloading[0m 110 crates                                                       [1m[96m Downloading[0m 111 crates                                                       [1m[96m Downloading[0m 112 crates                                                       [1m[96m Downloading[0m 113 crates                                                       [1m[96m Downloading[0m 114 crates                                                       [1m[96m Downloading[0m 115 crates                                                       [1m[96m Downloading[0m 116 crates                                                       [1m[96m Downloading[0m 117 crates                                                       [1m[96m Downloading[0m 118 crates                                                       [1m[96m Downloading[0m 119 crates                                                       [1m[96m Downloading[0m 120 crates                                                       [1m[96m Downloading[0m 121 crates                                                       [1m[96m Downloading[0m 122 crates                                                       [1m[96m Downloading[0m 123 crates                                                       [1m[96m Downloading[0m 124 crates                                                       [1m[96m Downloading[0m 125 crates                                                       [1m[96m Downloading[0m 126 crates                                                       [1m[96m Downloading[0m 127 crates                                                       [1m[96m Downloading[0m 128 crates                                                       [1m[96m Downloading[0m 129 crates                                                       [1m[96m Downloading[0m 130 crates                                                       [1m[96m Downloading[0m 131 crates                                                       [1m[96m Downloading[0m 132 crates                                                       [1m[96m Downloading[0m 133 crates                                                       [1m[96m Downloading[0m 134 crates                                                       [1m[96m Downloading[0m 135 crates                                                       [1m[96m Downloading[0m 136 crates                                                       [1m[96m Downloading[0m 137 crates                                                       [1m[96m Downloading[0m 138 crates                                                       [1m[96m Downloading[0m 139 crates                                                       [1m[96m Downloading[0m 140 crates                                                       [1m[96m Downloading[0m 141 crates                                                       [1m[96m Downloading[0m 142 crates                                                       [1m[96m Downloading[0m 143 crates                                                       [1m[96m Downloading[0m 144 crates                                                       [1m[96m Downloading[0m 145 crates                                                       [1m[96m Downloading[0m 146 crates                                                       [1m[96m Downloading[0m 147 crates                                                       [1m[96m Downloading[0m 148 crates                                                       [1m[96m Downloading[0m 149 crates                                                       [1m[96m Downloading[0m 150 crates                                                       [1m[96m Downloading[0m 151 crates                                                       [1m[96m Downloading[0m 152 crates                                                       [1m[96m Downloading[0m 153 crates                                                       [1m[96m Downloading[0m 154 crates                                                       [1m[96m Downloading[0m 155 crates                                                       [1m[96m Downloading[0m 156 crates                                                       [1m[96m Downloading[0m 157 crates                                                       [1m[96m Downloading[0m 158 crates                                                       [1m[96m Downloading[0m 159 crates                                                       [1m[96m Downloading[0m 160 crates                                                       [1m[96m Downloading[0m 161 crates                                                       [1m[96m Downloading[0m 162 crates                                                       [1m[96m Downloading[0m 163 crates                                                       [1m[96m Downloading[0m 164 crates                                                       [1m[96m Downloading[0m 165 crates                                                       [1m[96m Downloading[0m 166 crates                                                       [1m[96m Downloading[0m 167 crates                                                       [1m[96m Downloading[0m 168 crates                                                       [1m[96m Downloading[0m 169 crates                                                       [1m[96m Downloading[0m 170 crates                                                       [1m[96m Downloading[0m 171 crates                                                       [1m[96m Downloading[0m 172 crates                                                       [1m[96m Downloading[0m 173 crates                                                       [1m[96m Downloading[0m 174 crates                                                       [1m[96m Downloading[0m 175 crates                                                       [1m[96m Downloading[0m 176 crates                                                       [1m[96m Downloading[0m 177 crates                                                       [1m[96m Downloading[0m 178 crates                                                       [1m[96m Downloading[0m 179 crates                                                       [1m[96m Downloading[0m 180 crates                                                       [1m[96m Downloading[0m 181 crates                                                       [1m[96m Downloading[0m 182 crates                                                       [1m[96m Downloading[0m 183 crates                                                       [1m[96m Downloading[0m 184 crates                                                       [1m[96m Downloading[0m 185 crates                                                       [1m[96m Downloading[0m 186 crates                                                       [1m[96m Downloading[0m 187 crates                                                       [1m[96m Downloading[0m 188 crates                                                       [1m[96m Downloading[0m 189 crates                                                       [1m[96m Downloading[0m 190 crates                                                       [1m[96m Downloading[0m 191 crates                                                       [1m[96m Downloading[0m 192 crates                                                       [1m[96m Downloading[0m 193 crates                                                       [1m[96m Downloading[0m 194 crates                                                       [1m[96m Downloading[0m 195 crates                                                       [1m[96m Downloading[0m 196 crates                                                       [1m[96m Downloading[0m 197 crates                                                       [1m[96m Downloading[0m 198 crates                                                       [1m[96m Downloading[0m 199 crates                                                       [1m[96m Downloading[0m 200 crates                                                       [1m[96m Downloading[0m 201 crates                                                       [1m[96m Downloading[0m 202 crates                                                       [1m[96m Downloading[0m 203 crates                                                       [1m[96m Downloading[0m 204 crates                                                       [1m[96m Downloading[0m 205 crates                                                       [1m[96m Downloading[0m 206 crates                                                       [1m[96m Downloading[0m 207 crates                                                       [1m[96m Downloading[0m 208 crates                                                       [1m[96m Downloading[0m 209 crates                                                       [1m[96m Downloading[0m 210 crates                                                       [1m[96m Downloading[0m 211 crates                                                       [1m[96m Downloading[0m 212 crates                                                       [1m[96m Downloading[0m 213 crates                                                       [1m[96m Downloading[0m 214 crates                                                       [1m[96m Downloading[0m 215 crates                                                       [1m[96m Downloading[0m 216 crates                                                       [1m[96m Downloading[0m 217 crates                                                       [1m[96m Downloading[0m 218 crates                                                       [1m[96m Downloading[0m 219 crates                                                       [1m[96m Downloading[0m 220 crates                                                       [1m[96m Downloading[0m 221 crates                                                       [1m[96m Downloading[0m 222 crates                                                       [1m[96m Downloading[0m 223 crates                                                       [1m[96m Downloading[0m 224 crates                                                       [1m[96m Downloading[0m 225 crates                                                       [1m[96m Downloading[0m 226 crates                                                       [1m[96m Downloading[0m 227 crates                                                       [1m[96m Downloading[0m 228 crates                                                       [1m[96m Downloading[0m 229 crates                                                       [1m[96m Downloading[0m 230 crates                                                       [1m[96m Downloading[0m 231 crates                                                       [1m[96m Downloading[0m 232 crates                                                       [1m[96m Downloading[0m 233 crates                                                       [1m[96m Downloading[0m 234 crates                                                       [1m[96m Downloading[0m 235 crates                                                       [1m[96m Downloading[0m 236 crates                                                       [1m[96m Downloading[0m 237 crates                                                       [1m[96m Downloading[0m 238 crates                                                       [1m[96m Downloading[0m 239 crates                                                       [1m[96m Downloading[0m 240 crates                                                       [1m[96m Downloading[0m 241 crates                                                       [1m[96m Downloading[0m 242 crates                                                       [1m[96m Downloading[0m 243 crates                                                       [1m[96m Downloading[0m 244 crates                                                       [1m[96m Downloading[0m 245 crates                                                       [1m[96m Downloading[0m 246 crates                                                       [1m[96m Downloading[0m 247 crates                                                       [1m[96m Downloading[0m 248 crates                                                       [1m[96m Downloading[0m 249 crates                                                       [1m[96m Downloading[0m 250 crates                                                       [1m[96m Downloading[0m 251 crates                                                       [1m[96m Downloading[0m 252 crates                                                       [1m[96m Downloading[0m 253 crates                                                       [1m[96m Downloading[0m 254 crates                                                       [1m[96m Downloading[0m 255 crates                                                       [1m[96m Downloading[0m 256 crates                                                       [1m[96m Downloading[0m 257 crates                                                       [1m[96m Downloading[0m 258 crates                                                       [1m[96m Downloading[0m 259 crates                                                       [1m[96m Downloading[0m 260 crates                                                       [1m[96m Downloading[0m 261 crates                                                       [1m[96m Downloading[0m 262 crates                                                       [1m[96m Downloading[0m 263 crates                                                       [1m[96m Downloading[0m 264 crates                                                       [1m[96m Downloading[0m 265 crates                                                       [1m[96m Downloading[0m 266 crates                                                       [1m[96m Downloading[0m 267 crates                                                       [1m[96m Downloading[0m 268 crates                                                       [1m[96m Downloading[0m 269 crates                                                       [1m[96m Downloading[0m 270 crates                                                       [1m[96m Downloading[0m 271 crates                                                       [1m[96m Downloading[0m 272 crates                                                       [1m[96m Downloading[0m 273 crates                                                       [1m[96m Downloading[0m 274 crates                                                       [1m[96m Downloading[0m 275 crates                                                       [1m[96m Downloading[0m 276 crates                                                       [1m[96m Downloading[0m 277 crates                                                       [1m[96m Downloading[0m 278 crates                                                       [1m[96m Downloading[0m 279 crates                                                       [1m[96m Downloading[0m 280 crates                                                       [1m[96m Downloading[0m 281 crates                                                       [1m[96m Downloading[0m 282 crates                                                       [1m[96m Downloading[0m 283 crates                                                       [1m[96m Downloading[0m 284 crates                                                       [1m[96m Downloading[0m 285 crates                                                       [1m[96m Downloading[0m 286 crates                                                       [1m[96m Downloading[0m 287 crates                                                       [1m[96m Downloading[0m 288 crates                                                       [1m[96m Downloading[0m 289 crates                                                       [1m[96m Downloading[0m 290 crates                                                       [1m[96m Downloading[0m 291 crates                                                       [1m[96m Downloading[0m 292 crates                                                       [1m[96m Downloading[0m 293 crates                                                       [1m[96m Downloading[0m 294 crates                                                       [1m[96m Downloading[0m 295 crates                                                       [1m[96m Downloading[0m 296 crates                                                       [1m[96m Downloading[0m 297 crates                                                       [1m[96m Downloading[0m 298 crates                                                       [1m[96m Downloading[0m 299 crates                                                       [1m[96m Downloading[0m 300 crates                                                       [1m[96m Downloading[0m 301 crates                                                       [1m[96m Downloading[0m 302 crates                                                       [1m[96m Downloading[0m 303 crates                                                       [1m[96m Downloading[0m 304 crates                                                       [1m[96m Downloading[0m 305 crates                                                       [1m[96m Downloading[0m 306 crates                                                       [1m[96m Downloading[0m 307 crates                                                       [1m[96m Downloading[0m 308 crates                                                       [1m[96m Downloading[0m 309 crates                                                       [1m[96m Downloading[0m 310 crates                                                       [1m[96m Downloading[0m 311 crates                                                       [1m[96m Downloading[0m 312 crates                                                       [1m[96m Downloading[0m 313 crates                                                       [1m[96m Downloading[0m 314 crates                                                       [1m[96m Downloading[0m 315 crates                                                       [1m[96m Downloading[0m 316 crates                                                       [1m[96m Downloading[0m 317 crates                                                       [1m[96m Downloading[0m 318 crates                                                       [1m[96m Downloading[0m 319 crates                                                       [1m[96m Downloading[0m 320 crates                                                       [1m[96m Downloading[0m 321 crates                                                       [1m[96m Downloading[0m 322 crates                                                       [1m[96m Downloading[0m 323 crates                                                       [1m[96m Downloading[0m 324 crates                                                       [1m[96m Downloading[0m 325 crates                                                       [1m[96m Downloading[0m 326 crates                                                       [1m[96m Downloading[0m 327 crates                                                       [1m[96m Downloading[0m 328 crates                                                       [1m[96m Downloading[0m 329 crates                                                       [1m[96m Downloading[0m 330 crates                                                       [1m[96m Downloading[0m 331 crates                                                       [1m[96m Downloading[0m 332 crates                                                       [1m[96m Downloading[0m 333 crates                                                       [1m[96m Downloading[0m 334 crates                                                       [1m[96m Downloading[0m 335 crates                                                       [1m[96m Downloading[0m 336 crates                                                       [1m[96m Downloading[0m 337 crates                                                       [1m[96m Downloading[0m 338 crates                                                       [1m[96m Downloading[0m 339 crates                                                       [1m[96m Downloading[0m 340 crates                                                       [1m[96m Downloading[0m 341 crates                                                       [1m[96m Downloading[0m 342 crates                                                       [1m[96m Downloading[0m 343 crates                                                       [1m[96m Downloading[0m 344 crates                                                       [1m[96m Downloading[0m 345 crates                                                       [1m[96m Downloading[0m 346 crates                                                       [1m[96m Downloading[0m 347 crates                                                       [1m[96m Downloading[0m 348 crates                                                       [1m[96m Downloading[0m 349 crates                                                       [1m[96m Downloading[0m 350 crates                                                       [1m[96m Downloading[0m 351 crates                                                       [1m[96m Downloading[0m 352 crates                                                       [1m[96m Downloading[0m 353 crates                                                       [1m[96m Downloading[0m 354 crates                                                       [1m[96m Downloading[0m 355 crates                                                       [1m[96m Downloading[0m 356 crates                                                       [1m[96m Downloading[0m 357 crates                                                       [1m[96m Downloading[0m 358 crates                                                       [1m[96m Downloading[0m 359 crates                                                       [1m[96m Downloading[0m 359 crates, remaining bytes: 659.8KiB                            [K[1m[92m  Downloaded[0m alloc-stdlib v0.2.2
+[1m[96m Downloading[0m 358 crates, remaining bytes: 611.8KiB                            [K[1m[92m  Downloaded[0m async-channel v2.5.0
+[1m[96m Downloading[0m 357 crates, remaining bytes: 1.2MiB                              [K[1m[92m  Downloaded[0m bitflags v1.3.2
+[1m[96m Downloading[0m 356 crates, remaining bytes: 1.0MiB                              [K[1m[92m  Downloaded[0m enumflags2_derive v0.7.12
+[1m[96m Downloading[0m 355 crates, remaining bytes: 1.5MiB                              [K[1m[92m  Downloaded[0m enumflags2 v0.7.12
+[1m[96m Downloading[0m 354 crates, remaining bytes: 1.4MiB                              [K[1m[92m  Downloaded[0m gdkwayland-sys v0.18.2
+[1m[96m Downloading[0m 353 crates, remaining bytes: 1.2MiB                              [K[1m[92m  Downloaded[0m gdkx11-sys v0.18.2
+[1m[96m Downloading[0m 352 crates, remaining bytes: 3.0MiB                              [K[1m[92m  Downloaded[0m potential_utf v0.1.4
+[1m[96m Downloading[0m 351 crates, remaining bytes: 3.3MiB                              [K[1m[92m  Downloaded[0m ref-cast-impl v1.0.25
+[1m[96m Downloading[0m 350 crates, remaining bytes: 7.6MiB                              [K[1m[92m  Downloaded[0m serialize-to-javascript v0.1.2
+[1m[96m Downloading[0m 349 crates, remaining bytes: 7.3MiB                              [K[1m[92m  Downloaded[0m serde_spanned v0.6.9
+[1m[96m Downloading[0m 348 crates, remaining bytes: 7.3MiB                              [K[1m[92m  Downloaded[0m unic-common v0.9.0
+[1m[96m Downloading[0m 347 crates, remaining bytes: 7.1MiB                              [K[1m[92m  Downloaded[0m utf8_iter v1.0.4
+[1m[96m Downloading[0m 346 crates, remaining bytes: 6.7MiB                              [K[1m[92m  Downloaded[0m piper v0.2.4
+[1m[96m Downloading[0m 345 crates, remaining bytes: 6.6MiB                              [K[1m[92m  Downloaded[0m unic-ucd-version v0.9.0
+[1m[96m Downloading[0m 344 crates, remaining bytes: 6.0MiB                              [K[1m[92m  Downloaded[0m version-compare v0.2.1
+[1m[96m Downloading[0m 343 crates, remaining bytes: 5.3MiB                              [K[1m[92m  Downloaded[0m wayland-client v0.31.11
+[1m[96m Downloading[0m 342 crates, remaining bytes: 5.0MiB                              [K[1m[92m  Downloaded[0m same-file v1.0.6
+[1m[96m Downloading[0m 341 crates, remaining bytes: 4.2MiB                              [K[1m[92m  Downloaded[0m rfd v0.15.4
+[1m[96m Downloading[0m 340 crates, remaining bytes: 4.5MiB                              [K[1m[92m  Downloaded[0m wayland-sys v0.31.7
+[1m[96m Downloading[0m 339 crates, remaining bytes: 3.6MiB                              [K[1m[92m  Downloaded[0m yoke-derive v0.8.1
+[1m[96m Downloading[0m 338 crates, remaining bytes: 3.0MiB                              [K[1m[92m  Downloaded[0m yoke v0.8.1
+[1m[96m Downloading[0m 337 crates, remaining bytes: 4.8MiB                              [K[1m[92m  Downloaded[0m webkit2gtk-sys v2.0.1
+[1m[96m Downloading[0m 336 crates, remaining bytes: 4.4MiB                              [K[1m[92m  Downloaded[0m zerofrom-derive v0.1.6
+[1m[96m Downloading[0m 335 crates, remaining bytes: 4.1MiB                              [K[1m[92m  Downloaded[0m wayland-scanner v0.31.7
+[1m[96m Downloading[0m 334 crates, remaining bytes: 3.8MiB                              [K[1m[92m  Downloaded[0m syn v2.0.111
+[1m[96m Downloading[0m 333 crates, remaining bytes: 3.3MiB                              [K[1m[92m  Downloaded[0m toml_edit v0.20.2
+[1m[96m Downloading[0m 332 crates, remaining bytes: 2.9MiB                              [K[1m[92m  Downloaded[0m zerofrom v0.1.6
+[1m[96m Downloading[0m 331 crates, remaining bytes: 2.7MiB                              [K[1m[92m  Downloaded[0m zvariant_utils v3.2.1
+[1m[96m Downloading[0m 330 crates, remaining bytes: 2.2MiB                              [K[1m[92m  Downloaded[0m zerovec-derive v0.11.2
+[1m[96m Downloading[0m 329 crates, remaining bytes: 2.0MiB                              [K[1m[92m  Downloaded[0m time v0.3.44
+[1m[96m Downloading[0m 328 crates, remaining bytes: 1.7MiB                              [K[1m[92m  Downloaded[0m toml_edit v0.19.15
+[1m[96m Downloading[0m 327 crates, remaining bytes: 1.4MiB                              [K[1m[92m  Downloaded[0m x11-dl v2.21.0
+[1m[96m Downloading[0m 326 crates, remaining bytes: 1.1MiB                              [K[1m[92m  Downloaded[0m winnow v0.7.14
+[1m[96m Downloading[0m 325 crates, remaining bytes: 929.9KiB                            [K[1m[92m  Downloaded[0m zerotrie v0.2.3
+[1m[96m Downloading[0m 324 crates, remaining bytes: 734.0KiB                            [K[1m[92m  Downloaded[0m zvariant v5.8.0
+[1m[96m Downloading[0m 323 crates, remaining bytes: 614.0KiB                            [K[1m[92m  Downloaded[0m wry v0.53.5
+[1m[96m Downloading[0m 322 crates, remaining bytes: 498.0KiB                            [K[1m[92m  Downloaded[0m winnow v0.5.40
+[1m[96m Downloading[0m 321 crates, remaining bytes: 336.0KiB                            [K[1m[92m  Downloaded[0m wayland-backend v0.3.11
+[1m[96m Downloading[0m 320 crates, remaining bytes: 214.2KiB                            [K[1m[92m  Downloaded[0m typenum v1.19.0
+[1m[96m Downloading[0m 319 crates, remaining bytes: 134.3KiB                            [K[1m[92m  Downloaded[0m zerocopy v0.8.31
+[1m[96m Downloading[0m 318 crates, remaining bytes: 78.6KiB                             [K[1m[92m  Downloaded[0m tokio v1.48.0
+[1m[96m Downloading[0m 317 crates, extracting tokio ...                                 [K[1m[92m  Downloaded[0m zerovec v0.11.5
+[1m[96m Downloading[0m 316 crates                                                       [K[1m[92m  Downloaded[0m zbus v5.12.0
+[1m[96m Downloading[0m 315 crates                                                       [K[1m[92m  Downloaded[0m wayland-protocols v0.32.9
+[1m[96m Downloading[0m 314 crates                                                       [K[1m[92m  Downloaded[0m x11 v2.21.0
+[1m[96m Downloading[0m 313 crates                                                       [K[1m[92m  Downloaded[0m webkit2gtk v2.0.1
+[1m[96m Downloading[0m 312 crates                                                       [K[1m[92m  Downloaded[0m linux-raw-sys v0.11.0
+[1m[96m Downloading[0m 311 crates, extracting linux-raw-sys ...                         [K[1m[92m  Downloaded[0m tauri-runtime-wry v2.9.3
+[1m[96m Downloading[0m 310 crates                                                       [K[1m[92m  Downloaded[0m tauri v2.9.5
+[1m[96m Downloading[0m 309 crates                                                       [K[1m[92m  Downloaded[0m zvariant_derive v5.8.0
+[1m[96m Downloading[0m 308 crates                                                       [K[1m[92m  Downloaded[0m toml_edit v0.23.9
+[1m[96m Downloading[0m 307 crates                                                       [K[1m[92m  Downloaded[0m tauri-plugin-dialog v2.4.2
+[1m[96m Downloading[0m 306 crates                                                       [K[1m[92m  Downloaded[0m syn v1.0.109
+[1m[96m Downloading[0m 305 crates                                                       [K[1m[92m  Downloaded[0m writeable v0.6.2
+[1m[96m Downloading[0m 304 crates                                                       [K[1m[92m  Downloaded[0m tauri-utils v2.8.1
+[1m[96m Downloading[0m 303 crates                                                       [K[1m[92m  Downloaded[0m tao v0.34.5
+[1m[96m Downloading[0m 302 crates                                                       [K[1m[92m  Downloaded[0m zbus_names v4.2.0
+[1m[96m Downloading[0m 301 crates                                                       [K[1m[92m  Downloaded[0m zbus_macros v5.12.0
+[1m[96m Downloading[0m 300 crates                                                       [K[1m[92m  Downloaded[0m walkdir v2.5.0
+[1m[96m Downloading[0m 299 crates                                                       [K[1m[92m  Downloaded[0m url v2.5.7
+[1m[96m Downloading[0m 298 crates                                                       [K[1m[92m  Downloaded[0m unicode-segmentation v1.12.0
+[1m[96m Downloading[0m 297 crates                                                       [K[1m[92m  Downloaded[0m serde_with v3.16.1
+[1m[96m Downloading[0m 296 crates                                                       [K[1m[92m  Downloaded[0m serde_json v1.0.145
+[1m[96m Downloading[0m 295 crates                                                       [K[1m[92m  Downloaded[0m schemars v1.1.0
+[1m[96m Downloading[0m 294 crates                                                       [K[1m[92m  Downloaded[0m libc v0.2.178
+[1m[96m Downloading[0m 293 crates, extracting libc ...                                  [K[1m[92m  Downloaded[0m version_check v0.9.5
+[1m[96m Downloading[0m 292 crates                                                       [K[1m[92m  Downloaded[0m uuid v1.19.0
+[1m[96m Downloading[0m 291 crates                                                       [K[1m[92m  Downloaded[0m unic-ucd-ident v0.9.0
+[1m[96m Downloading[0m 290 crates                                                       [K[1m[92m  Downloaded[0m typeid v1.0.3
+[1m[96m Downloading[0m 289 crates                                                       [K[1m[92m  Downloaded[0m tray-icon v0.21.2
+[1m[96m Downloading[0m 288 crates                                                       [K[1m[92m  Downloaded[0m tracing-attributes v0.1.31
+[1m[96m Downloading[0m 287 crates                                                       [K[1m[92m  Downloaded[0m toml_datetime v0.7.3
+[1m[96m Downloading[0m 286 crates                                                       [K[1m[92m  Downloaded[0m toml_datetime v0.6.3
+[1m[96m Downloading[0m 285 crates                                                       [K[1m[92m  Downloaded[0m toml v0.9.8
+[1m[96m Downloading[0m 284 crates                                                       [K[1m[92m  Downloaded[0m tendril v0.4.3
+[1m[96m Downloading[0m 283 crates                                                       [K[1m[92m  Downloaded[0m tauri-runtime v2.9.2
+[1m[96m Downloading[0m 282 crates                                                       [K[1m[92m  Downloaded[0m tauri-plugin v2.5.2
+[1m[96m Downloading[0m 281 crates                                                       [K[1m[92m  Downloaded[0m serde v1.0.228
+[1m[96m Downloading[0m 280 crates                                                       [K[1m[92m  Downloaded[0m unic-char-range v0.9.0
+[1m[96m Downloading[0m 279 crates                                                       [K[1m[92m  Downloaded[0m unic-char-property v0.9.0
+[1m[96m Downloading[0m 278 crates                                                       [K[1m[92m  Downloaded[0m toml_parser v1.0.4
+[1m[96m Downloading[0m 277 crates                                                       [K[1m[92m  Downloaded[0m toml v0.8.2
+[1m[96m Downloading[0m 276 crates                                                       [K[1m[92m  Downloaded[0m time-macros v0.2.24
+[1m[96m Downloading[0m 275 crates                                                       [K[1m[92m  Downloaded[0m time-core v0.1.6
+[1m[96m Downloading[0m 274 crates                                                       [K[1m[92m  Downloaded[0m thiserror-impl v1.0.69
+[1m[96m Downloading[0m 273 crates                                                       [K[1m[92m  Downloaded[0m thiserror v1.0.69
+[1m[96m Downloading[0m 272 crates                                                       [K[1m[92m  Downloaded[0m tauri-winres v0.3.5
+[1m[96m Downloading[0m 271 crates                                                       [K[1m[92m  Downloaded[0m tauri-plugin-opener v2.5.2
+[1m[96m Downloading[0m 270 crates                                                       [K[1m[92m  Downloaded[0m tauri-codegen v2.5.2
+[1m[96m Downloading[0m 269 crates                                                       [K[1m[92m  Downloaded[0m tauri-build v2.5.3
+[1m[96m Downloading[0m 268 crates                                                       [K[1m[92m  Downloaded[0m target-lexicon v0.12.16
+[1m[96m Downloading[0m 267 crates                                                       [K[1m[92m  Downloaded[0m strsim v0.11.1
+[1m[96m Downloading[0m 266 crates                                                       [K[1m[92m  Downloaded[0m string_cache_codegen v0.5.4
+[1m[96m Downloading[0m 265 crates                                                       [K[1m[92m  Downloaded[0m static_assertions v1.1.0
+[1m[96m Downloading[0m 264 crates                                                       [K[1m[92m  Downloaded[0m soup3 v0.5.0
+[1m[96m Downloading[0m 263 crates                                                       [K[1m[92m  Downloaded[0m system-deps v6.2.2
+[1m[96m Downloading[0m 262 crates                                                       [K[1m[92m  Downloaded[0m synstructure v0.13.2
+[1m[96m Downloading[0m 261 crates                                                       [K[1m[92m  Downloaded[0m stable_deref_trait v1.2.1
+[1m[96m Downloading[0m 260 crates                                                       [K[1m[92m  Downloaded[0m soup3-sys v0.5.0
+[1m[96m Downloading[0m 259 crates                                                       [K[1m[92m  Downloaded[0m socket2 v0.6.1
+[1m[96m Downloading[0m 258 crates                                                       [K[1m[92m  Downloaded[0m slab v0.4.11
+[1m[96m Downloading[0m 257 crates                                                       [K[1m[92m  Downloaded[0m siphasher v1.0.1
+[1m[96m Downloading[0m 256 crates                                                       [K[1m[92m  Downloaded[0m siphasher v0.3.11
+[1m[96m Downloading[0m 255 crates                                                       [K[1m[92m  Downloaded[0m simd-adler32 v0.3.8
+[1m[96m Downloading[0m 254 crates                                                       [K[1m[92m  Downloaded[0m signal-hook-registry v1.4.7
+[1m[96m Downloading[0m 253 crates                                                       [K[1m[92m  Downloaded[0m shlex v1.3.0
+[1m[96m Downloading[0m 252 crates                                                       [K[1m[92m  Downloaded[0m sha2 v0.10.9
+[1m[96m Downloading[0m 251 crates                                                       [K[1m[92m  Downloaded[0m servo_arc v0.2.0
+[1m[96m Downloading[0m 250 crates                                                       [K[1m[92m  Downloaded[0m serialize-to-javascript-impl v0.1.2
+[1m[96m Downloading[0m 249 crates                                                       [K[1m[92m  Downloaded[0m serde_with_macros v3.16.1
+[1m[96m Downloading[0m 248 crates                                                       [K[1m[92m  Downloaded[0m serde_spanned v1.0.3
+[1m[96m Downloading[0m 247 crates                                                       [K[1m[92m  Downloaded[0m serde_repr v0.1.20
+[1m[96m Downloading[0m 246 crates                                                       [K[1m[92m  Downloaded[0m serde_derive_internals v0.29.1
+[1m[96m Downloading[0m 245 crates                                                       [K[1m[92m  Downloaded[0m serde_derive v1.0.228
+[1m[96m Downloading[0m 244 crates                                                       [K[1m[92m  Downloaded[0m serde_core v1.0.228
+[1m[96m Downloading[0m 243 crates                                                       [K[1m[92m  Downloaded[0m serde-untagged v0.1.9
+[1m[96m Downloading[0m 242 crates                                                       [K[1m[92m  Downloaded[0m semver v1.0.27
+[1m[96m Downloading[0m 241 crates                                                       [K[1m[92m  Downloaded[0m selectors v0.24.0
+[1m[96m Downloading[0m 240 crates                                                       [K[1m[92m  Downloaded[0m scopeguard v1.2.0
+[1m[96m Downloading[0m 239 crates                                                       [K[1m[92m  Downloaded[0m scoped-tls v1.0.1
+[1m[96m Downloading[0m 238 crates                                                       [K[1m[92m  Downloaded[0m schemars_derive v0.8.22
+[1m[96m Downloading[0m 237 crates                                                       [K[1m[92m  Downloaded[0m rustix v1.1.2
+[1m[96m Downloading[0m 236 crates, extracting rustix ...                                [K[1m[92m  Downloaded[0m regex-syntax v0.8.8
+[1m[96m Downloading[0m 235 crates                                                       [K[1m[92m  Downloaded[0m regex-automata v0.4.13
+[1m[96m Downloading[0m 234 crates, extracting regex-automata ...                        [K[1m[92m  Downloaded[0m nix v0.30.1
+[1m[96m Downloading[0m 233 crates                                                       [K[1m[92m  Downloaded[0m gtk v0.18.2
+[1m[96m Downloading[0m 232 crates                                                       [K[1m[92m  Downloaded[0m tracing v0.1.43
+[1m[96m Downloading[0m 231 crates                                                       [K[1m[92m  Downloaded[0m glib v0.18.5
+[1m[96m Downloading[0m 230 crates                                                       [K[1m[92m  Downloaded[0m raw-window-handle v0.6.2
+[1m[96m Downloading[0m 229 crates                                                       [K[1m[92m  Downloaded[0m idna v1.1.0
+[1m[96m Downloading[0m 228 crates                                                       [K[1m[92m  Downloaded[0m icu_properties_data v2.1.2
+[1m[96m Downloading[0m 227 crates                                                       [K[1m[92m  Downloaded[0m gio v0.18.4
+[1m[96m Downloading[0m 226 crates                                                       [K[1m[92m  Downloaded[0m ryu v1.0.20
+[1m[96m Downloading[0m 225 crates                                                       [K[1m[92m  Downloaded[0m rustc_version v0.4.1
+[1m[96m Downloading[0m 224 crates                                                       [K[1m[92m  Downloaded[0m regex v1.12.2
+[1m[96m Downloading[0m 223 crates                                                       [K[1m[92m  Downloaded[0m rand_pcg v0.2.1
+[1m[96m Downloading[0m 222 crates                                                       [K[1m[92m  Downloaded[0m rand_core v0.9.3
+[1m[96m Downloading[0m 221 crates                                                       [K[1m[92m  Downloaded[0m muda v0.17.1
+[1m[96m Downloading[0m 220 crates                                                       [K[1m[92m  Downloaded[0m mio v1.1.1
+[1m[96m Downloading[0m 219 crates                                                       [K[1m[92m  Downloaded[0m memchr v2.7.6
+[1m[96m Downloading[0m 218 crates                                                       [K[1m[92m  Downloaded[0m indexmap v2.12.1
+[1m[96m Downloading[0m 217 crates                                                       [K[1m[92m  Downloaded[0m icu_collections v2.1.1
+[1m[96m Downloading[0m 216 crates                                                       [K[1m[92m  Downloaded[0m http v1.4.0
+[1m[96m Downloading[0m 215 crates                                                       [K[1m[92m  Downloaded[0m hashbrown v0.16.1
+[1m[96m Downloading[0m 214 crates                                                       [K[1m[92m  Downloaded[0m gtk-sys v0.18.2
+[1m[96m Downloading[0m 213 crates                                                       [K[1m[92m  Downloaded[0m urlpattern v0.3.0
+[1m[96m Downloading[0m 212 crates                                                       [K[1m[92m  Downloaded[0m unicode-ident v1.0.22
+[1m[96m Downloading[0m 211 crates                                                       [K[1m[92m  Downloaded[0m tauri-macros v2.5.2
+[1m[96m Downloading[0m 210 crates                                                       [K[1m[92m  Downloaded[0m schemars v0.9.0
+[1m[96m Downloading[0m 209 crates                                                       [K[1m[92m  Downloaded[0m schemars v0.8.22
+[1m[96m Downloading[0m 208 crates                                                       [K[1m[92m  Downloaded[0m rand_core v0.6.4
+[1m[96m Downloading[0m 207 crates                                                       [K[1m[92m  Downloaded[0m rand_chacha v0.3.1
+[1m[96m Downloading[0m 206 crates                                                       [K[1m[92m  Downloaded[0m parking_lot v0.12.5
+[1m[96m Downloading[0m 205 crates                                                       [K[1m[92m  Downloaded[0m num-traits v0.2.19
+[1m[96m Downloading[0m 204 crates                                                       [K[1m[92m  Downloaded[0m miniz_oxide v0.8.9
+[1m[96m Downloading[0m 203 crates                                                       [K[1m[92m  Downloaded[0m log v0.4.29
+[1m[96m Downloading[0m 202 crates                                                       [K[1m[92m  Downloaded[0m libappindicator v0.9.0
+[1m[96m Downloading[0m 201 crates                                                       [K[1m[92m  Downloaded[0m icu_properties v2.1.2
+[1m[96m Downloading[0m 200 crates                                                       [K[1m[92m  Downloaded[0m icu_normalizer_data v2.1.1
+[1m[96m Downloading[0m 199 crates                                                       [K[1m[92m  Downloaded[0m icu_normalizer v2.1.1
+[1m[96m Downloading[0m 198 crates                                                       [K[1m[92m  Downloaded[0m icu_locale_core v2.1.1
+[1m[96m Downloading[0m 197 crates                                                       [K[1m[92m  Downloaded[0m ico v0.4.0
+[1m[96m Downloading[0m 196 crates                                                       [K[1m[92m  Downloaded[0m html5ever v0.29.1
+[1m[96m Downloading[0m 195 crates                                                       [K[1m[92m  Downloaded[0m hashbrown v0.12.3
+[1m[96m Downloading[0m 194 crates                                                       [K[1m[92m  Downloaded[0m gio-sys v0.18.1
+[1m[96m Downloading[0m 193 crates                                                       [K[1m[92m  Downloaded[0m utf-8 v0.7.6
+[1m[96m Downloading[0m 192 crates                                                       [K[1m[92m  Downloaded[0m toml_writer v1.0.4
+[1m[96m Downloading[0m 191 crates                                                       [K[1m[92m  Downloaded[0m smallvec v1.15.1
+[1m[96m Downloading[0m 190 crates                                                       [K[1m[92m  Downloaded[0m ref-cast v1.0.25
+[1m[96m Downloading[0m 189 crates                                                       [K[1m[92m  Downloaded[0m rand_core v0.5.1
+[1m[96m Downloading[0m 188 crates                                                       [K[1m[92m  Downloaded[0m rand v0.8.5
+[1m[96m Downloading[0m 187 crates                                                       [K[1m[92m  Downloaded[0m rand v0.7.3
+[1m[96m Downloading[0m 186 crates                                                       [K[1m[92m  Downloaded[0m quick-xml v0.37.5
+[1m[96m Downloading[0m 185 crates                                                       [K[1m[92m  Downloaded[0m pango v0.18.3
+[1m[96m Downloading[0m 184 crates                                                       [K[1m[92m  Downloaded[0m markup5ever v0.14.1
+[1m[96m Downloading[0m 183 crates                                                       [K[1m[92m  Downloaded[0m jsonptr v0.6.3
+[1m[96m Downloading[0m 182 crates                                                       [K[1m[92m  Downloaded[0m indexmap v1.9.3
+[1m[96m Downloading[0m 181 crates                                                       [K[1m[92m  Downloaded[0m icu_provider v2.1.1
+[1m[96m Downloading[0m 180 crates                                                       [K[1m[92m  Downloaded[0m iana-time-zone v0.1.64
+[1m[96m Downloading[0m 179 crates                                                       [K[1m[92m  Downloaded[0m glib-sys v0.18.1
+[1m[96m Downloading[0m 178 crates                                                       [K[1m[92m  Downloaded[0m getrandom v0.3.4
+[1m[96m Downloading[0m 177 crates                                                       [K[1m[92m  Downloaded[0m getrandom v0.2.16
+[1m[96m Downloading[0m 176 crates                                                       [K[1m[92m  Downloaded[0m tauri-plugin-fs v2.4.4
+[1m[96m Downloading[0m 175 crates                                                       [K[1m[92m  Downloaded[0m pin-project-lite v0.2.16
+[1m[96m Downloading[0m 174 crates                                                       [K[1m[92m  Downloaded[0m phf_shared v0.11.3
+[1m[96m Downloading[0m 173 crates                                                       [K[1m[92m  Downloaded[0m phf_macros v0.11.3
+[1m[96m Downloading[0m 172 crates                                                       [K[1m[92m  Downloaded[0m phf_generator v0.8.0
+[1m[96m Downloading[0m 171 crates                                                       [K[1m[92m  Downloaded[0m parking_lot_core v0.9.12
+[1m[96m Downloading[0m 170 crates                                                       [K[1m[92m  Downloaded[0m parking v2.2.1
+[1m[96m Downloading[0m 169 crates                                                       [K[1m[92m  Downloaded[0m pango-sys v0.18.0
+[1m[96m Downloading[0m 168 crates                                                       [K[1m[92m  Downloaded[0m open v5.3.3
+[1m[96m Downloading[0m 167 crates                                                       [K[1m[92m  Downloaded[0m once_cell v1.21.3
+[1m[96m Downloading[0m 166 crates                                                       [K[1m[92m  Downloaded[0m lock_api v0.4.14
+[1m[96m Downloading[0m 165 crates                                                       [K[1m[92m  Downloaded[0m litemap v0.8.1
+[1m[96m Downloading[0m 164 crates                                                       [K[1m[92m  Downloaded[0m libloading v0.7.4
+[1m[96m Downloading[0m 163 crates                                                       [K[1m[92m  Downloaded[0m kuchikiki v0.8.8-speedreader
+[1m[96m Downloading[0m 162 crates                                                       [K[1m[92m  Downloaded[0m keyboard-types v0.7.0
+[1m[96m Downloading[0m 161 crates                                                       [K[1m[92m  Downloaded[0m itoa v1.0.15
+[1m[96m Downloading[0m 160 crates                                                       [K[1m[92m  Downloaded[0m glib-macros v0.18.5
+[1m[96m Downloading[0m 159 crates                                                       [K[1m[92m  Downloaded[0m getrandom v0.1.16
+[1m[96m Downloading[0m 158 crates                                                       [K[1m[92m  Downloaded[0m phf_codegen v0.11.3
+[1m[96m Downloading[0m 157 crates                                                       [K[1m[92m  Downloaded[0m phf v0.11.3
+[1m[96m Downloading[0m 156 crates                                                       [K[1m[92m  Downloaded[0m percent-encoding v2.3.2
+[1m[96m Downloading[0m 155 crates                                                       [K[1m[92m  Downloaded[0m pathdiff v0.2.3
+[1m[96m Downloading[0m 154 crates                                                       [K[1m[92m  Downloaded[0m ordered-stream v0.2.0
+[1m[96m Downloading[0m 153 crates                                                       [K[1m[92m  Downloaded[0m nodrop v0.1.14
+[1m[96m Downloading[0m 152 crates                                                       [K[1m[92m  Downloaded[0m rand v0.9.2
+[1m[96m Downloading[0m 151 crates                                                       [K[1m[92m  Downloaded[0m proc-macro2 v1.0.103
+[1m[96m Downloading[0m 150 crates                                                       [K[1m[92m  Downloaded[0m pkg-config v0.3.32
+[1m[96m Downloading[0m 149 crates                                                       [K[1m[92m  Downloaded[0m pin-utils v0.1.0
+[1m[96m Downloading[0m 148 crates                                                       [K[1m[92m  Downloaded[0m phf_generator v0.11.3
+[1m[96m Downloading[0m 147 crates                                                       [K[1m[92m  Downloaded[0m phf_generator v0.10.0
+[1m[96m Downloading[0m 146 crates                                                       [K[1m[92m  Downloaded[0m mime v0.3.17
+[1m[96m Downloading[0m 145 crates                                                       [K[1m[92m  Downloaded[0m memoffset v0.9.1
+[1m[96m Downloading[0m 144 crates                                                       [K[1m[92m  Downloaded[0m lazy_static v1.5.0
+[1m[96m Downloading[0m 143 crates                                                       [K[1m[92m  Downloaded[0m json-patch v3.0.1
+[1m[96m Downloading[0m 142 crates                                                       [K[1m[92m  Downloaded[0m javascriptcore-rs v1.1.2
+[1m[96m Downloading[0m 141 crates                                                       [K[1m[92m  Downloaded[0m infer v0.19.0
+[1m[96m Downloading[0m 140 crates                                                       [K[1m[92m  Downloaded[0m idna_adapter v1.2.1
+[1m[96m Downloading[0m 139 crates                                                       [K[1m[92m  Downloaded[0m heck v0.5.0
+[1m[96m Downloading[0m 138 crates                                                       [K[1m[92m  Downloaded[0m heck v0.4.1
+[1m[96m Downloading[0m 137 crates                                                       [K[1m[92m  Downloaded[0m glob v0.3.3
+[1m[96m Downloading[0m 136 crates                                                       [K[1m[92m  Downloaded[0m gdkx11 v0.18.2
+[1m[96m Downloading[0m 135 crates                                                       [K[1m[92m  Downloaded[0m tracing-core v0.1.35
+[1m[96m Downloading[0m 134 crates                                                       [K[1m[92m  Downloaded[0m tinystr v0.8.2
+[1m[96m Downloading[0m 133 crates                                                       [K[1m[92m  Downloaded[0m thiserror-impl v2.0.17
+[1m[96m Downloading[0m 132 crates                                                       [K[1m[92m  Downloaded[0m thiserror v2.0.17
+[1m[96m Downloading[0m 131 crates                                                       [K[1m[92m  Downloaded[0m string_cache v0.8.9
+[1m[96m Downloading[0m 130 crates                                                       [K[1m[92m  Downloaded[0m phf_shared v0.10.0
+[1m[96m Downloading[0m 129 crates                                                       [K[1m[92m  Downloaded[0m phf_shared v0.8.0
+[1m[96m Downloading[0m 128 crates                                                       [K[1m[92m  Downloaded[0m phf_macros v0.10.0
+[1m[96m Downloading[0m 127 crates                                                       [K[1m[92m  Downloaded[0m phf_codegen v0.8.0
+[1m[96m Downloading[0m 126 crates                                                       [K[1m[92m  Downloaded[0m phf v0.10.1
+[1m[96m Downloading[0m 125 crates                                                       [K[1m[92m  Downloaded[0m phf v0.8.0
+[1m[96m Downloading[0m 124 crates                                                       [K[1m[92m  Downloaded[0m option-ext v0.2.0
+[1m[96m Downloading[0m 123 crates                                                       [K[1m[92m  Downloaded[0m new_debug_unreachable v1.0.6
+[1m[96m Downloading[0m 122 crates                                                       [K[1m[92m  Downloaded[0m mac v0.1.1
+[1m[96m Downloading[0m 121 crates                                                       [K[1m[92m  Downloaded[0m javascriptcore-rs-sys v1.1.1
+[1m[96m Downloading[0m 120 crates                                                       [K[1m[92m  Downloaded[0m is-docker v0.2.0
+[1m[96m Downloading[0m 119 crates                                                       [K[1m[92m  Downloaded[0m rand_chacha v0.2.2
+[1m[96m Downloading[0m 118 crates                                                       [K[1m[92m  Downloaded[0m num-conv v0.1.0
+[1m[96m Downloading[0m 117 crates                                                       [K[1m[92m  Downloaded[0m quote v1.0.42
+[1m[96m Downloading[0m 116 crates                                                       [K[1m[92m  Downloaded[0m proc-macro-hack v0.5.20+deprecated
+[1m[96m Downloading[0m 115 crates                                                       [K[1m[92m  Downloaded[0m proc-macro-error-attr v1.0.4
+[1m[96m Downloading[0m 114 crates                                                       [K[1m[92m  Downloaded[0m png v0.17.16
+[1m[96m Downloading[0m 113 crates                                                       [K[1m[92m  Downloaded[0m matches v0.1.10
+[1m[96m Downloading[0m 112 crates                                                       [K[1m[92m  Downloaded[0m match_token v0.1.0
+[1m[96m Downloading[0m 111 crates                                                       [K[1m[92m  Downloaded[0m libappindicator-sys v0.9.0
+[1m[96m Downloading[0m 110 crates                                                       [K[1m[92m  Downloaded[0m is-wsl v0.4.0
+[1m[96m Downloading[0m 109 crates                                                       [K[1m[92m  Downloaded[0m ident_case v1.0.1
+[1m[96m Downloading[0m 108 crates                                                       [K[1m[92m  Downloaded[0m generic-array v0.14.7
+[1m[96m Downloading[0m 107 crates                                                       [K[1m[92m  Downloaded[0m gdk-sys v0.18.2
+[1m[96m Downloading[0m 106 crates                                                       [K[1m[92m  Downloaded[0m chrono v0.4.42
+[1m[96m Downloading[0m 105 crates                                                       [K[1m[92m  Downloaded[0m brotli-decompressor v5.0.0
+[1m[96m Downloading[0m 104 crates                                                       [K[1m[92m  Downloaded[0m brotli v8.0.2
+[1m[96m Downloading[0m 103 crates, extracting brotli ...                                [K[1m[92m  Downloaded[0m rand_chacha v0.9.0
+[1m[96m Downloading[0m 102 crates                                                       [K[1m[92m  Downloaded[0m proc-macro-error v1.0.4
+[1m[96m Downloading[0m 101 crates                                                       [K[1m[92m  Downloaded[0m proc-macro-crate v3.4.0
+[1m[96m Downloading[0m 100 crates                                                       [K[1m[92m  Downloaded[0m proc-macro-crate v2.0.2
+[1m[96m Downloading[0m 99 crates                                                        [K[1m[92m  Downloaded[0m proc-macro-crate v1.3.1
+[1m[96m Downloading[0m 98 crates                                                        [K[1m[92m  Downloaded[0m precomputed-hash v0.1.1
+[1m[96m Downloading[0m 97 crates                                                        [K[1m[92m  Downloaded[0m ppv-lite86 v0.2.21
+[1m[96m Downloading[0m 96 crates                                                        [K[1m[92m  Downloaded[0m powerfmt v0.2.0
+[1m[96m Downloading[0m 95 crates                                                        [K[1m[92m  Downloaded[0m polling v3.11.0
+[1m[96m Downloading[0m 94 crates                                                        [K[1m[92m  Downloaded[0m hex v0.4.3
+[1m[96m Downloading[0m 93 crates                                                        [K[1m[92m  Downloaded[0m gobject-sys v0.18.0
+[1m[96m Downloading[0m 92 crates                                                        [K[1m[92m  Downloaded[0m gdk v0.18.2
+[1m[96m Downloading[0m 91 crates                                                        [K[1m[92m  Downloaded[0m futures-util v0.3.31
+[1m[96m Downloading[0m 90 crates                                                        [K[1m[92m  Downloaded[0m futures-sink v0.3.31
+[1m[96m Downloading[0m 89 crates                                                        [K[1m[92m  Downloaded[0m futures-lite v2.6.1
+[1m[96m Downloading[0m 88 crates                                                        [K[1m[92m  Downloaded[0m futures-io v0.3.31
+[1m[96m Downloading[0m 87 crates                                                        [K[1m[92m  Downloaded[0m futf v0.1.5
+[1m[96m Downloading[0m 86 crates                                                        [K[1m[92m  Downloaded[0m flate2 v1.1.5
+[1m[96m Downloading[0m 85 crates                                                        [K[1m[92m  Downloaded[0m find-msvc-tools v0.1.5
+[1m[96m Downloading[0m 84 crates                                                        [K[1m[92m  Downloaded[0m event-listener v5.4.1
+[1m[96m Downloading[0m 83 crates                                                        [K[1m[92m  Downloaded[0m cssparser v0.29.6
+[1m[96m Downloading[0m 82 crates                                                        [K[1m[92m  Downloaded[0m crossbeam-channel v0.5.15
+[1m[96m Downloading[0m 81 crates                                                        [K[1m[92m  Downloaded[0m cookie v0.18.1
+[1m[96m Downloading[0m 80 crates                                                        [K[1m[92m  Downloaded[0m cfg-expr v0.15.8
+[1m[96m Downloading[0m 79 crates                                                        [K[1m[92m  Downloaded[0m cargo_toml v0.22.3
+[1m[96m Downloading[0m 78 crates                                                        [K[1m[92m  Downloaded[0m ashpd v0.11.0
+[1m[96m Downloading[0m 77 crates                                                        [K[1m[92m  Downloaded[0m aho-corasick v1.1.4
+[1m[96m Downloading[0m 76 crates                                                        [K[1m[92m  Downloaded[0m gtk3-macros v0.18.2
+[1m[96m Downloading[0m 75 crates                                                        [K[1m[92m  Downloaded[0m gdk-pixbuf-sys v0.18.0
+[1m[96m Downloading[0m 74 crates                                                        [K[1m[92m  Downloaded[0m gdk-pixbuf v0.18.5
+[1m[96m Downloading[0m 73 crates                                                        [K[1m[92m  Downloaded[0m futures-core v0.3.31
+[1m[96m Downloading[0m 72 crates                                                        [K[1m[92m  Downloaded[0m form_urlencoded v1.2.2
+[1m[96m Downloading[0m 71 crates                                                        [K[1m[92m  Downloaded[0m fdeflate v0.3.7
+[1m[96m Downloading[0m 70 crates                                                        [K[1m[92m  Downloaded[0m fastrand v2.3.0
+[1m[96m Downloading[0m 69 crates                                                        [K[1m[92m  Downloaded[0m darling_core v0.21.3
+[1m[96m Downloading[0m 68 crates                                                        [K[1m[92m  Downloaded[0m cssparser-macros v0.6.1
+[1m[96m Downloading[0m 67 crates                                                        [K[1m[92m  Downloaded[0m crossbeam-utils v0.8.21
+[1m[96m Downloading[0m 66 crates                                                        [K[1m[92m  Downloaded[0m crc32fast v1.5.0
+[1m[96m Downloading[0m 65 crates                                                        [K[1m[92m  Downloaded[0m convert_case v0.4.0
+[1m[96m Downloading[0m 64 crates                                                        [K[1m[92m  Downloaded[0m cfg_aliases v0.2.1
+[1m[96m Downloading[0m 63 crates                                                        [K[1m[92m  Downloaded[0m cc v1.2.49
+[1m[96m Downloading[0m 62 crates                                                        [K[1m[92m  Downloaded[0m cargo-platform v0.1.9
+[1m[96m Downloading[0m 61 crates                                                        [K[1m[92m  Downloaded[0m cairo-sys-rs v0.18.2
+[1m[96m Downloading[0m 60 crates                                                        [K[1m[92m  Downloaded[0m byteorder v1.5.0
+[1m[96m Downloading[0m 59 crates                                                        [K[1m[92m  Downloaded[0m fxhash v0.2.1
+[1m[96m Downloading[0m 58 crates                                                        [K[1m[92m  Downloaded[0m futures-task v0.3.31
+[1m[96m Downloading[0m 57 crates                                                        [K[1m[92m  Downloaded[0m futures-macro v0.3.31
+[1m[96m Downloading[0m 56 crates                                                        [K[1m[92m  Downloaded[0m futures-executor v0.3.31
+[1m[96m Downloading[0m 55 crates                                                        [K[1m[92m  Downloaded[0m fnv v1.0.7
+[1m[96m Downloading[0m 54 crates                                                        [K[1m[92m  Downloaded[0m field-offset v0.3.6
+[1m[96m Downloading[0m 53 crates                                                        [K[1m[92m  Downloaded[0m event-listener-strategy v0.5.4
+[1m[96m Downloading[0m 52 crates                                                        [K[1m[92m  Downloaded[0m errno v0.3.14
+[1m[96m Downloading[0m 51 crates                                                        [K[1m[92m  Downloaded[0m erased-serde v0.4.9
+[1m[96m Downloading[0m 50 crates                                                        [K[1m[92m  Downloaded[0m equivalent v1.0.2
+[1m[96m Downloading[0m 49 crates                                                        [K[1m[92m  Downloaded[0m endi v1.1.1
+[1m[96m Downloading[0m 48 crates                                                        [K[1m[92m  Downloaded[0m embed-resource v3.0.6
+[1m[96m Downloading[0m 47 crates                                                        [K[1m[92m  Downloaded[0m dtoa-short v0.3.5
+[1m[96m Downloading[0m 46 crates                                                        [K[1m[92m  Downloaded[0m downcast-rs v1.2.1
+[1m[96m Downloading[0m 45 crates                                                        [K[1m[92m  Downloaded[0m displaydoc v0.2.5
+[1m[96m Downloading[0m 44 crates                                                        [K[1m[92m  Downloaded[0m dirs v6.0.0
+[1m[96m Downloading[0m 43 crates                                                        [K[1m[92m  Downloaded[0m derive_more v0.99.20
+[1m[96m Downloading[0m 42 crates                                                        [K[1m[92m  Downloaded[0m darling v0.21.3
+[1m[96m Downloading[0m 41 crates                                                        [K[1m[92m  Downloaded[0m cfg-if v1.0.4
+[1m[96m Downloading[0m 40 crates                                                        [K[1m[92m  Downloaded[0m cfb v0.7.3
+[1m[96m Downloading[0m 39 crates                                                        [K[1m[92m  Downloaded[0m bytes v1.11.0
+[1m[96m Downloading[0m 38 crates                                                        [K[1m[92m  Downloaded[0m bitflags v2.10.0
+[1m[96m Downloading[0m 37 crates                                                        [K[1m[92m  Downloaded[0m base64 v0.22.1
+[1m[96m Downloading[0m 36 crates                                                        [K[1m[92m  Downloaded[0m async-process v2.5.0
+[1m[96m Downloading[0m 35 crates                                                        [K[1m[92m  Downloaded[0m async-lock v3.4.1
+[1m[96m Downloading[0m 34 crates                                                        [K[1m[92m  Downloaded[0m async-io v2.6.0
+[1m[96m Downloading[0m 33 crates                                                        [K[1m[92m  Downloaded[0m anyhow v1.0.100
+[1m[96m Downloading[0m 32 crates                                                        [K[1m[92m  Downloaded[0m futures-channel v0.3.31
+[1m[96m Downloading[0m 31 crates                                                        [K[1m[92m  Downloaded[0m dyn-clone v1.0.20
+[1m[96m Downloading[0m 30 crates                                                        [K[1m[92m  Downloaded[0m dunce v1.0.5
+[1m[96m Downloading[0m 29 crates                                                        [K[1m[92m  Downloaded[0m dtoa v1.0.10
+[1m[96m Downloading[0m 28 crates                                                        [K[1m[92m  Downloaded[0m dpi v0.1.2
+[1m[96m Downloading[0m 27 crates                                                        [K[1m[92m  Downloaded[0m dlopen2_derive v0.4.3
+[1m[96m Downloading[0m 26 crates                                                        [K[1m[92m  Downloaded[0m dlopen2 v0.8.2
+[1m[96m Downloading[0m 25 crates                                                        [K[1m[92m  Downloaded[0m dlib v0.5.2
+[1m[96m Downloading[0m 24 crates                                                        [K[1m[92m  Downloaded[0m dirs-sys v0.5.0
+[1m[96m Downloading[0m 23 crates                                                        [K[1m[92m  Downloaded[0m digest v0.10.7
+[1m[96m Downloading[0m 22 crates                                                        [K[1m[92m  Downloaded[0m darling_macro v0.21.3
+[1m[96m Downloading[0m 21 crates                                                        [K[1m[92m  Downloaded[0m crypto-common v0.1.7
+[1m[96m Downloading[0m 20 crates                                                        [K[1m[92m  Downloaded[0m cpufeatures v0.2.17
+[1m[96m Downloading[0m 19 crates                                                        [K[1m[92m  Downloaded[0m cargo_metadata v0.19.2
+[1m[96m Downloading[0m 18 crates                                                        [K[1m[92m  Downloaded[0m camino v1.2.1
+[1m[96m Downloading[0m 17 crates                                                        [K[1m[92m  Downloaded[0m cairo-rs v0.18.5
+[1m[96m Downloading[0m 16 crates                                                        [K[1m[92m  Downloaded[0m atk-sys v0.18.2
+[1m[96m Downloading[0m 15 crates                                                        [K[1m[92m  Downloaded[0m async-trait v0.1.89
+[1m[96m Downloading[0m 14 crates                                                        [K[1m[92m  Downloaded[0m async-task v4.7.1
+[1m[96m Downloading[0m 13 crates                                                        [K[1m[92m  Downloaded[0m async-executor v1.13.3
+[1m[96m Downloading[0m 12 crates                                                        [K[1m[92m  Downloaded[0m async-broadcast v0.7.2
+[1m[96m Downloading[0m 11 crates                                                        [K[1m[92m  Downloaded[0m alloc-no-stdlib v2.0.4
+[1m[96m Downloading[0m 10 crates                                                        [K[1m[92m  Downloaded[0m adler2 v2.0.1
+[1m[96m Downloading[0m 9 crates                                                         [K[1m[92m  Downloaded[0m deranged v0.5.5
+[1m[96m Downloading[0m 8 crates                                                         [K[1m[92m  Downloaded[0m ctor v0.2.9
+[1m[96m Downloading[0m 7 crates                                                         [K[1m[92m  Downloaded[0m concurrent-queue v2.5.0
+[1m[96m Downloading[0m 6 crates                                                         [K[1m[92m  Downloaded[0m blocking v1.6.2
+[1m[96m Downloading[0m 5 crates                                                         [K[1m[92m  Downloaded[0m block-buffer v0.10.4
+[1m[96m Downloading[0m 4 crates                                                         [K[1m[92m  Downloaded[0m autocfg v1.5.0
+[1m[96m Downloading[0m 3 crates                                                         [K[1m[92m  Downloaded[0m atomic-waker v1.1.2
+[1m[96m Downloading[0m 2 crates                                                         [K[1m[92m  Downloaded[0m async-signal v0.2.13
+[1m[96m Downloading[0m 1 crate                                                          [K[1m[92m  Downloaded[0m atk v0.18.2
+[1m[96m Downloading[0m 0 crates                                                         [K[1m[92m  Downloaded[0m 359 crates (21.7MiB) in 2.63s (largest was `linux-raw-sys` at 2.5MiB)
+[1m[92m   Compiling[0m unicode-ident v1.0.22
+[1m[92m   Compiling[0m quote v1.0.42
+[1m[92m   Compiling[0m proc-macro2 v1.0.103
+[1m[92m   Compiling[0m serde_core v1.0.228
+[1m[96m    Building[0m [                           ] 0/521: proc-macro2(build.rs), se...[K[1m[92m   Compiling[0m serde v1.0.228
+[1m[96m    Building[0m [                           ] 1/521: proc-macro2(build.rs), se...[1m[96m    Building[0m [                           ] 2/521: proc-macro2(build.rs), se...[1m[96m    Building[0m [                           ] 3/521: serde(build.rs), serde_co...[1m[96m    Building[0m [                           ] 5/521: serde_core(build), quote(...[1m[96m    Building[0m [                           ] 6/521: quote(build), serde(build...[K[1m[92m   Compiling[0m hashbrown v0.16.1
+[1m[96m    Building[0m [                           ] 7/521: hashbrown, serde(build), ...[K[1m[92m   Compiling[0m equivalent v1.0.2
+[1m[96m    Building[0m [                           ] 8/521: equivalent, hashbrown, pr...[K[1m[92m   Compiling[0m smallvec v1.15.1
+[1m[96m    Building[0m [                           ] 9/521: smallvec, hashbrown, proc...[K[1m[92m   Compiling[0m heck v0.5.0
+[1m[96m    Building[0m [                          ] 10/521: hashbrown, heck, proc-mac...[1m[96m    Building[0m [                          ] 11/521: proc-macro2, hashbrown, h...[K[1m[92m   Compiling[0m cfg-if v1.0.4
+[1m[96m    Building[0m [                          ] 12/521: proc-macro2, hashbrown, c...[K[1m[92m   Compiling[0m pkg-config v0.3.32
+[1m[96m    Building[0m [                          ] 13/521: proc-macro2, hashbrown, p...[K[1m[92m   Compiling[0m indexmap v2.12.1
+[1m[96m    Building[0m [                          ] 14/521: proc-macro2, indexmap, pk...[1m[96m    Building[0m [                          ] 15/521: proc-macro2, indexmap, qu...[K[1m[92m   Compiling[0m winnow v0.5.40
+[1m[96m    Building[0m [                          ] 16/521: indexmap, quote, winnow, ...[K[1m[92m   Compiling[0m syn v2.0.111
+[1m[96m    Building[0m [                          ] 17/521: quote, syn, winnow, serde...[K[1m[92m   Compiling[0m target-lexicon v0.12.16
+[1m[96m    Building[0m [                          ] 18/521: syn, winnow, target-lexic...[1m[96m    Building[0m [                          ] 19/521: target-lexicon(build), sy...[1m[96m    Building[0m [                          ] 20/521: syn, winnow, target-lexic...[K[1m[92m   Compiling[0m cfg-expr v0.15.8
+[1m[96m    Building[0m [>                         ] 21/521: syn, winnow, cfg-expr, se...[K[1m[92m   Compiling[0m version-compare v0.2.1
+[1m[96m    Building[0m [>                         ] 22/521: version-compare, syn, win...[K[1m[92m   Compiling[0m libc v0.2.178
+[1m[96m    Building[0m [>                         ] 23/521: syn, winnow, cfg-expr, li...[1m[96m    Building[0m [>                         ] 24/521: serde_core(build.rs), syn...[1m[96m    Building[0m [>                         ] 25/521: serde_core(build.rs), syn...[1m[96m    Building[0m [>                         ] 26/521: serde_core(build.rs), syn...[1m[96m    Building[0m [>                         ] 27/521: serde_core(build), syn, w...[K[1m[92m   Compiling[0m memchr v2.7.6
+[1m[96m    Building[0m [>                         ] 28/521: syn, winnow, libc, memchr   [1m[96m    Building[0m [>                         ] 29/521: serde_core, syn, libc, me...[1m[96m    Building[0m [>                         ] 30/521: serde_core, syn, libc, li...[1m[96m    Building[0m [>                         ] 31/521: serde_core, syn, libc, li...[K[1m[92m   Compiling[0m zerocopy v0.8.31
+[1m[96m    Building[0m [>                         ] 32/521: zerocopy(build.rs), serde...[1m[96m    Building[0m [>                         ] 33/521: zerocopy(build.rs), serde...[1m[96m    Building[0m [>                         ] 34/521: zerocopy(build), serde_co...[K[1m[92m   Compiling[0m syn v1.0.109
+[1m[96m    Building[0m [>                         ] 35/521: syn(build.rs), serde_core...[1m[96m    Building[0m [>                         ] 36/521: syn(build), serde_core, l...[1m[96m    Building[0m [>                         ] 37/521: zerocopy, serde_core, lib...[K[1m[92m   Compiling[0m synstructure v0.13.2
+[1m[96m    Building[0m [>                         ] 38/521: zerocopy, synstructure, l...[1m[96m    Building[0m [>                         ] 39/521: zerocopy, synstructure, s...[K[1m[92m   Compiling[0m getrandom v0.2.16
+[1m[96m    Building[0m [>                         ] 40/521: zerocopy, getrandom, syn,...[K[1m[92m   Compiling[0m autocfg v1.5.0
+[1m[96m    Building[0m [=>                        ] 41/521: zerocopy, autocfg, syn, syn [K[1m[92m   Compiling[0m ppv-lite86 v0.2.21
+[1m[96m    Building[0m [=>                        ] 42/521: autocfg, syn, syn, ppv-li...[K[1m[92m   Compiling[0m version_check v0.9.5
+[1m[96m    Building[0m [=>                        ] 43/521: syn, version_check, syn, ...[K[1m[92m   Compiling[0m thiserror v1.0.69
+[1m[96m    Building[0m [=>                        ] 44/521: syn, version_check, syn, ...[K[1m[92m   Compiling[0m rand_core v0.6.4
+[1m[96m    Building[0m [=>                        ] 45/521: syn, rand_core, syn, this...[K[1m[92m   Compiling[0m serde_derive v1.0.228
+[1m[96m    Building[0m [=>                        ] 46/521: serde_derive, rand_core, ...[K[1m[92m   Compiling[0m zerofrom-derive v0.1.6
+[1m[96m    Building[0m [=>                        ] 47/521: serde_derive, zerofrom-de...[K[1m[92m   Compiling[0m yoke-derive v0.8.1
+[1m[96m    Building[0m [=>                        ] 48/521: serde_derive, yoke-derive...[K[1m[92m   Compiling[0m zerovec-derive v0.11.2
+[1m[96m    Building[0m [=>                        ] 49/521: serde_derive, zerovec-der...[K[1m[92m   Compiling[0m zerofrom v0.1.6
+[1m[96m    Building[0m [=>                        ] 50/521: serde_derive, zerovec-der...[K[1m[92m   Compiling[0m displaydoc v0.2.5
+[1m[96m    Building[0m [=>                        ] 51/521: serde_derive, zerovec-der...[1m[96m    Building[0m [=>                        ] 52/521: serde_derive, thiserror(b...[K[1m[92m   Compiling[0m thiserror-impl v1.0.69
+[1m[96m    Building[0m [=>                        ] 53/521: serde_derive, thiserror-i...[K[1m[92m   Compiling[0m litemap v0.8.1
+[1m[96m    Building[0m [=>                        ] 54/521: serde_derive, thiserror-i...[K[1m[92m   Compiling[0m winnow v0.7.14
+[1m[96m    Building[0m [=>                        ] 55/521: serde_derive, thiserror-i...[K[1m[92m   Compiling[0m writeable v0.6.2
+[1m[96m    Building[0m [=>                        ] 56/521: serde_derive, writeable, ...[1m[96m    Building[0m [=>                        ] 57/521: serde_derive, thiserror, ...[K[1m[92m   Compiling[0m rand_chacha v0.3.1
+[1m[96m    Building[0m [=>                        ] 58/521: serde_derive, rand_chacha...[1m[96m    Building[0m [=>                        ] 59/521: rand_chacha, serde, syn, ...[K[1m[92m   Compiling[0m rand v0.8.5
+[1m[96m    Building[0m [=>                        ] 60/521: rand, serde, syn, winnow    [K[1m[92m   Compiling[0m toml_datetime v0.6.3
+[1m[96m    Building[0m [==>                       ] 61/521: rand, toml_datetime, syn,...[K[1m[92m   Compiling[0m serde_spanned v0.6.9
+[1m[96m    Building[0m [==>                       ] 62/521: rand, serde_spanned, toml...[K[1m[92m   Compiling[0m itoa v1.0.15
+[1m[96m    Building[0m [==>                       ] 63/521: rand, itoa, toml_datetime...[K[1m[92m   Compiling[0m toml_edit v0.20.2
+[1m[96m    Building[0m [==>                       ] 64/521: rand, itoa, toml_edit, wi...[K[1m[92m   Compiling[0m pin-project-lite v0.2.16
+[1m[96m    Building[0m [==>                       ] 65/521: rand, toml_edit, pin-proj...[K[1m[92m   Compiling[0m stable_deref_trait v1.2.1
+[1m[96m    Building[0m [==>                       ] 66/521: rand, stable_deref_trait,...[K[1m[92m   Compiling[0m siphasher v1.0.1
+[1m[96m    Building[0m [==>                       ] 67/521: rand, stable_deref_trait,...[K[1m[92m   Compiling[0m icu_normalizer_data v2.1.1
+[1m[96m    Building[0m [==>                       ] 68/521: rand, toml_edit, siphashe...[K[1m[92m   Compiling[0m icu_properties_data v2.1.2
+[1m[96m    Building[0m [==>                       ] 69/521: rand, toml_edit, siphashe...[1m[96m    Building[0m [==>                       ] 70/521: toml_edit, siphasher, icu...[1m[96m    Building[0m [==>                       ] 71/521: icu_normalizer_data, toml...[K[1m[92m   Compiling[0m phf_shared v0.11.3
+[1m[96m    Building[0m [==>                       ] 72/521: phf_shared, icu_normalize...[K[1m[92m   Compiling[0m futures-core v0.3.31
+[1m[96m    Building[0m [==>                       ] 73/521: futures-core, phf_shared,...[1m[96m    Building[0m [==>                       ] 74/521: futures-core, phf_shared,...[1m[96m    Building[0m [==>                       ] 75/521: futures-core, phf_shared,...[K[1m[92m   Compiling[0m yoke v0.8.1
+[1m[96m    Building[0m [==>                       ] 76/521: phf_shared, toml_edit, ic...[K[1m[92m   Compiling[0m semver v1.0.27
+[1m[96m    Building[0m [==>                       ] 77/521: semver, toml_edit, icu_pr...[K[1m[92m   Compiling[0m phf_generator v0.11.3
+[1m[96m    Building[0m [==>                       ] 78/521: semver, phf_generator, to...[K[1m[92m   Compiling[0m toml_parser v1.0.4
+[1m[96m    Building[0m [==>                       ] 79/521: semver, phf_generator, to...[K[1m[92m   Compiling[0m toml_datetime v0.7.3
+[1m[96m    Building[0m [==>                       ] 80/521: semver, toml_parser, toml...[K[1m[92m   Compiling[0m siphasher v0.3.11
+[1m[96m    Building[0m [===>                      ] 81/521: toml_parser, toml_edit, t...[K[1m[92m   Compiling[0m fnv v1.0.7
+[1m[96m    Building[0m [===>                      ] 82/521: fnv, toml_parser, toml_ed...[K[1m[92m   Compiling[0m zerovec v0.11.5
+[1m[96m    Building[0m [===>                      ] 83/521: fnv, toml_parser, toml_ed...[K[1m[92m   Compiling[0m once_cell v1.21.3
+[1m[96m    Building[0m [===>                      ] 84/521: once_cell, toml_parser, t...[K[1m[92m   Compiling[0m ryu v1.0.20
+[1m[96m    Building[0m [===>                      ] 85/521: toml_parser, toml_edit, r...[K[1m[92m   Compiling[0m getrandom v0.1.16
+[1m[96m    Building[0m [===>                      ] 86/521: getrandom(build.rs), toml...[K[1m[92m   Compiling[0m parking_lot_core v0.9.12
+[1m[96m    Building[0m [===>                      ] 87/521: getrandom(build.rs), toml...[1m[96m    Building[0m [===>                      ] 88/521: getrandom(build), toml_ed...[K[1m[92m   Compiling[0m utf8_iter v1.0.4
+[1m[96m    Building[0m [===>                      ] 89/521: toml_edit, parking_lot_co...[K[1m[92m   Compiling[0m byteorder v1.5.0
+[1m[96m    Building[0m [===>                      ] 90/521: byteorder, toml_edit, par...[1m[96m    Building[0m [===>                      ] 91/521: byteorder, parking_lot_co...[1m[96m    Building[0m [===>                      ] 92/521: byteorder, toml_edit, get...[K[1m[92m   Compiling[0m bitflags v2.10.0
+[1m[96m    Building[0m [===>                      ] 93/521: byteorder, bitflags, toml...[1m[96m    Building[0m [===>                      ] 94/521: byteorder, bitflags, toml...[K[1m[92m   Compiling[0m bitflags v1.3.2
+[1m[96m    Building[0m [===>                      ] 95/521: bitflags, bitflags, toml_...[K[1m[92m   Compiling[0m rand_core v0.5.1
+[1m[96m    Building[0m [===>                      ] 96/521: bitflags, rand_core, toml...[K[1m[92m   Compiling[0m tinystr v0.8.2
+[1m[96m    Building[0m [===>                      ] 97/521: tinystr, rand_core, toml_...[K[1m[92m   Compiling[0m slab v0.4.11
+[1m[96m    Building[0m [===>                      ] 98/521: tinystr, rand_core, slab,...[K[1m[92m   Compiling[0m typeid v1.0.3
+[1m[96m    Building[0m [===>                      ] 99/521: tinystr, slab, toml_edit,...[K[1m[92m   Compiling[0m log v0.4.29
+[1m[96m    Building[0m [===>                     ] 100/521: tinystr, log, toml_edit, ...[K[1m[92m   Compiling[0m scopeguard v1.2.0
+[1m[96m    Building[0m [===>                     ] 101/521: log, toml_edit, typeid(bu...[K[1m[92m   Compiling[0m ident_case v1.0.1
+[1m[96m    Building[0m [===>                     ] 102/521: log, toml_edit, typeid(bu...[K[1m[92m   Compiling[0m strsim v0.11.1
+[1m[96m    Building[0m [===>                     ] 103/521: strsim, toml_edit, typeid...[K[1m[92m   Compiling[0m lock_api v0.4.14
+[1m[96m    Building[0m [===>                     ] 104/521: strsim, toml_edit, typeid...[1m[96m    Building[0m [====>                    ] 105/521: strsim, typeid(build), to...[K[1m[92m   Compiling[0m icu_locale_core v2.1.1
+[1m[96m    Building[0m [====>                    ] 106/521: strsim, toml_edit, icu_lo...[K[1m[92m   Compiling[0m darling_core v0.21.3
+[1m[96m    Building[0m [====>                    ] 107/521: strsim, darling_core, tom...[K[1m[92m   Compiling[0m toml v0.8.2
+[1m[96m    Building[0m [====>                    ] 108/521: darling_core, toml_edit, ...[K[1m[92m   Compiling[0m system-deps v6.2.2
+[1m[96m    Building[0m [====>                    ] 109/521: darling_core, toml_edit, ...[K[1m[92m   Compiling[0m potential_utf v0.1.4
+[1m[96m    Building[0m [====>                    ] 110/521: potential_utf, darling_co...[K[1m[92m   Compiling[0m phf_macros v0.11.3
+[1m[96m    Building[0m [====>                    ] 111/521: darling_core, toml_edit, ...[K[1m[92m   Compiling[0m zerotrie v0.2.3
+[1m[96m    Building[0m [====>                    ] 112/521: darling_core, zerotrie, t...[K[1m[92m   Compiling[0m glib-sys v0.18.1
+[1m[96m    Building[0m [====>                    ] 113/521: darling_core, glib-sys(bu...[K[1m[92m   Compiling[0m gobject-sys v0.18.0
+[1m[96m    Building[0m [====>                    ] 114/521: darling_core, glib-sys(bu...[K[1m[92m   Compiling[0m gio-sys v0.18.1
+[1m[96m    Building[0m [====>                    ] 115/521: gio-sys(build.rs), darlin...[1m[96m    Building[0m [====>                    ] 116/521: gio-sys(build.rs), darlin...[1m[96m    Building[0m [====>                    ] 117/521: gio-sys(build.rs), darlin...[1m[96m    Building[0m [====>                    ] 118/521: gio-sys(build), darling_c...[K[1m[33mwarning[0m: gobject-sys@0.18.0:
+[1m[91merror[0m: failed to run custom build command for `gobject-sys v0.18.0`
+
+Caused by:
+  process didn't exit successfully: `/app/apps/desktop/src-tauri/target/debug/build/gobject-sys-769d1096f98753a0/build-script-build` (exit status: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=GOBJECT_2.0_NO_PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_PATH
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_LIBDIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_SYSROOT_DIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR
+  cargo:warning=
+  pkg-config exited with status code 1
+  > PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 pkg-config --libs --cflags gobject-2.0 'gobject-2.0 >= 2.70'
+
+  The system library `gobject-2.0` required by crate `gobject-sys` was not found.
+  The file `gobject-2.0.pc` needs to be installed and the PKG_CONFIG_PATH environment variable must contain its parent directory.
+  The PKG_CONFIG_PATH environment variable is not set.
+
+  HINT: if you have installed the library, try setting PKG_CONFIG_PATH to the directory containing `gobject-2.0.pc`.
+
+[1m[33mwarning[0m: build failed, waiting for other jobs to finish...
+[1m[33mwarning[0m: gio-sys@0.18.1:
+[1m[91merror[0m: failed to run custom build command for `gio-sys v0.18.1`
+
+Caused by:
+  process didn't exit successfully: `/app/apps/desktop/src-tauri/target/debug/build/gio-sys-aef96a45ab398b9f/build-script-build` (exit status: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=GIO_2.0_NO_PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_PATH
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_LIBDIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_SYSROOT_DIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR
+  cargo:warning=
+  pkg-config exited with status code 1
+  > PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 pkg-config --libs --cflags gio-2.0 'gio-2.0 >= 2.70'
+
+  The system library `gio-2.0` required by crate `gio-sys` was not found.
+  The file `gio-2.0.pc` needs to be installed and the PKG_CONFIG_PATH environment variable must contain its parent directory.
+  The PKG_CONFIG_PATH environment variable is not set.
+
+  HINT: if you have installed the library, try setting PKG_CONFIG_PATH to the directory containing `gio-2.0.pc`.
+
+[1m[96m    Building[0m [====>                    ] 120/521: darling_core, glib-sys(bu...[K[1m[33mwarning[0m: glib-sys@0.18.1:
+[1m[91merror[0m: failed to run custom build command for `glib-sys v0.18.1`
+
+Caused by:
+  process didn't exit successfully: `/app/apps/desktop/src-tauri/target/debug/build/glib-sys-13f0a705aba1dc43/build-script-build` (exit status: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=GLIB_2.0_NO_PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_PATH
+  cargo:rerun-if-env-changed=PKG_CONFIG_PATH
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_LIBDIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_LIBDIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=HOST_PKG_CONFIG_SYSROOT_DIR
+  cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR
+  cargo:warning=
+  pkg-config exited with status code 1
+  > PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1 pkg-config --libs --cflags glib-2.0 'glib-2.0 >= 2.70'
+
+  The system library `glib-2.0` required by crate `glib-sys` was not found.
+  The file `glib-2.0.pc` needs to be installed and the PKG_CONFIG_PATH environment variable must contain its parent directory.
+  The PKG_CONFIG_PATH environment variable is not set.
+
+  HINT: if you have installed the library, try setting PKG_CONFIG_PATH to the directory containing `glib-2.0.pc`.
+
+[1m[96m    Building[0m [====>                    ] 121/521: darling_core                [K ELIFECYCLE  Command failed.
+/app/apps/desktop:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @liminal-notes/desktop@0.1.0 tauri: `tauri dev`
+Exit status 101
+ ELIFECYCLE  Command failed with exit code 101.

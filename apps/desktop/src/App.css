@@ -10,12 +10,22 @@
   --ln-item-hover-bg: #e0e0e0;
 }
 
+@font-face {
+  font-family: 'Noto Color Emoji';
+  src: url('./assets/fonts/NotoColorEmoji-Compatible.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Emoji';
+  src: url('./assets/fonts/NotoEmoji-Regular.ttf') format('truetype');
+}
+
 body {
   margin: 0;
   padding: 0;
   background-color: var(--ln-bg);
   color: var(--ln-fg);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Noto Color Emoji', 'Noto Emoji';
 }
 
 #root {

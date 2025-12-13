@@ -18,6 +18,7 @@ import { useVault } from "./hooks/useVault";
 import { useNote } from "./hooks/useNote";
 import { updateFrontmatter } from "./utils/frontmatter";
 import { writeNote, renameItem } from "./commands";
+import { PuzzleIcon, SearchIcon, DocumentTextIcon, ShareIcon, SparklesIcon, PencilSquareIcon } from "./components/Icons";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
@@ -259,9 +260,9 @@ function App() {
               </option>
             ))}
           </select>
-          <button className="reset-btn" onClick={handleStartCreate} title="New Note (Ctrl+N)">➕</button>
-          <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)">🔍</button>
-          <button className="reset-btn" onClick={() => setIsPluginsOpen(true)} title="Plugins">🧩</button>
+          <button className="reset-btn" onClick={handleStartCreate} title="New Note (Ctrl+N)"><PencilSquareIcon size={18} /></button>
+          <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)"><SearchIcon size={18} /></button>
+          <button className="reset-btn" onClick={() => setIsPluginsOpen(true)} title="Plugins"><PuzzleIcon size={18} /></button>
           <button className="reset-btn" onClick={() => setIsHelpOpen(true)} title="Help">?</button>
           <button className="reset-btn" onClick={onResetVault} title="Switch Vault">⚙</button>
           <div className="view-toggle">
@@ -270,14 +271,14 @@ function App() {
               onClick={() => setViewMode('notes')}
               title="Notes View"
             >
-              📝
+              <DocumentTextIcon size={18} />
             </button>
             <button
               className={`toggle-btn ${viewMode === 'graph' ? 'active' : ''}`}
               onClick={() => setViewMode('graph')}
               title="Graph View"
             >
-              🕸️
+              <ShareIcon size={18} />
             </button>
           </div>
         </div>
@@ -323,7 +324,9 @@ function App() {
                         onClick={() => setIsAiSidebarOpen(!isAiSidebarOpen)}
                         title="Toggle AI Assistant"
                       >
-                        🤖 AI
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <SparklesIcon size={16} /> AI
+                        </span>
                       </button>
                   )}
                   <button onClick={handleSave} disabled={isSaving || isLoadingNote}>
