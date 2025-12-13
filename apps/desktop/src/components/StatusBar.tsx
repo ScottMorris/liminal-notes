@@ -10,10 +10,10 @@ export function StatusBar() {
       display: 'flex',
       gap: '12px',
       padding: '4px 12px',
-      borderTop: '1px solid var(--border-color, #ccc)',
+      borderTop: '1px solid var(--ln-border)',
       fontSize: '0.85rem',
-      backgroundColor: 'var(--bg-secondary, #f5f5f5)',
-      color: 'var(--text-secondary, #666)',
+      backgroundColor: 'var(--ln-sidebar-bg)',
+      color: 'var(--ln-sidebar-fg)',
       userSelect: 'none',
       flexShrink: 0
     }}>
