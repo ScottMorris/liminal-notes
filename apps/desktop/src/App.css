@@ -92,6 +92,24 @@ body {
   font-size: 0.8rem;
   padding: 2px;
   max-width: 80px;
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+  border: 1px solid var(--ln-border);
+  border-radius: 4px;
+}
+
+button {
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+  border: 1px solid var(--ln-border);
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .reset-btn {

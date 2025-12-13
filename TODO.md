@@ -34,3 +34,8 @@ We should consider adding a printing feature for notes.
 - Folders as implicit tags: Display folders in the UI with distinct colors and treat them as tags for the notes they contain.
 - Tabs for multiple open notes: Implement a tabbed interface to allow users to switch between multiple open notes easily.
 - Format inline but don't hide the markdown syntax in the editor view (e.g., bold, italics). Eg. _rendered_ **markdown** `syntax` should still be visible in the editor, like VSCode.
+- Replace native `<select>` with a custom dropdown component to ensure consistent theming across platforms, as native controls on Linux/Tauri often ignore CSS for dropdown menus.
+
+## Theming
+
+- Consolidate all themes to use HSL color values for consistency and easier programmatic manipulation.
