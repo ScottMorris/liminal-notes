@@ -12,7 +12,7 @@
 
 @font-face {
   font-family: 'Noto Color Emoji';
-  src: url('./assets/fonts/NotoColorEmoji.ttf') format('truetype');
+  src: url('./assets/fonts/NotoColorEmoji-Compatible.ttf') format('truetype');
 }
 
 body {
