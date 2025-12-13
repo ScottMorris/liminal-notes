@@ -19,6 +19,7 @@ import { useNote } from "./hooks/useNote";
 import { updateFrontmatter } from "./utils/frontmatter";
 import { writeNote, renameItem } from "./commands";
 import { PuzzleIcon, SearchIcon, DocumentTextIcon, ShareIcon, SparklesIcon, PencilSquareIcon } from "./components/Icons";
+import { CodeMirrorEditor, EditorHandle } from "./components/Editor/CodeMirrorEditor";
 
 function App() {
   const { themeId, setThemeId, availableThemes } = useTheme();
@@ -47,7 +48,7 @@ function App() {
     clearSelection
   } = useNote();
 
-  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<EditorHandle>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPluginsOpen, setIsPluginsOpen] = useState(false);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
@@ -65,17 +66,7 @@ function App() {
 
   const handleInsertAtCursor = (text: string) => {
     if (editorRef.current) {
-      const textarea = editorRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const newContent = noteContent.substring(0, start) + text + noteContent.substring(end);
-      updateContent(newContent);
-
-      // Restore cursor after insertion
-      requestAnimationFrame(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + text.length;
-        textarea.focus();
-      });
+      editorRef.current.insertAtCursor(text);
     } else {
       // Fallback if ref is not available (e.g. view mode not ready), append to end
       updateContent(noteContent + "\n" + text);
@@ -167,6 +158,11 @@ function App() {
 
       // Save: Ctrl+S
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        // If editor is focused, CodeMirror will handle it
+        if (document.activeElement?.closest('.cm-editor')) {
+          return; // Let CodeMirror handle it
+        }
+
         e.preventDefault();
         handleSave();
       }
@@ -350,12 +346,11 @@ function App() {
                   {isLoadingNote ? (
                     <div className="loading-indicator">Loading...</div>
                   ) : (
-                    <textarea
+                    <CodeMirrorEditor
                       ref={editorRef}
-                      className="markdown-editor"
                       value={noteContent}
-                      onChange={(e) => updateContent(e.target.value)}
-                      disabled={isLoadingNote}
+                      onChange={updateContent}
+                      onSave={handleSave}
                     />
                   )}
                 </div>

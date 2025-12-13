@@ -12,3 +12,6 @@ apps/desktop/src/assets/fonts/
 # User Vault
 vault/*
 !vault/.gitkeep
+
+# pnpm store
+.pnpm-store/
