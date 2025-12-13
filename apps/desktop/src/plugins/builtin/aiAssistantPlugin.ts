@@ -5,7 +5,7 @@ export const aiAssistantPlugin: LiminalPlugin = {
     id: 'ai-assistant',
     name: 'AI Assistant',
     description: 'Jules-like local assistant for summaries, tags, and related notes.',
-    enabledByDefault: false,
+    enabledByDefault: true,
     version: '0.1.0',
     author: 'Liminal Notes',
   },

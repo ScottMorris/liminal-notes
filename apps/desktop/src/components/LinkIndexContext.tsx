@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useRef, ReactNode, useCallback } from 'react';
 import { readNote } from '../commands';
 import { FileEntry, Wikilink, LinkIndex, NotePath } from '../types';
 
@@ -20,61 +20,60 @@ export const useLinkIndex = () => {
   return context;
 };
 
+// Helper functions moved outside to ensure stability
+const resolveTarget = (targetRaw: string, paths: Set<string>): NotePath | undefined => {
+  // 1. If path separators, treat as relative path
+  if (targetRaw.includes('/') || targetRaw.includes('\\')) {
+    let candidate = targetRaw;
+    if (!candidate.endsWith('.md')) {
+      candidate += '.md';
+    }
+    if (paths.has(candidate)) {
+      return candidate;
+    }
+    return undefined;
+  }
+
+  // 2. Basename matching
+  const candidateName = targetRaw.endsWith('.md') ? targetRaw : `${targetRaw}.md`;
+
+  // Check exact match first (if file is in root)
+  if (paths.has(candidateName)) {
+    return candidateName;
+  }
+
+  // Search for any file ending with /candidateName
+  // Sort paths to be deterministic
+  const sortedPaths = Array.from(paths).sort();
+  for (const path of sortedPaths) {
+    if (path.endsWith(`/${candidateName}`)) {
+      return path;
+    }
+  }
+
+  return undefined;
+};
+
+const parseLinks = (source: NotePath, content: string): Wikilink[] => {
+  const regex = /\[\[([^\]]+)\]\]/g;
+  const links: Wikilink[] = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    links.push({
+      source,
+      targetRaw: match[1],
+      targetPath: undefined // To be resolved
+    });
+  }
+  return links;
+};
+
 export const LinkIndexProvider = ({ children }: { children: ReactNode }) => {
   const [linkIndex, setLinkIndex] = useState<LinkIndex>({ outbound: new Map(), backlinks: new Map() });
   const [isLoadingIndex, setIsLoadingIndex] = useState(false);
   const knownPathsRef = useRef<Set<string>>(new Set());
 
-  const resolveTarget = (targetRaw: string, paths: Set<string>): NotePath | undefined => {
-    // 1. If path separators, treat as relative path
-    if (targetRaw.includes('/') || targetRaw.includes('\\')) {
-      // Normalize slashes? Assuming unix style from backend or handling both.
-      // But let's check exact match first.
-      let candidate = targetRaw;
-      if (!candidate.endsWith('.md')) {
-        candidate += '.md';
-      }
-      if (paths.has(candidate)) {
-        return candidate;
-      }
-      return undefined;
-    }
-
-    // 2. Basename matching
-    const candidateName = targetRaw.endsWith('.md') ? targetRaw : `${targetRaw}.md`;
-
-    // Check exact match first (if file is in root)
-    if (paths.has(candidateName)) {
-      return candidateName;
-    }
-
-    // Search for any file ending with /candidateName
-    // Sort paths to be deterministic
-    const sortedPaths = Array.from(paths).sort();
-    for (const path of sortedPaths) {
-      if (path.endsWith(`/${candidateName}`)) {
-        return path;
-      }
-    }
-
-    return undefined;
-  };
-
-  const parseLinks = (source: NotePath, content: string): Wikilink[] => {
-    const regex = /\[\[([^\]]+)\]\]/g;
-    const links: Wikilink[] = [];
-    let match;
-    while ((match = regex.exec(content)) !== null) {
-      links.push({
-        source,
-        targetRaw: match[1],
-        targetPath: undefined // To be resolved
-      });
-    }
-    return links;
-  };
-
-  const rebuildIndex = async (files: FileEntry[]) => {
+  const rebuildIndex = useCallback(async (files: FileEntry[]) => {
     setIsLoadingIndex(true);
     const mdFiles = files.filter(f => !f.is_dir && f.path.endsWith('.md'));
     const paths = new Set(mdFiles.map(f => f.path));
@@ -110,9 +109,9 @@ export const LinkIndexProvider = ({ children }: { children: ReactNode }) => {
 
     setLinkIndex({ outbound: newOutbound, backlinks: newBacklinks });
     setIsLoadingIndex(false);
-  };
+  }, []);
 
-  const updateNote = (path: NotePath, content: string) => {
+  const updateNote = useCallback((path: NotePath, content: string) => {
     const paths = knownPathsRef.current;
 
     // Parse new links
@@ -155,14 +154,18 @@ export const LinkIndexProvider = ({ children }: { children: ReactNode }) => {
 
       return { outbound: nextOutbound, backlinks: nextBacklinks };
     });
-  };
+  }, []);
+
+  const resolvePath = useCallback((targetRaw: string) => {
+    return resolveTarget(targetRaw, knownPathsRef.current);
+  }, []);
 
   return (
     <LinkIndexContext.Provider value={{
       linkIndex,
       rebuildIndex,
       updateNote,
-      resolvePath: (t) => resolveTarget(t, knownPathsRef.current),
+      resolvePath,
       isLoadingIndex
     }}>
       {children}
