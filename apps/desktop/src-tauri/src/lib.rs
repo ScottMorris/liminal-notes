@@ -2,6 +2,13 @@ mod vault;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Cinnamon and similar Linux desktops often lack an accessibility bus, which causes
+    // GTK/Wry to spam errors and sometimes abort the launch. Force-disable the AT-SPI
+    // bridge when it is not explicitly configured.
+    if std::env::var_os("NO_AT_BRIDGE").is_none() {
+        std::env::set_var("NO_AT_BRIDGE", "1");
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
