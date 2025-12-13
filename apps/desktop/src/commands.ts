@@ -24,3 +24,7 @@ export const readNote = async (relativePath: string): Promise<string> => {
 export const writeNote = async (relativePath: string, contents: string): Promise<void> => {
   return await invoke("write_note_command", { relativePath, contents });
 };
+
+export const renameItem = async (oldPath: string, newPath: string): Promise<void> => {
+  return await invoke("rename_item", { oldPath, newPath });
+};

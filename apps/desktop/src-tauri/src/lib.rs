@@ -11,7 +11,8 @@ pub fn run() {
             vault::reset_vault_config,
             vault::list_markdown_files,
             vault::read_note_command,
-            vault::write_note_command
+            vault::write_note_command,
+            vault::rename_item
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

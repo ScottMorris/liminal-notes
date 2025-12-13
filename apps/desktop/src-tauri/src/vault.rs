@@ -171,6 +171,36 @@ pub fn write_note_command(app: AppHandle, relative_path: String, contents: Strin
     fs::write(full_path, contents).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub fn rename_item(app: AppHandle, old_path: String, new_path: String) -> Result<(), String> {
+    let config = get_vault_config(app.clone()).ok_or("No vault configured".to_string())?;
+    let root = Path::new(&config.root_path);
+
+    if !root.exists() {
+        return Err("Vault root does not exist".to_string());
+    }
+
+    let full_old_path = resolve_safe_path(root, &old_path)?;
+    let full_new_path = resolve_safe_path(root, &new_path)?;
+
+    if !full_old_path.exists() {
+        return Err("Source item does not exist".to_string());
+    }
+
+    if full_new_path.exists() {
+        return Err("Destination item already exists".to_string());
+    }
+
+    // Create parent directories for new path if needed
+    if let Some(parent) = full_new_path.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+    }
+
+    fs::rename(full_old_path, full_new_path).map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

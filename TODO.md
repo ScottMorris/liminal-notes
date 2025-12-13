@@ -21,3 +21,7 @@ We should consider adding a printing feature for notes.
 
 - Investigate setting up cross-compilation for Windows/macOS from Linux, or configuring GitHub Actions for multi-platform builds.
 - Current Linux builds produce `.deb` and `.AppImage`.
+
+## UI/UX Ideas
+
+- Folders as implicit tags: Display folders in the UI with distinct colors and treat them as tags for the notes they contain.
