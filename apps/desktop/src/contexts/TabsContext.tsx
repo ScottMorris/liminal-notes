@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { OpenTab, TabsState } from '../types/tabs';
+import { OpenTab, TabsState, AiState } from '../types/tabs';
 
 type TabsAction =
   | { type: 'OPEN_TAB'; tab: OpenTab }
@@ -9,6 +9,7 @@ type TabsAction =
   | { type: 'UPDATE_TAB_STATE'; tabId: string; editorState: string }
   | { type: 'UPDATE_TAB_TITLE'; tabId: string; title: string }
   | { type: 'UPDATE_TAB_PATH'; tabId: string; path: string; isUnsaved: boolean }
+  | { type: 'UPDATE_TAB_AI_STATE'; tabId: string; aiState: AiState }
   | { type: 'LOAD_TABS'; tabs: OpenTab[]; activeTabId: string | null };
 
 export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
@@ -81,6 +82,14 @@ export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
          )
       };
     }
+    case 'UPDATE_TAB_AI_STATE': {
+      return {
+        ...state,
+        openTabs: state.openTabs.map(t =>
+          t.id === action.tabId ? { ...t, aiState: action.aiState } : t
+        ),
+      };
+    }
     case 'LOAD_TABS': {
       return {
         openTabs: action.tabs,
@@ -101,6 +110,7 @@ interface TabsContextValue extends TabsState {
   updateTabState: (tabId: string, editorState: string) => void;
   updateTabTitle: (tabId: string, title: string) => void;
   updateTabPath: (tabId: string, path: string, isUnsaved: boolean) => void;
+  updateTabAiState: (tabId: string, aiState: AiState) => void;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -142,6 +152,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const updateTabState = (tabId: string, editorState: string) => dispatch({ type: 'UPDATE_TAB_STATE', tabId, editorState });
   const updateTabTitle = (tabId: string, title: string) => dispatch({ type: 'UPDATE_TAB_TITLE', tabId, title });
   const updateTabPath = (tabId: string, path: string, isUnsaved: boolean) => dispatch({ type: 'UPDATE_TAB_PATH', tabId, path, isUnsaved });
+  const updateTabAiState = (tabId: string, aiState: AiState) => dispatch({ type: 'UPDATE_TAB_AI_STATE', tabId, aiState });
 
   const value = {
     ...state,
@@ -152,7 +163,8 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     updateTabDirty,
     updateTabState,
     updateTabTitle,
-    updateTabPath
+    updateTabPath,
+    updateTabAiState
   };
 
   return <TabsContext.Provider value={value}>{children}</TabsContext.Provider>;

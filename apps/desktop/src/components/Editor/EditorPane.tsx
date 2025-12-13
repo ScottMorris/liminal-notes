@@ -31,6 +31,7 @@ export function EditorPane() {
     updateTabState,
     updateTabTitle,
     updateTabPath,
+    updateTabAiState,
     closeTab: closeTabContext
   } = useTabs();
 
@@ -426,7 +427,6 @@ export function EditorPane() {
                         </div>
                         )}
                     </div>
-                    {/* Backlinks Panel restored here, inside document column */}
                     <BacklinksPanel
                         currentFile={activeTab.path || null}
                         onNavigate={handleNavigate}
@@ -440,6 +440,8 @@ export function EditorPane() {
                         title: activeTab.title,
                         content: content
                         }}
+                        aiState={activeTab.aiState}
+                        onUpdateAiState={(newState) => updateTabAiState(activeTab.id, newState)}
                         onNavigate={handleNavigate}
                         onClose={() => setIsAiSidebarOpen(false)}
                         onInsertAtCursor={handleInsertAtCursor}

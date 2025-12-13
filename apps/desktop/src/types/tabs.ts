@@ -1,3 +1,9 @@
+export interface AiState {
+  result: any | null; // Using any to avoid circular dependency with aiController types
+  isLoading: boolean;
+  error: string | null;
+}
+
 export interface OpenTab {
   id: string;
   path: string;          // Empty string '' for unsaved tabs
@@ -7,6 +13,7 @@ export interface OpenTab {
   isLoading: boolean;
   isUnsaved: boolean;    // true if not yet saved to disk
   editorState: string;
+  aiState?: AiState;
 }
 
 export interface TabsState {
