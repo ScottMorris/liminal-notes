@@ -6,13 +6,15 @@ interface TabProps {
   isActive: boolean;
   onSelect: () => void;
   onClose: (e: React.MouseEvent) => void;
+  onDoubleClick: () => void;
 }
 
-export function Tab({ tab, isActive, onSelect, onClose }: TabProps) {
+export function Tab({ tab, isActive, onSelect, onClose, onDoubleClick }: TabProps) {
   return (
     <div
-      className={`tab ${isActive ? 'active' : ''} ${tab.isDirty ? 'dirty' : ''}`}
+      className={`tab ${isActive ? 'active' : ''} ${tab.isDirty ? 'dirty' : ''} ${tab.isPreview ? 'preview' : ''}`}
       onClick={onSelect}
+      onDoubleClick={onDoubleClick}
       onMouseDown={(e) => {
         if (e.button === 1) { // Middle click
           e.preventDefault();
@@ -21,7 +23,7 @@ export function Tab({ tab, isActive, onSelect, onClose }: TabProps) {
       }}
       title={tab.path || tab.title}
     >
-      <span className="tab-title">{tab.title}</span>
+      <span className="tab-title" style={tab.isPreview ? { fontStyle: 'italic' } : {}}>{tab.title}</span>
       {tab.isDirty && <span className="tab-dirty-indicator">●</span>}
       <button
         className="tab-close"

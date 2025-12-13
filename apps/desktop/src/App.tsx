@@ -64,6 +64,7 @@ function AppContent() {
 
   const handleStartCreate = useCallback(() => {
     // New behavior: Open "Untitled" tab
+    // New tabs via "New Note" are always permanent (not preview)
     const newId = crypto.randomUUID();
     openTab({
         id: newId,
@@ -73,41 +74,13 @@ function AppContent() {
         isDirty: true,
         isLoading: false,
         isUnsaved: true,
+        isPreview: false,
         editorState: ''
     });
-    // We don't use the sidebar input for creating "New Note" via button anymore?
-    // The requirement said "Create new tab".
-    // BUT the sidebar "New Note" button previously triggered inline creation in file tree.
-    // Requirement 3.1: "When opening a note from file tree... New tabs should load content".
-    // Requirement 4: "New Note behavior - Untitled Ephemeral Tabs".
-
-    // So Ctrl+N / Button should open Untitled Tab.
-    // Sidebar File Tree "New File" (if it existed) might be different.
-    // The existing "New Note" button used `handleStartCreate` to show input in tree.
-    // We replace this with opening an Untitled Tab.
-
-    // What about `FileTree` creation? The `FileTree` component has `onStartCreate` prop.
-    // If we want to keep the tree-based creation as an alternative, we can.
-    // But "New Note" (Ctrl+N) usually means "Open empty editor".
-
-    // Let's stick to the plan: Ctrl+N -> Untitled Tab.
-    // File Tree context menu or button might still do file-on-disk creation.
-    // The current `FileTree` props: `isCreating`, `onRename`, `onCreate`.
-    // I will leave `FileTree` logic mostly as is for explicit "Create File in Folder" actions if supported,
-    // but the main "New Note" action will use tabs.
-
-    // Actually, `FileTree` `isCreating` shows an input box at root.
-    // Let's DISABLE that for the main button and use Tabs.
-    // But `FileTree` might still need it?
-    // Let's decouple the button from `FileTree`.
   }, [openTab]);
 
   const handleCreateCommit = useCallback(async (name: string) => {
       // This is for the FileTree input if we still use it.
-      // If we don't use it, we can remove this or keep it for compatibility if FileTree internally uses it.
-      // Current FileTree seems to be controlled by parent props.
-      // If we don't set `isCreating=true`, this won't be called.
-      // So we can ignore it if we don't trigger it.
   }, []);
 
   const handleCreateCancel = useCallback(() => {
@@ -141,31 +114,6 @@ function AppContent() {
           await renameItem(oldPath, newPath);
           await refreshFiles();
 
-          // If we renamed a file that is open in a tab, we should update the tab
-          // Find tab with id == oldPath (since for existing files id=path)
-          // Wait, if id=path, we need to update ID too?
-          // If we change ID, React keys change, editor remounts.
-          // Ideally ID should be UUID.
-          // But for now ID=path for existing files.
-          // So we need to close old tab and open new one? Or update Tab in place?
-          // If we update ID, we need a robust reducer action.
-          // For now, let's just update title and path?
-          // But ID is used for lookup.
-          // Let's check if we have a tab open with this path.
-
-          // This is a bit tricky with ID=path.
-          // Ideally we migrate to UUIDs for all tabs, but for file-based tabs, path is convenient unique key.
-          // Let's try to update:
-          // We need a NEW action: `RENAME_TAB_ID`?
-          // Or just close and reopen?
-          // Close and reopen loses undo history (which we lose anyway on switch).
-          // Let's close old and open new.
-
-          // But first, let's just handle the file system rename.
-          // The tab will point to a non-existent file?
-          // If we don't update tab, user sees error on save.
-
-          // Workaround: Loop through tabs, if any matches oldPath, close it and open newPath?
           const oldTab = openTabs.find(t => t.id === oldPath); // Assuming ID=path
           if (oldTab) {
               closeTab(oldPath);
@@ -174,9 +122,10 @@ function AppContent() {
                   path: newPath,
                   title: newFilename.replace('.md', ''),
                   mode: 'source',
-                  isDirty: oldTab.isDirty, // Preserve dirty? No, file moved.
+                  isDirty: oldTab.isDirty,
                   isLoading: false,
                   isUnsaved: false,
+                  isPreview: oldTab.isPreview, // Preserve preview state? Or force permanent? Usually permanent on rename.
                   editorState: oldTab.editorState
               });
           }
@@ -188,10 +137,13 @@ function AppContent() {
       }
   }, [refreshFiles, openTabs, closeTab, openTab]);
 
-  const handleFileSelect = useCallback((path: string) => {
+  const handleFileSelect = useCallback((path: string, isDoubleClick: boolean = false) => {
       // Check if already open
       const existing = openTabs.find(t => t.id === path); // Assuming ID=path
       if (existing) {
+          if (isDoubleClick && existing.isPreview) {
+              dispatch({ type: 'KEEP_TAB', tabId: existing.id });
+          }
           switchTab(existing.id);
       } else {
           const title = path.split('/').pop()?.replace('.md', '') || path;
@@ -203,10 +155,11 @@ function AppContent() {
               isDirty: false,
               isLoading: false,
               isUnsaved: false,
+              isPreview: !isDoubleClick, // Preview if single click
               editorState: ''
           });
       }
-  }, [openTabs, switchTab, openTab]);
+  }, [openTabs, switchTab, openTab, dispatch]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -215,22 +168,6 @@ function AppContent() {
         e.preventDefault();
         setIsSearchOpen(true);
       }
-
-      // Save: Ctrl+S -> Handled by CodeMirror if focused, or EditorPane global handler?
-      // EditorPane has a local `handleSave`.
-      // App doesn't know about EditorPane's internal save logic easily without ref/context.
-      // But `EditorPane` mounts the editor.
-      // If focus is NOT in editor (e.g. sidebar), Ctrl+S should probably still save active tab.
-      // We can expose `saveActiveTab` in Context? No, context is state.
-      // We can use an event bus or just rely on Editor being focused?
-      // "Save command is handled by the CodeMirror keymap when the editor is focused".
-      // Falling back to global handler:
-      // If we are in App, we don't have direct access to `writeNote` with `content`.
-      // `EditorPane` owns `content`.
-      // So we should move the global shortcut listener INTO `EditorPane` or expose a save trigger.
-      // For now, let's assume user focuses editor to save, or we move this listener to `EditorPane`.
-      // The original App.tsx had it.
-      // Let's remove it from here and rely on EditorPane (which I will add listener to).
 
       // New Note: Ctrl+N
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
@@ -311,7 +248,7 @@ function AppContent() {
         </div>
         <FileTree
             files={files}
-            onFileSelect={handleFileSelect}
+            onFileSelect={(path, isDoubleClick) => handleFileSelect(path, isDoubleClick)}
             editingPath={editingPath}
             isCreating={isCreating} // We aren't using this for now via button, but prop required
             onRename={handleRenameCommit}
@@ -326,7 +263,7 @@ function AppContent() {
           <SearchModal
             onClose={() => setIsSearchOpen(false)}
             onSelect={(path) => {
-              handleFileSelect(path);
+              handleFileSelect(path, false); // Search select is usually single click
               setIsSearchOpen(false);
             }}
           />
@@ -335,7 +272,7 @@ function AppContent() {
         {isHelpOpen && <HelpModal onClose={() => setIsHelpOpen(false)} />}
 
         {viewMode === 'graph' ? (
-           <GraphView selectedFile={selectedFile} onSelect={handleFileSelect} />
+           <GraphView selectedFile={selectedFile} onSelect={(path) => handleFileSelect(path, false)} />
         ) : (
            <EditorPane />
         )}

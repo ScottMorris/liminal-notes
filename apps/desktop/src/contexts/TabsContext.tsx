@@ -5,6 +5,7 @@ type TabsAction =
   | { type: 'OPEN_TAB'; tab: OpenTab }
   | { type: 'CLOSE_TAB'; tabId: string }
   | { type: 'SWITCH_TAB'; tabId: string }
+  | { type: 'KEEP_TAB'; tabId: string } // Convert preview to permanent
   | { type: 'UPDATE_TAB_DIRTY'; tabId: string; isDirty: boolean }
   | { type: 'UPDATE_TAB_STATE'; tabId: string; editorState: string }
   | { type: 'UPDATE_TAB_TITLE'; tabId: string; title: string }
@@ -18,11 +19,45 @@ export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
       // Check if already open
       const existing = state.openTabs.find(t => t.id === action.tab.id);
       if (existing) {
-        return { ...state, activeTabId: action.tab.id };
+        // If it was preview and we are "opening" it again, check if we need to promote it?
+        // Usually clicking an existing tab just focuses it.
+        // But if we double-clicked a file that was already open as preview, we should promote it.
+        // We rely on 'KEEP_TAB' for explicit promotion, or logic here.
+        // If new request is NOT preview, promote existing?
+        let updatedTabs = state.openTabs;
+        if (existing.isPreview && !action.tab.isPreview) {
+             updatedTabs = state.openTabs.map(t => t.id === existing.id ? { ...t, isPreview: false } : t);
+        }
+        return { ...state, openTabs: updatedTabs, activeTabId: action.tab.id };
       }
+
+      // Logic for replacing Preview tab
+      // If the new tab is a Preview tab...
+      if (action.tab.isPreview) {
+          const existingPreview = state.openTabs.find(t => t.isPreview);
+          if (existingPreview) {
+              // Replace existing preview with new tab
+              // Ensure we replace it in place or just filter out old and add new?
+              // Replacing in place preserves position.
+              const newTabs = state.openTabs.map(t => t.id === existingPreview.id ? action.tab : t);
+              return {
+                  openTabs: newTabs,
+                  activeTabId: action.tab.id
+              };
+          }
+      }
+
       return {
         openTabs: [...state.openTabs, action.tab],
         activeTabId: action.tab.id,
+      };
+    }
+    case 'KEEP_TAB': {
+      return {
+        ...state,
+        openTabs: state.openTabs.map(t =>
+          t.id === action.tabId ? { ...t, isPreview: false } : t
+        ),
       };
     }
     case 'CLOSE_TAB': {
@@ -106,6 +141,7 @@ interface TabsContextValue extends TabsState {
   openTab: (tab: OpenTab) => void;
   closeTab: (tabId: string) => void;
   switchTab: (tabId: string) => void;
+  keepTab: (tabId: string) => void;
   updateTabDirty: (tabId: string, isDirty: boolean) => void;
   updateTabState: (tabId: string, editorState: string) => void;
   updateTabTitle: (tabId: string, title: string) => void;
@@ -148,6 +184,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const openTab = (tab: OpenTab) => dispatch({ type: 'OPEN_TAB', tab });
   const closeTab = (tabId: string) => dispatch({ type: 'CLOSE_TAB', tabId });
   const switchTab = (tabId: string) => dispatch({ type: 'SWITCH_TAB', tabId });
+  const keepTab = (tabId: string) => dispatch({ type: 'KEEP_TAB', tabId });
   const updateTabDirty = (tabId: string, isDirty: boolean) => dispatch({ type: 'UPDATE_TAB_DIRTY', tabId, isDirty });
   const updateTabState = (tabId: string, editorState: string) => dispatch({ type: 'UPDATE_TAB_STATE', tabId, editorState });
   const updateTabTitle = (tabId: string, title: string) => dispatch({ type: 'UPDATE_TAB_TITLE', tabId, title });
@@ -160,6 +197,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     openTab,
     closeTab,
     switchTab,
+    keepTab,
     updateTabDirty,
     updateTabState,
     updateTabTitle,

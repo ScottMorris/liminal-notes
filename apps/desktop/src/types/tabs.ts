@@ -12,6 +12,7 @@ export interface OpenTab {
   isDirty: boolean;
   isLoading: boolean;
   isUnsaved: boolean;    // true if not yet saved to disk
+  isPreview?: boolean;   // true if tab is in preview mode (reusable)
   editorState: string;
   aiState?: AiState;
 }

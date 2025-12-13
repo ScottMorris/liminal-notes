@@ -27,6 +27,7 @@ export function EditorPane() {
     activeTabId,
     dispatch,
     switchTab,
+    keepTab,
     updateTabDirty,
     updateTabState,
     updateTabTitle,
@@ -122,6 +123,15 @@ export function EditorPane() {
             // Immediate (memory or new unsaved)
             setContent(nextContent);
             setLoadedTabId(activeTab.id);
+
+            // Notify plugins even if loading from memory
+            if (activeTab.path || activeTab.isUnsaved) {
+                notifyNoteOpened({
+                    path: activeTab.path || activeTab.title, // Fallback for new notes
+                    title: activeTab.title,
+                    content: nextContent
+                });
+            }
         }
     };
 
@@ -196,6 +206,11 @@ export function EditorPane() {
   const handleContentChange = (newContent: string) => {
     if (newContent !== content) {
         setContent(newContent);
+
+        // If editing a preview tab, make it permanent
+        if (activeTab && activeTab.isPreview) {
+            keepTab(activeTab.id);
+        }
 
         if (activeTab && !activeTab.isDirty) {
             updateTabDirty(activeTab.id, true);
@@ -297,6 +312,7 @@ export function EditorPane() {
                     switchTab(existing.id);
                 } else {
                      const title = targetPath.split('/').pop()?.replace('.md', '') || targetPath;
+                     // Wikilinks open in preview mode by default
                      dispatch({
                          type: 'OPEN_TAB',
                          tab: {
@@ -307,6 +323,7 @@ export function EditorPane() {
                              isDirty: false,
                              isLoading: false,
                              isUnsaved: false,
+                             isPreview: true, // Default to preview for links
                              editorState: ''
                          }
                      });
@@ -345,6 +362,7 @@ export function EditorPane() {
                   isDirty: false,
                   isLoading: false,
                   isUnsaved: false,
+                  isPreview: true, // Default to preview for navigation
                   editorState: ''
               }
           });
@@ -361,13 +379,14 @@ export function EditorPane() {
          activeTabId={activeTabId}
          onTabSwitch={handleTabSwitch}
          onTabClose={handleCloseTab}
+         onKeepTab={keepTab}
        />
 
        {activeTab ? (
          <>
            <div className="editor-header">
                 <div className="file-info">
-                  <span className="file-name">{activeTab.title}</span>
+                  <span className="file-name" style={activeTab.isPreview ? { fontStyle: 'italic' } : {}}>{activeTab.title}</span>
                   {activeTab.isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
                   {activeTab.isUnsaved && <span className="indexing-indicator"> (Unsaved)</span>}
                 </div>
