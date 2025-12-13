@@ -39,3 +39,8 @@ We should consider adding a printing feature for notes.
 ## Theming
 
 - Consolidate all themes to use HSL color values for consistency and easier programmatic manipulation.
+
+## Editor
+
+- Verify if explicit theme reconfiguration is needed for CodeMirror when complex theme changes occur (currently relies on CSS variables updating automatically).
+- Implement undo history reset when switching notes to prevent undoing into a previous note's content state.
