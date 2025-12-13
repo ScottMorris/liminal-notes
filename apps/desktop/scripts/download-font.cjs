@@ -6,10 +6,10 @@ const fontsDir = path.join(__dirname, '../src/assets/fonts');
 
 // Fonts configuration
 // 1. Noto Color Emoji (Windows Compatible version for robustness)
-const colorFontUrl = 'https://github.com/googlefonts/noto-emoji/raw/main/fonts/NotoColorEmoji_WindowsCompatible.ttf';
-const colorFontPath = path.join(fontsDir, 'NotoColorEmoji-Compatible.ttf');
+const colourFontUrl = 'https://github.com/googlefonts/noto-emoji/raw/main/fonts/NotoColorEmoji_WindowsCompatible.ttf';
+const colourFontPath = path.join(fontsDir, 'NotoColorEmoji-Compatible.ttf');
 
-// 2. Noto Emoji (Monochrome fallback for Linux environments where color fonts fail)
+// 2. Noto Emoji (Monochrome fallback for Linux environments where colour fonts fail)
 // Note: We use a specific tag/commit because 'main' branch structure changes frequently or files move.
 // v2.034 is a stable release containing the static NotoEmoji-Regular.ttf
 const monoFontUrl = 'https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.034/fonts/NotoEmoji-Regular.ttf';
@@ -77,7 +77,7 @@ async function main() {
   try {
     await ensureDir(fontsDir);
     await Promise.all([
-        downloadFile(colorFontUrl, colorFontPath),
+        downloadFile(colourFontUrl, colourFontPath),
         downloadFile(monoFontUrl, monoFontPath),
         downloadFile(licenseUrl, licensePath)
     ]);
