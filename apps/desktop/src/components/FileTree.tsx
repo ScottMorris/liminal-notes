@@ -232,7 +232,7 @@ function NodeInput({ initialValue, isDir, onSubmit, onCancel }: { initialValue: 
                 value={val}
                 onChange={(e) => setVal(e.target.value)}
                 onKeyDown={handleKeyDown}
-                onBlur={onCancel}
+                onBlur={() => requestAnimationFrame(() => onCancel())}
                 style={{
                     fontFamily: 'inherit',
                     fontSize: 'inherit',
