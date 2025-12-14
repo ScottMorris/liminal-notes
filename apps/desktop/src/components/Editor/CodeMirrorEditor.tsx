@@ -220,6 +220,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       try {
         const context = getEditorContext(viewRef.current);
         await commandRegistry.executeCommand(commandId, context, viewRef.current);
+        viewRef.current.focus();
       } catch (e) {
         console.error("Failed to execute command from menu:", e);
       }
