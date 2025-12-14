@@ -115,9 +115,9 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         markdown(),
         createEditorTheme(),
         keymap.of([
+          ...registryKeymap,
           ...defaultKeymap,
           ...historyKeymap,
-          ...registryKeymap,
           {
             key: 'Mod-s',
             run: () => {
