@@ -123,6 +123,7 @@ const pastePlainCommand: Command = {
   id: 'editor.edit.pastePlain',
   label: 'Paste as plain text',
   group: 'Edit',
+  shortcut: 'Ctrl+Shift+V',
   run: async (ctx, view) => {
     // Same as paste for now; could strip formatting in future
     const text = await readText();
