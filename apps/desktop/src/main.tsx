@@ -6,6 +6,10 @@ import { LinkIndexProvider } from "./components/LinkIndexContext";
 import { SearchIndexProvider } from "./components/SearchIndexContext";
 import { PluginHostProvider } from "./plugins/PluginHostProvider";
 import { NotificationProvider } from "./components/NotificationContext";
+import { registerAllCommands } from "./commands/registerDefaults";
+
+// Initialize commands before rendering
+registerAllCommands();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

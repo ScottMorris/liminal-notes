@@ -22,7 +22,7 @@ export function MenuSection({ section, onItemClick }: MenuSectionProps) {
           <MenuItem
             key={item.id}
             item={item}
-            onClick={() => onItemClick(item.id)}
+            onItemClick={onItemClick}
           />
         );
       })}

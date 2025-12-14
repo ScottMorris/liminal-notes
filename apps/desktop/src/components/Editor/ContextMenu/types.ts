@@ -8,7 +8,7 @@ export interface MenuItem {
   shortcut?: string;
   disabled?: boolean;
   action?: () => void;
-  children?: MenuItem[];  // For submenus (E5)
+  children?: MenuItem[];  // Submenu items
 }
 
 /**
@@ -39,4 +39,13 @@ export interface MenuModel {
 export interface MenuPosition {
   x: number;
   y: number;
+}
+
+/**
+ * Submenu state tracking
+ */
+export interface SubmenuState {
+  parentItemId: string;
+  items: MenuItem[];
+  position: MenuPosition;
 }

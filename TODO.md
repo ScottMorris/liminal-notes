@@ -69,3 +69,20 @@ Currently, unsaved tabs are stored in `localStorage` which means:
 ## Editor Enhancements
 
 - **Specialized Clipboard Support:** Add support for specialized clipboard formats (HTML, Image) via `clipboard-manager:allow-write-html`, `clipboard-manager:allow-write-image`, etc. Currently only plain text is supported.
+- **Advanced Editing Commands:** Expose native CodeMirror commands in the Command Registry/Palette ([Reference](https://codemirror.net/docs/ref/#commands)):
+  - Undo / Redo
+  - Move Line Up / Down
+  - Indentation commands (Tab / Shift+Tab) - [Details](https://codemirror.net/examples/tab/)
+  - Toggle Comment (Ctrl+/) - Add to Context Menu
+- **Editor Enhancements:**
+  - **Multiple Selections:** Enable [`allowMultipleSelections`](https://codemirror.net/docs/ref/#state.EditorState^allowMultipleSelections).
+  - **Tab Size:** specific config via [`tabSize`](https://codemirror.net/docs/ref/#state.EditorState^tabSize).
+- **AI Features:**
+  - **Thought Summarizer:** Highlight text and have AI summarize and insert it.
+- **Advanced Editing Commands:** Expose native CodeMirror commands in the Command Registry/Palette:
+  - Undo / Redo
+  - Move Line Up / Down
+  - Add Cursor Above / Below (Multi-cursor)
+  - Delete Line
+  - Select Line
+  - Duplicate Line

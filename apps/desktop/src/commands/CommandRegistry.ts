@@ -21,6 +21,13 @@ export class CommandRegistry implements ICommandRegistry {
   }
 
   /**
+   * Get all registered commands (unfiltered)
+   */
+  getAllCommands(): Command[] {
+    return Array.from(this.commands.values());
+  }
+
+  /**
    * Get all commands that are enabled in the current context
    */
   getCommands(context: EditorContext): Command[] {
