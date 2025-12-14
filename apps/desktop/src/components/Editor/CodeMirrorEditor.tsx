@@ -94,6 +94,18 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     useEffect(() => {
       if (!editorRef.current) return;
 
+      // Build keymap from command registry
+      const registryKeymap = commandRegistry.getAllCommands()
+        .filter(cmd => cmd.shortcut)
+        .map(cmd => ({
+          key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-'),
+          run: (view: EditorView) => {
+            const context = getEditorContext(view);
+            commandRegistry.executeCommand(cmd.id, context, view);
+            return true;
+          }
+        }));
+
       let startState: EditorState;
       const extensions = [
         lineNumbers(),
@@ -105,6 +117,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         keymap.of([
           ...defaultKeymap,
           ...historyKeymap,
+          ...registryKeymap,
           {
             key: 'Mod-s',
             run: () => {
