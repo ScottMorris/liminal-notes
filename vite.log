@@ -37,3 +37,4 @@
       at async viteTransformMiddleware (file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:24541:20)
 4:27:41 AM [vite] (client) hmr update /src/components/Editor/ContextMenu/MenuItem.tsx
 4:43:14 AM [vite] (client) hmr update /src/components/Editor/ContextMenu/ContextMenu.css
+4:54:04 AM [vite] (client) hmr update /src/App.tsx
