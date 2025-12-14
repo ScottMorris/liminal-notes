@@ -5,6 +5,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { closeBrackets } from '@codemirror/autocomplete';
 import { createEditorTheme } from './editorTheme';
+import { markdownDecorations } from './decorations';
 import { useTheme } from '../../theme';
 import { ContextMenu } from './ContextMenu/ContextMenu';
 import { buildContextMenu } from './ContextMenu/menuBuilder';
@@ -113,6 +114,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         history(),
         closeBrackets(),
         markdown(),
+        markdownDecorations,
         createEditorTheme(),
         keymap.of([
           ...registryKeymap,
