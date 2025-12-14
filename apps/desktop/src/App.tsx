@@ -16,7 +16,7 @@ import { writeNote, renameItem } from "./ipc";
 import { PuzzleIcon, SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon } from "./components/Icons";
 import { TabsProvider, useTabs } from "./contexts/TabsContext";
 import { EditorPane } from "./components/Editor/EditorPane";
-import { registerAllCommands } from "./commands";
+import { registerAllCommands } from "./commands/registerDefaults";
 
 // Main App Component Content (Inside TabsProvider)
 function AppContent() {
@@ -285,6 +285,10 @@ function AppContent() {
 }
 
 function App() {
+    useEffect(() => {
+        registerAllCommands();
+    }, []);
+
     return (
         <TabsProvider>
             <AppContent />

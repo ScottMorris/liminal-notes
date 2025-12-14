@@ -71,6 +71,9 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
           },
         });
       },
+      get view() {
+          return viewRef.current;
+      }
     }));
 
     // Initialize Editor
