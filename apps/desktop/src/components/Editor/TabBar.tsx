@@ -18,16 +18,16 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
   const { reorderTabs } = useTabs();
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
 
-  if (tabs.length === 0) {
-      return null;
-  }
-
   // Scroll active tab into view
   useEffect(() => {
     if (activeTabId && scrollContainerRef.current) {
         // Implement scrolling later if needed
     }
   }, [activeTabId]);
+
+  if (tabs.length === 0) {
+      return null;
+  }
 
   const handleWheel = (e: React.WheelEvent) => {
     if (scrollContainerRef.current) {
