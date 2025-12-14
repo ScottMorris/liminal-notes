@@ -25,8 +25,6 @@ export function Submenu({
 
   // Position submenu relative to parent
   useEffect(() => {
-    // Note: We don't have the ref immediately if we just rendered?
-    // Actually ref is attached to the div.
     if (!submenuRef.current) return;
 
     const menu = submenuRef.current;
@@ -62,9 +60,7 @@ export function Submenu({
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (submenuRef.current && !submenuRef.current.contains(e.target as Node)) {
-        // Only close if we are sure. See notes in previous iteration.
-        // If we rely on hover for closing, we might not need click-outside for submenus specifically
-        // provided the parent closes everything.
+        // Parent menu handling suffices
       }
     }
 
@@ -89,10 +85,7 @@ export function Submenu({
         <MenuItem
           key={item.id}
           item={item}
-          onClick={() => {
-            onItemClick(item.id);
-            onClose();
-          }}
+          onItemClick={onItemClick}
         />
       ))}
     </div>,
