@@ -18,6 +18,10 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
   const { reorderTabs } = useTabs();
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
 
+  if (tabs.length === 0) {
+      return null;
+  }
+
   // Scroll active tab into view
   useEffect(() => {
     if (activeTabId && scrollContainerRef.current) {
@@ -35,6 +39,12 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
   const handleDragStart = (e: React.DragEvent, tabId: string) => {
       setDraggedTabId(tabId);
       e.dataTransfer.effectAllowed = 'move';
+
+      // Use a transparent image to remove the default ghost
+      const img = new Image();
+      img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // 1x1 transparent gif
+      e.dataTransfer.setDragImage(img, 0, 0);
+
       // Dim the element being dragged for visual feedback
       (e.target as HTMLElement).style.opacity = '0.5';
   };
