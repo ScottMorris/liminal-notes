@@ -95,6 +95,24 @@ export function createEditorTheme() {
       color: 'var(--ln-syntax-link)',
     },
 
+    // Strikethrough
+    '.cm-strikethrough': {
+      textDecoration: 'line-through',
+      opacity: '0.8',
+    },
+
+    // Blockquote
+    '.cm-blockquote': {
+      color: 'var(--ln-syntax-frontmatter)', // Use muted color
+      fontStyle: 'italic',
+    },
+
+    // Horizontal Rule
+    '.cm-hr': {
+      color: 'var(--ln-syntax-frontmatter)',
+      fontWeight: 'bold',
+    },
+
     // Frontmatter
     '.cm-frontmatter': {
       color: 'var(--ln-syntax-frontmatter)',

@@ -55,137 +55,6 @@ export function detectFrontmatter(view: EditorView): { from: number; to: number 
 }
 
 /**
- * Build decorations for the visible range
- */
-function buildDecorations(view: EditorView): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>();
-
-  // Frontmatter Decoration
-  const frontmatter = detectFrontmatter(view);
-  if (frontmatter) {
-    // Only add if visible
-    if (frontmatter.to >= view.viewport.from && frontmatter.from <= view.viewport.to) {
-        // Ensure we clip the range to what's valid (though decorations are usually robust)
-        builder.add(
-            frontmatter.from,
-            frontmatter.to,
-            Decoration.mark({
-            class: 'cm-frontmatter',
-            })
-        );
-    }
-  }
-
-  // Iterate through visible syntax tree
-  for (const { from, to } of view.visibleRanges) {
-    syntaxTree(view.state).iterate({
-      from,
-      to,
-      enter(node) {
-        const { type, from, to } = node;
-
-        // Bold: **text**
-        if (type.name === 'StrongEmphasis') {
-          builder.add(
-            from,
-            to,
-            Decoration.mark({
-              class: 'cm-strong',
-              // Markers remain visible, but text gets weight
-            })
-          );
-        }
-
-        // Italic: _text_
-        if (type.name === 'Emphasis') {
-          builder.add(
-            from,
-            to,
-            Decoration.mark({
-              class: 'cm-emphasis',
-            })
-          );
-        }
-
-        // Inline code: `text`
-        if (type.name === 'InlineCode') {
-          builder.add(
-            from,
-            to,
-            Decoration.mark({
-              class: 'cm-inline-code',
-            })
-          );
-        }
-
-        // Headings: # H1, ## H2, etc.
-        if (type.name.startsWith('ATXHeading')) {
-          builder.add(
-            from,
-            to,
-            Decoration.mark({
-              class: `cm-heading cm-heading-${type.name.slice(-1)}`,
-            })
-          );
-        }
-
-        // Links: [text](url)
-        // CodeMirror Markdown parses Link as [LinkMark, LinkText, LinkMark, URL, LinkMark] or similar structure depending on dialect
-        // But usually 'Link' wraps the whole thing.
-        if (type.name === 'Link') {
-          builder.add(
-            from,
-            to,
-            Decoration.mark({
-              class: 'cm-link',
-            })
-          );
-        }
-      },
-    });
-  }
-
-  // Add wikilinks using manual parser
-  const wikilinks = findWikiLinks(view);
-  for (const { from, to } of wikilinks) {
-    // Only add decorations for visible wikilinks
-    // RangeSetBuilder expects items to be added in increasing order of 'from'.
-    // Since we are iterating separately, we have a problem: RangeSetBuilder must be built in order.
-    //
-    // To solve this, we cannot just append to 'builder' if we've already added items from syntaxTree that appear AFTER the wikilink.
-    // However, syntaxTree iteration is ordered.
-    // WikiLinks are also found in order.
-    //
-    // But mixing two sources into one RangeSetBuilder requires merging them first or using two separate builders/sets and combining them.
-    // CodeMirror supports merging DecorationSets.
-    //
-    // So, let's change strategy:
-    // 1. Build syntax decorations.
-    // 2. Build wikilink decorations.
-    // 3. Combine them.
-
-    // Actually, to keep it simple and performant, we can just use one builder if we are careful,
-    // but since we iterate syntaxTree (which yields nodes in order), injecting wikilinks "in between" is hard.
-    //
-    // Better approach: Return a DecorationSet that combines multiple RangeSets if needed, or better yet,
-    // since we want to output a single DecorationSet, we can just create a separate set for wikilinks
-    // and let CodeMirror handle multiple sets in the ViewPlugin?
-    // No, ViewPlugin expects a single DecorationSet usually, but we can return `Decoration.set([set1, set2])`.
-    //
-    // Let's refactor `buildDecorations` to return an array of sets or just one merged set.
-  }
-
-  // Wait, RangeSetBuilder MUST be added to in order.
-  // The syntaxTree iteration happens in order.
-  // The wikiLinks are in order.
-  // But they interleave.
-  //
-  // A cleaner way is to collect ALL decorations into an array first, sort them by `from`, and then build.
-
-  return builder.finish();
-}
-
-/**
  * We need to handle the interleaving of decorations from different sources (Syntax Tree vs Manual Regex).
  * Since RangeSetBuilder requires ordered addition, we will collect all decoration requests into a buffer,
  * sort them, and then build the set.
@@ -223,6 +92,14 @@ function buildCombinedDecorations(view: EditorView): DecorationSet {
                      decorations.push({ from, to, deco: Decoration.mark({ class: `cm-heading cm-heading-${type.name.slice(-1)}` }) });
                 } else if (type.name === 'Link') {
                      decorations.push({ from, to, deco: Decoration.mark({ class: 'cm-link' }) });
+                } else if (type.name === 'Strikethrough') {
+                     decorations.push({ from, to, deco: Decoration.mark({ class: 'cm-strikethrough' }) });
+                } else if (type.name === 'Blockquote') {
+                    // Blockquotes are block level, we might want to decorate the whole line or content
+                    // Usually they wrap content.
+                    decorations.push({ from, to, deco: Decoration.mark({ class: 'cm-blockquote' }) });
+                } else if (type.name === 'HorizontalRule') {
+                    decorations.push({ from, to, deco: Decoration.mark({ class: 'cm-hr' }) });
                 }
             }
         });
