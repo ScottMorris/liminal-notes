@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { readNote, writeNote } from '../../commands';
+import { readNote, writeNote } from '../../ipc';
 import { useTabs } from '../../contexts/TabsContext';
 import { usePluginHost } from '../../plugins/PluginHostProvider';
 import { useLinkIndex } from '../LinkIndexContext';
@@ -13,6 +13,10 @@ import { SparklesIcon } from '../Icons';
 import { AiSidebar } from '../../features/ai/AiSidebar';
 import { updateFrontmatter } from '../../utils/frontmatter';
 import { BacklinksPanel } from '../BacklinksPanel';
+import { buildEditorContext } from '../../commands/contextBuilder';
+import { commandRegistry } from '../../commands/CommandRegistry';
+import { EditorContext } from '../../commands/types';
+import { EditorView } from '@codemirror/view';
 
 // Confirm Dialog (Simple implementation for now)
 const confirmCloseDirty = async (title: string): Promise<'Save' | 'Don\'t Save' | 'Cancel'> => {
@@ -61,6 +65,81 @@ export function EditorPane() {
   useEffect(() => {
     localStorage.setItem('liminal-notes.showPreview', String(showPreview));
   }, [showPreview]);
+
+  // Build the editor context for commands
+  const getEditorContext = useCallback((view: EditorView): EditorContext => {
+    if (!activeTab) throw new Error('No active tab');
+
+    const baseContext = buildEditorContext(
+      view,
+      activeTab.id,
+      activeTab.path
+    );
+
+    return {
+      ...baseContext,
+      isUnsaved: activeTab.isUnsaved,
+      operations: {
+        saveNote: async (text: string) => {
+            if (activeTab.isUnsaved) {
+                // Handle unsaved file
+                const h1Match = text.match(/^#\s+(.+)$/m);
+                const title = h1Match ? h1Match[1].trim() : 'Untitled';
+                let filename = sanitizeFilename(title);
+                if (!filename) filename = "Untitled";
+                filename += '.md';
+                const path = filename;
+
+                await writeNote(path, text);
+
+                dispatch({
+                  type: 'UPDATE_TAB',
+                  tabId: activeTab.id,
+                  updates: {
+                    path,
+                    title,
+                    isUnsaved: false,
+                    isDirty: false,
+                  },
+                });
+
+                // Update indexes (need to update with new path)
+                updateNote(path, text);
+                updateSearchEntry(path, text);
+                notifyNoteSaved({ path, title, content: text });
+
+            } else {
+                // Normal save
+                await writeNote(activeTab.path, text);
+
+                dispatch({
+                  type: 'UPDATE_TAB_DIRTY',
+                  tabId: activeTab.id,
+                  isDirty: false,
+                });
+
+                updateNote(activeTab.path, text);
+                updateSearchEntry(activeTab.path, text);
+                notifyNoteSaved({
+                    path: activeTab.path,
+                    title: activeTab.title,
+                    content: text
+                });
+            }
+        },
+        updateIndexes: (text: string) => {
+           if (activeTab.path) {
+                updateNote(activeTab.path, text);
+                updateSearchEntry(activeTab.path, text);
+           }
+        },
+        notify: (message: string, type: 'success' | 'error') => {
+             notify(message, type);
+        }
+      }
+    };
+  }, [activeTab, dispatch, updateNote, updateSearchEntry, notifyNoteSaved, notify]);
+
 
   // Load content when active tab changes
   useEffect(() => {
@@ -227,6 +306,12 @@ export function EditorPane() {
   };
 
   const saveUnsavedTab = async (tab: typeof activeTab, text: string) => {
+      // NOTE: This legacy helper is kept for confirmClose logic, but handleSave uses CommandRegistry now
+      // Ideally we would route this through the command registry too if we had a way to provide context for a non-active tab
+      // For now, duplicate logic is acceptable or we could refactor.
+      // Given the complexity, let's keep this as fallback for the modal logic which might close an INACTIVE tab.
+      // The CommandRegistry works best for the ACTIVE tab/editor.
+
     if (!tab) return;
     // Extract title from H1 or use 'Untitled'
     const h1Match = text.match(/^#\s+(.+)$/m);
@@ -252,24 +337,13 @@ export function EditorPane() {
   };
 
   const handleSave = async () => {
-    if (!activeTab) return;
+    if (!activeTab || !editorRef.current || !editorRef.current.view) return;
     setIsSaving(true);
 
     try {
-        if (activeTab.isUnsaved) {
-            await saveUnsavedTab(activeTab, content);
-        } else {
-            await writeNote(activeTab.path, content);
-            updateTabDirty(activeTab.id, false);
-            updateNote(activeTab.path, content);
-            updateSearchEntry(activeTab.path, content);
-            notifyNoteSaved({
-                path: activeTab.path,
-                title: activeTab.title,
-                content: content
-            });
-        }
-        notify("Note saved", 'success', 2000);
+        const view = editorRef.current.view;
+        const context = getEditorContext(view);
+        await commandRegistry.executeCommand('editor.file.save', context, view);
     } catch (err) {
         notify("Failed to save: " + String(err), 'error');
     } finally {

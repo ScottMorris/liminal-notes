@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { readNote } from '../commands';
+import { readNote } from '../ipc';
 import { FileEntry } from '../types';
 
 export interface NoteIndexEntry {

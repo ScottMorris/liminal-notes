@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getVaultConfig, listMarkdownFiles, resetVaultConfig } from "../commands";
+import { getVaultConfig, listMarkdownFiles, resetVaultConfig } from "../ipc";
 import { VaultConfig, FileEntry } from "../types";
 import { useLinkIndex } from "../components/LinkIndexContext";
 import { useSearchIndex } from "../components/SearchIndexContext";

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useRef, ReactNode, useCallback } from 'react';
-import { readNote } from '../commands';
+import { readNote } from '../ipc';
 import { FileEntry, Wikilink, LinkIndex, NotePath } from '../types';
 
 interface LinkIndexContextProps {

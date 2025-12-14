@@ -12,10 +12,11 @@ import { StatusBar } from "./components/StatusBar";
 import { PluginsSettings } from "./components/PluginsSettings";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
-import { writeNote, renameItem } from "./commands";
+import { writeNote, renameItem } from "./ipc";
 import { PuzzleIcon, SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon } from "./components/Icons";
 import { TabsProvider, useTabs } from "./contexts/TabsContext";
 import { EditorPane } from "./components/Editor/EditorPane";
+import { registerAllCommands } from "./commands";
 
 // Main App Component Content (Inside TabsProvider)
 function AppContent() {
