@@ -178,10 +178,40 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
 
   // Persist to localStorage on change
   useEffect(() => {
-    localStorage.setItem('liminal-notes.tabs', JSON.stringify({
-      tabs: state.openTabs,
+    // Persist a lightweight, serialisable snapshot. Avoid aiState to prevent huge/circular payloads.
+    const tabsToPersist = state.openTabs.map(({ aiState, ...rest }) => rest);
+    const payload = JSON.stringify({
+      tabs: tabsToPersist,
       activeTabId: state.activeTabId,
-    }));
+    });
+
+    const save = () => {
+      try {
+        localStorage.setItem('liminal-notes.tabs', payload);
+      } catch (err) {
+        console.warn('Failed to persist tabs to localStorage', err);
+      }
+    };
+
+    // Defer persistence to idle time to avoid blocking UI during drag/drop
+    const idle = (window as any).requestIdleCallback as
+      | ((cb: () => void, opts?: { timeout: number }) => number)
+      | undefined;
+    let handle: number | undefined;
+
+    if (idle) {
+      handle = idle(save, { timeout: 1000 });
+    } else {
+      handle = window.setTimeout(save, 0);
+    }
+
+    return () => {
+      if (idle && handle !== undefined) {
+        (window as any).cancelIdleCallback(handle);
+      } else if (handle !== undefined) {
+        clearTimeout(handle);
+      }
+    };
   }, [state.openTabs, state.activeTabId]);
 
   const openTab = (tab: OpenTab) => dispatch({ type: 'OPEN_TAB', tab });

@@ -17,6 +17,9 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const { reorderTabs } = useTabs();
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
+  const [hoverTabId, setHoverTabId] = useState<string | null>(null);
+  const reorderFrame = useRef<number | null>(null);
+  const pendingTargetId = useRef<string | null>(null);
 
   // Scroll active tab into view
   useEffect(() => {
@@ -38,30 +41,85 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
   // DnD Handlers
   const handleDragStart = (e: React.DragEvent, tabId: string) => {
       setDraggedTabId(tabId);
-      e.dataTransfer.effectAllowed = 'move';
-
-      // Use a transparent image to remove the default ghost
-      const img = new Image();
-      img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // 1x1 transparent gif
-      e.dataTransfer.setDragImage(img, 0, 0);
-
-      // Dim the element being dragged for visual feedback
+      // Keep drag setup minimal to avoid WebView crashes; rely on default ghost if setDragImage is unsupported.
+      const dataTransfer = e.dataTransfer;
+      if (dataTransfer) {
+          try {
+              dataTransfer.effectAllowed = 'move';
+              dataTransfer.setData('text/plain', tabId);
+          } catch (err) {
+              console.warn('Tab drag start failed to configure dataTransfer', err);
+          }
+      }
       (e.target as HTMLElement).style.opacity = '0.5';
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
       (e.target as HTMLElement).style.opacity = '';
       setDraggedTabId(null);
+      setHoverTabId(null);
+      pendingTargetId.current = null;
+      if (reorderFrame.current !== null) {
+          cancelAnimationFrame(reorderFrame.current);
+          reorderFrame.current = null;
+      }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
       e.preventDefault(); // Necessary to allow dropping
-      e.dataTransfer.dropEffect = 'move';
+      if (e.dataTransfer) {
+          try {
+              e.dataTransfer.dropEffect = 'move';
+          } catch (err) {
+              console.warn('Tab drag over failed to set dropEffect', err);
+          }
+      }
+
+      const target = (e.currentTarget as HTMLElement).dataset.tabId;
+      if (!target) return;
+
+      if (pendingTargetId.current === target) return;
+      pendingTargetId.current = target;
+      setHoverTabId(target);
+
+      if (reorderFrame.current === null) {
+          reorderFrame.current = requestAnimationFrame(() => {
+              reorderFrame.current = null;
+
+              if (!draggedTabId || !pendingTargetId.current || draggedTabId === pendingTargetId.current) {
+                  return;
+              }
+
+              const fromIndex = tabs.findIndex(t => t.id === draggedTabId);
+              const toIndex = tabs.findIndex(t => t.id === pendingTargetId.current);
+
+              if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+                  reorderTabs(fromIndex, toIndex);
+              }
+          });
+      }
   };
 
-  const handleDragEnter = (e: React.DragEvent, targetTabId: string) => {
+  const handleDragEnter = (e: React.DragEvent) => {
       e.preventDefault();
-      if (!draggedTabId || draggedTabId === targetTabId) return;
+  };
+
+  const handleDragLeave = () => {
+      setHoverTabId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetTabId: string) => {
+      e.preventDefault();
+      pendingTargetId.current = null;
+      if (reorderFrame.current !== null) {
+          cancelAnimationFrame(reorderFrame.current);
+          reorderFrame.current = null;
+      }
+      if (!draggedTabId || draggedTabId === targetTabId) {
+          setDraggedTabId(null);
+          setHoverTabId(null);
+          return;
+      }
 
       const fromIndex = tabs.findIndex(t => t.id === draggedTabId);
       const toIndex = tabs.findIndex(t => t.id === targetTabId);
@@ -69,11 +127,8 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
       if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
           reorderTabs(fromIndex, toIndex);
       }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-      e.preventDefault();
       setDraggedTabId(null);
+      setHoverTabId(null);
   };
 
   return (
@@ -87,12 +142,14 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
             <div
                 key={tab.id}
                 draggable
+                data-tab-id={tab.id}
                 onDragStart={(e) => handleDragStart(e, tab.id)}
                 onDragEnd={handleDragEnd}
                 onDragOver={handleDragOver}
-                onDragEnter={(e) => handleDragEnter(e, tab.id)}
-                onDrop={handleDrop}
-                className="draggable-tab-wrapper"
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, tab.id)}
+                className={`draggable-tab-wrapper ${hoverTabId === tab.id ? 'drag-over' : ''}`}
             >
                 <Tab
                     tab={tab}

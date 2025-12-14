@@ -339,6 +339,18 @@ button:disabled {
 /* Draggable Wrapper */
 .draggable-tab-wrapper {
   display: flex;
+  position: relative;
+}
+
+.draggable-tab-wrapper.drag-over::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background-color: var(--ln-accent);
+  border-radius: 1px;
 }
 
 /* Overflow Menu */
