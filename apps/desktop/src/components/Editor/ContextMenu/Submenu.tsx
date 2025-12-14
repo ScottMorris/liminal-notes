@@ -80,6 +80,7 @@ export function Submenu({
       role="menu"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onMouseDown={(e) => e.stopPropagation()}
     >
       {items.map(item => (
         <MenuItem
