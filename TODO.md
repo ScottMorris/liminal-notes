@@ -43,6 +43,7 @@ We should consider adding a printing feature for notes.
 
 - Verify if explicit theme reconfiguration is needed for CodeMirror when complex theme changes occur (currently relies on CSS variables updating automatically).
 - Implement undo history reset when switching notes to prevent undoing into a previous note's content state.
+- Refactor legacy `saveUnsavedTab` helper in `EditorPane.tsx`. It is currently kept for confirmClose logic but ideally should be routed through the command registry or a dedicated context to support non-active tabs.
 
 ## Tab Persistence in Vault
 
