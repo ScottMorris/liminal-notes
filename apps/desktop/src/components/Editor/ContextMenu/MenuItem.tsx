@@ -5,12 +5,12 @@ import { getIconByName } from './iconMapper';
 
 interface MenuItemProps {
   item: MenuItemType;
-  onClick: () => void;
+  onItemClick: (id: string) => void;
 }
 
-export function MenuItem({ item, onClick }: MenuItemProps) {
+export function MenuItem({ item, onItemClick }: MenuItemProps) {
   const [showSubmenu, setShowSubmenu] = useState(false);
-  const [submenuTimer, setSubmenuTimer] = useState<number | null>(null);
+  const submenuTimerRef = useRef<number | null>(null);
   const itemRef = useRef<HTMLButtonElement>(null);
 
   const hasSubmenu = item.children && item.children.length > 0;
@@ -18,9 +18,11 @@ export function MenuItem({ item, onClick }: MenuItemProps) {
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (submenuTimer) clearTimeout(submenuTimer);
+      if (submenuTimerRef.current !== null) {
+        clearTimeout(submenuTimerRef.current);
+      }
     };
-  }, [submenuTimer]);
+  }, []);
 
   function handleClick(e: React.MouseEvent) {
     if (item.disabled) return;
@@ -32,53 +34,53 @@ export function MenuItem({ item, onClick }: MenuItemProps) {
         return;
     }
 
-    onClick();
+    onItemClick(item.id);
   }
 
   function handleMouseEnter() {
     if (!hasSubmenu) return;
 
-    if (submenuTimer !== null) {
-      clearTimeout(submenuTimer);
-      setSubmenuTimer(null);
+    if (submenuTimerRef.current !== null) {
+      clearTimeout(submenuTimerRef.current);
+      submenuTimerRef.current = null;
     }
 
-    const timer = window.setTimeout(() => {
+    submenuTimerRef.current = window.setTimeout(() => {
       setShowSubmenu(true);
     }, 250);
-
-    setSubmenuTimer(timer);
   }
 
   function handleMouseLeave() {
     if (!hasSubmenu) return;
 
-    if (submenuTimer !== null) {
-      clearTimeout(submenuTimer);
-      setSubmenuTimer(null);
+    if (submenuTimerRef.current !== null) {
+      clearTimeout(submenuTimerRef.current);
+      submenuTimerRef.current = null;
     }
 
-    const timer = window.setTimeout(() => {
+    submenuTimerRef.current = window.setTimeout(() => {
       setShowSubmenu(false);
     }, 300);
-
-    setSubmenuTimer(timer);
   }
 
   const handleSubmenuEnter = () => {
     // We are inside the submenu, cancel any close timer from leaving the parent item
-    if (submenuTimer) clearTimeout(submenuTimer);
-    setSubmenuTimer(null);
+    if (submenuTimerRef.current !== null) {
+      clearTimeout(submenuTimerRef.current);
+      submenuTimerRef.current = null;
+    }
     setShowSubmenu(true);
   };
 
   const handleSubmenuLeave = () => {
     // Leaving the submenu, start close timer
     // (If they move back to parent item, parent's enter will cancel this)
-    const timer = window.setTimeout(() => {
+    if (submenuTimerRef.current !== null) {
+      clearTimeout(submenuTimerRef.current);
+    }
+    submenuTimerRef.current = window.setTimeout(() => {
       setShowSubmenu(false);
     }, 300);
-    setSubmenuTimer(timer);
   };
 
   const iconNode = getIconByName(item.icon);
@@ -112,7 +114,7 @@ export function MenuItem({ item, onClick }: MenuItemProps) {
         <Submenu
           items={item.children!}
           parentRect={itemRef.current.getBoundingClientRect()}
-          onItemClick={onClick}
+          onItemClick={onItemClick}
           onClose={() => setShowSubmenu(false)}
           onMouseEnter={handleSubmenuEnter}
           onMouseLeave={handleSubmenuLeave}

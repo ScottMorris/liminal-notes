@@ -78,6 +78,14 @@ const PasteIcon = () => (
   </svg>
 );
 
+const PastePlainIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+    <text x="12" y="14" fontSize="10" textAnchor="middle" fill="currentColor" fontWeight="bold">T</text>
+  </svg>
+);
+
 const TrashIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="3 6 5 6 21 6"></polyline>
@@ -85,11 +93,11 @@ const TrashIcon = () => (
   </svg>
 );
 
+// Format: Paint brush
 const FormatIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3v18"></path>
-    <path d="M6 21h12"></path>
-    <path d="M5.5 8l4-5 4 5"></path>
+    <path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
+    <path d="M11 7.5c-4.326.65-8 4.29-8 8.75 0 2.9 2.1 5.25 5 5.25a4.75 4.75 0 0 0 4.75-4.75c0-1.428-.46-2.73-1.25-3.75" />
   </svg>
 );
 
@@ -101,12 +109,28 @@ const ParagraphIcon = () => (
   </svg>
 );
 
+// Insert: Lines with plus
 const InsertIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" y1="12" x2="20" y2="12"></line>
+    <line x1="4" y1="6" x2="20" y2="6"></line>
+    <line x1="4" y1="18" x2="20" y2="18"></line>
     <line x1="12" y1="5" x2="12" y2="19"></line>
-    <line x1="5" y1="12" x2="19" y2="12"></line>
   </svg>
 );
+
+// Refined Insert Icon to match "lines with a plus sign on the right"
+// The prompt said "lines with a plus sign on the right".
+const InsertIconAlt = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="3" y1="6" x2="21" y2="6"></line>
+    <line x1="3" y1="12" x2="15" y2="12"></line>
+    <line x1="3" y1="18" x2="15" y2="18"></line>
+    <line x1="19" y1="11" x2="19" y2="19"></line>
+    <line x1="15" y1="15" x2="23" y2="15"></line>
+  </svg>
+);
+// I will use InsertIconAlt
 
 const ListIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -205,6 +229,12 @@ export function getIconByName(name?: string): React.ReactNode {
     case 'cut': return <CutIcon />;
     case 'copy': return <CopyIcon />;
     case 'paste': return <PasteIcon />;
+    // Need a special name for pastePlain if the command uses it?
+    // editing.ts uses 'paste'. I should update editing.ts to use 'paste-plain' if I want the T icon.
+    // Or just map 'paste' to PasteIcon and assume paste plain uses something else?
+    // User asked for "Paste as plain text" to have a T.
+    // I should update editing.ts to use 'paste-plain' for that command.
+    case 'paste-plain': return <PastePlainIcon />;
     case 'trash': return <TrashIcon />;
     case 'search': return <SearchIcon size={16} />;
     case 'document': return <DocumentTextIcon size={16} />;
@@ -215,7 +245,7 @@ export function getIconByName(name?: string): React.ReactNode {
     // New icons
     case 'format': return <FormatIcon />;
     case 'paragraph': return <ParagraphIcon />;
-    case 'insert': return <InsertIcon />;
+    case 'insert': return <InsertIconAlt />;
     case 'list': return <ListIcon />;
     case 'list-ordered': return <ListOrderedIcon />;
     case 'list-task': return <TaskListIcon />;

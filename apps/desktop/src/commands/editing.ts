@@ -232,7 +232,7 @@ const pastePlainCommand: Command = {
   id: 'editor.edit.pastePlain',
   label: 'Paste as plain text',
   group: 'Edit',
-  icon: 'paste', // Reusing paste icon for now
+  icon: 'paste-plain',
   shortcut: 'Ctrl+Shift+V',
   run: async (ctx, view) => {
     const text = await readText();
