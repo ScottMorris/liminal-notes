@@ -65,3 +65,7 @@ Currently, unsaved tabs are stored in `localStorage` which means:
 - Format: JSON array of `{ id, title, content, createdAt, modifiedAt }`
 - Load on vault open, save on change (debounced)
 - Merge strategy for conflicts (last-write-wins for MVP)
+
+## Editor Enhancements
+
+- **Specialized Clipboard Support:** Add support for specialized clipboard formats (HTML, Image) via `clipboard-manager:allow-write-html`, `clipboard-manager:allow-write-image`, etc. Currently only plain text is supported.
