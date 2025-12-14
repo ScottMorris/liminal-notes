@@ -35,6 +35,7 @@ We should consider adding a printing feature for notes.
 - Format inline but don't hide the markdown syntax in the editor view (e.g., bold, italics). Eg. _rendered_ **markdown** `syntax` should still be visible in the editor, like VSCode.
 - Replace native `<select>` with a custom dropdown component to ensure consistent theming across platforms, as native controls on Linux/Tauri often ignore CSS for dropdown menus.
 - **Integrate Prettier:** Add support for Prettier, either auto or manual. Maybe it should be a plugin with a formatter hook.
+- **Link preview pop-up:** Add a pop-up preview for WikiLinks on hover.
 
 ## Theming
 

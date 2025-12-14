@@ -148,8 +148,11 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
             },
             click: (event, view) => {
                 const target = event.target as HTMLElement;
-                if (target.classList.contains('cm-wikilink') && (event.ctrlKey || event.metaKey)) {
-                     const linkTarget = target.getAttribute('data-wikilink-target');
+                // Traverse up to find the wikilink element, since the target might be a text node or inner element
+                const wikilinkElement = target.closest?.('.cm-wikilink') || (target.parentElement?.closest?.('.cm-wikilink'));
+
+                if (wikilinkElement && (event.ctrlKey || event.metaKey)) {
+                     const linkTarget = wikilinkElement.getAttribute('data-wikilink-target');
                      if (linkTarget && onLinkClickRef.current) {
                          event.preventDefault();
                          onLinkClickRef.current(linkTarget);
