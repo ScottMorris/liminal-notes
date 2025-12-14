@@ -10,8 +10,8 @@ import { EditorView } from '@codemirror/view';
  * Optimization: We only scan the visible ranges to avoid stringifying
  * the entire document on every update.
  */
-export function findWikiLinks(view: EditorView): Array<{ from: number; to: number }> {
-  const wikilinks: Array<{ from: number; to: number }> = [];
+export function findWikiLinks(view: EditorView): Array<{ from: number; to: number; target: string }> {
+  const wikilinks: Array<{ from: number; to: number; target: string }> = [];
   const regex = /(?<!\\)\[\[([^\]]+)\]\]/g;
 
   for (const { from, to } of view.visibleRanges) {
@@ -25,6 +25,7 @@ export function findWikiLinks(view: EditorView): Array<{ from: number; to: numbe
         wikilinks.push({
           from: from + match.index,
           to: from + match.index + match[0].length,
+          target: match[1], // Capture group 1 is the link target
         });
       }
   }

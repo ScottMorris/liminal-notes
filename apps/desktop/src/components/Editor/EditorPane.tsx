@@ -507,6 +507,7 @@ export function EditorPane() {
                             noteId={activeTab.id}
                             path={activeTab.path}
                             getEditorContext={getEditorContext}
+                            onLinkClick={handleNavigate}
                             />
                         )}
                         </div>

@@ -14,7 +14,7 @@ describe('wikiLinkParser', () => {
     const links = findWikiLinks(view);
 
     expect(links).toHaveLength(1);
-    expect(links[0]).toEqual({ from: 10, to: 18 });
+    expect(links[0]).toEqual({ from: 10, to: 18, target: 'Link' });
   });
 
   it('finds multiple wikilinks', () => {

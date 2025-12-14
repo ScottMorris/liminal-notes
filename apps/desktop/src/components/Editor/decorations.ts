@@ -107,9 +107,16 @@ function buildCombinedDecorations(view: EditorView): DecorationSet {
 
     // 3. WikiLinks (Manual)
     const wikilinks = findWikiLinks(view);
-    for (const { from, to } of wikilinks) {
+    for (const { from, to, target } of wikilinks) {
         if (to >= view.viewport.from && from <= view.viewport.to) {
-             decorations.push({ from, to, deco: Decoration.mark({ class: 'cm-wikilink' }) });
+             decorations.push({
+                 from,
+                 to,
+                 deco: Decoration.mark({
+                     class: 'cm-wikilink',
+                     attributes: { 'data-wikilink-target': target }
+                 })
+            });
         }
     }
 
