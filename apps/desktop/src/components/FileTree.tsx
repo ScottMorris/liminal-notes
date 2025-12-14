@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 
 interface FileTreeProps {
   files: FileEntry[];
-  onFileSelect: (path: string) => void;
+  onFileSelect: (path: string, isDoubleClick: boolean) => void;
   editingPath?: string | null;
   isCreating?: boolean;
   onRename?: (oldPath: string, newName: string) => void;
@@ -135,7 +135,7 @@ export function FileTree({
 
 interface TreeNodeProps {
   node: DisplayNode;
-  onFileSelect: (path: string) => void;
+  onFileSelect: (path: string, isDoubleClick: boolean) => void;
   editingPath?: string | null;
   onRename?: (oldPath: string, newName: string) => void;
   onCreate?: (name: string) => void;
@@ -152,7 +152,8 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
     if (node.isDir) {
       setExpanded(!expanded);
     } else {
-      onFileSelect(node.path);
+      // e.detail gives click count
+      onFileSelect(node.path, e.detail === 2);
     }
   };
 

@@ -32,7 +32,6 @@ We should consider adding a printing feature for notes.
 ## UI/UX Ideas
 
 - Folders as implicit tags: Display folders in the UI with distinct colors and treat them as tags for the notes they contain.
-- Tabs for multiple open notes: Implement a tabbed interface to allow users to switch between multiple open notes easily.
 - Format inline but don't hide the markdown syntax in the editor view (e.g., bold, italics). Eg. _rendered_ **markdown** `syntax` should still be visible in the editor, like VSCode.
 - Replace native `<select>` with a custom dropdown component to ensure consistent theming across platforms, as native controls on Linux/Tauri often ignore CSS for dropdown menus.
 
@@ -44,3 +43,24 @@ We should consider adding a printing feature for notes.
 
 - Verify if explicit theme reconfiguration is needed for CodeMirror when complex theme changes occur (currently relies on CSS variables updating automatically).
 - Implement undo history reset when switching notes to prevent undoing into a previous note's content state.
+
+## Tab Persistence in Vault
+
+Currently, unsaved tabs are stored in `localStorage` which means:
+- They don't sync across devices
+- They're browser-specific
+- They're lost if localStorage is cleared
+
+**Future improvement:**
+- Store unsaved tabs in `.liminal/unsaved-tabs.json` within the vault
+- This enables:
+  - Cross-device sync (when sync is implemented)
+  - Cross-platform access (desktop/mobile)
+  - Backup via vault backup
+  - Version control if vault is in Git
+
+**Implementation notes:**
+- Unsaved tabs should be in vault's `.liminal/` directory (gitignored by default)
+- Format: JSON array of `{ id, title, content, createdAt, modifiedAt }`
+- Load on vault open, save on change (debounced)
+- Merge strategy for conflicts (last-write-wins for MVP)

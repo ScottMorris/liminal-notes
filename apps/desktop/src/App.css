@@ -8,6 +8,14 @@
   --ln-sidebar-bg: #f5f5f5;
   --ln-sidebar-fg: #333333;
   --ln-item-hover-bg: #e0e0e0;
+
+  /* Tabs */
+  --ln-tab-bg: #e0e0e0;
+  --ln-tab-bg-active: #ffffff;
+  --ln-tab-fg: #666666;
+  --ln-tab-fg-active: #333333;
+  --ln-tab-border: #cccccc;
+  --ln-tab-dirty: #e0a800;
 }
 
 @font-face {
@@ -246,6 +254,184 @@ button:disabled {
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.tab-bar-container {
+  background-color: var(--ln-sidebar-bg); /* Match sidebar or lighter */
+  border-bottom: 1px solid var(--ln-border);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.tab-bar {
+  display: flex;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none; /* Firefox */
+}
+
+.tab-bar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  max-width: 200px;
+  min-width: 100px;
+  background-color: var(--ln-tab-bg);
+  color: var(--ln-tab-fg);
+  border-right: 1px solid var(--ln-tab-border);
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+  position: relative;
+}
+
+.tab:hover {
+  background-color: color-mix(in srgb, var(--ln-tab-bg), var(--ln-fg) 5%);
+}
+
+.tab.active {
+  background-color: var(--ln-tab-bg-active);
+  color: var(--ln-tab-fg-active);
+  border-bottom: 2px solid var(--ln-accent); /* Optional underline */
+  margin-bottom: -1px; /* Overlap border */
+  z-index: 1;
+}
+
+.tab-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+}
+
+.tab-dirty-indicator {
+  color: var(--ln-tab-dirty);
+  margin-right: 4px;
+  font-size: 1.2rem;
+  line-height: 0.5;
+}
+
+.tab-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.1rem;
+  padding: 0 4px;
+  border-radius: 50%;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.tab-close:hover {
+  opacity: 1;
+  background-color: rgba(0,0,0,0.1);
+}
+
+/* Draggable Wrapper */
+.draggable-tab-wrapper {
+  display: flex;
+  position: relative;
+}
+
+.draggable-tab-wrapper.drag-over::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background-color: var(--ln-accent);
+  border-radius: 1px;
+}
+
+/* Overflow Menu */
+.tab-overflow-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.overflow-btn {
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--ln-tab-border);
+  border-radius: 0;
+  height: 100%;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ln-tab-fg);
+  padding: 0;
+}
+
+.overflow-btn:hover, .overflow-btn.active {
+  background-color: color-mix(in srgb, var(--ln-tab-bg), var(--ln-fg) 5%);
+  color: var(--ln-fg);
+}
+
+.overflow-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 99;
+}
+
+.overflow-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--ln-bg);
+  border: 1px solid var(--ln-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 5px 0;
+}
+
+.overflow-item {
+  padding: 8px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.overflow-item:hover {
+  background-color: var(--ln-item-hover-bg);
+}
+
+.overflow-item.active {
+  background-color: var(--ln-item-hover-bg);
+  color: var(--ln-accent);
+  font-weight: 500;
+}
+
+.overflow-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.overflow-dirty {
+  color: var(--ln-tab-dirty);
+  margin-left: 8px;
 }
 
 .editor-header {

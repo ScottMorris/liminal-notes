@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NoteSnapshot } from '../../plugins/types';
 import {
   summariseCurrentNote,
@@ -12,82 +12,64 @@ import {
   AiRelatedNotesResult
 } from './aiController';
 import { useSearchIndex } from '../../components/SearchIndexContext';
+import { AiState } from '../../types/tabs';
 import './AiSidebar.css';
 
 interface AiSidebarProps {
   currentNote: NoteSnapshot | null;
+  aiState?: AiState;
+  onUpdateAiState: (state: AiState) => void;
   onNavigate?: (path: string) => void;
   onClose: () => void;
   onInsertAtCursor: (text: string) => void;
   onUpdateFrontmatter: (updater: (data: any) => void) => void;
 }
 
-export function AiSidebar({ currentNote, onNavigate, onClose, onInsertAtCursor, onUpdateFrontmatter }: AiSidebarProps) {
-  const [result, setResult] = useState<AiResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
+export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, onClose, onInsertAtCursor, onUpdateFrontmatter }: AiSidebarProps) {
   const { search } = useSearchIndex();
+
+  const result = aiState?.result || null;
+  const isLoading = aiState?.isLoading || false;
+  const error = aiState?.error || null;
+
+  const updateState = (updates: Partial<AiState>) => {
+      onUpdateAiState({
+          result: updates.result !== undefined ? updates.result : result,
+          isLoading: updates.isLoading !== undefined ? updates.isLoading : isLoading,
+          error: updates.error !== undefined ? updates.error : error
+      });
+  };
 
   const handleAction = async (actionName: string, actionFn: (note: NoteSnapshot) => Promise<AiResult>) => {
     if (!currentNote) return;
-    setIsLoading(true);
-    setError(null);
+    updateState({ isLoading: true, error: null });
     try {
       const res = await actionFn(currentNote);
-      setResult(res);
+      updateState({ result: res, isLoading: false });
     } catch (err) {
       console.error(`Error performing ${actionName}:`, err);
-      setError(`Failed to ${actionName}. ${(err as Error).message || ''}`);
-    } finally {
-      setIsLoading(false);
+      updateState({
+          error: `Failed to ${actionName}. ${(err as Error).message || ''}`,
+          isLoading: false
+      });
     }
   };
 
   const handleFindRelated = async () => {
     if (!currentNote) return;
-    setIsLoading(true);
-    setError(null);
+    updateState({ isLoading: true, error: null });
     try {
-        // Fetch candidates from search index.
-        // We just grab all of them (or a large subset) and let the controller slice/limit.
-        // search('') returns all notes if the implementation supports it, otherwise we might need another way.
-        // Actually, search('') returns empty in current implementation.
-        // We can pass a generic query or we might need access to raw index.
-        // But `search(' ')` might work if it matches everything?
-        // Let's rely on a catch-all query or assume we can get all entries.
-        // The SearchIndexContext `search` function filters by title/content.
-        // Let's modify SearchIndexContext to allow getting all entries, or just use a common term.
-        // Actually, the user approved "bounded subset... e.g. first 50-100".
-        // I can just search for "a" or "e" to get most notes, or better:
-        // SearchIndexContext exposes `getEntry` but not `getAll`.
-        // Wait, I can't easily get all notes without changing SearchIndexContext.
-        // But wait, `App.tsx` has `files`. But `files` are just paths.
-        // SearchIndexContext has the full content.
-
-        // HACK: I will search for " " (space) or common vowel to get a list.
-        // Or I can add `getAllEntries` to SearchIndexContext in a future PR.
-        // For now, let's try searching for " " if the index implementation allows it.
-        // Looking at `SearchIndexContext.tsx`: `if (!query.trim()) return [];`
-        // So empty/whitespace returns empty.
-        // I will try to search for "e" (most common letter). It's a heuristic but works for v0.1.
-
         const candidates = search('e').map(entry => ({
             path: entry.path,
             title: entry.title,
             content: entry.content
         }));
 
-        // If we get too few, maybe search 'a'?
-        // It's fine for v0.1.
-
         const res = await findRelatedNotes(currentNote, candidates);
-        setResult(res);
+        updateState({ result: res, isLoading: false });
     } catch (err) {
       console.error('Error finding related notes:', err);
-      setError('Failed to find related notes.');
-    } finally {
-        setIsLoading(false);
+      updateState({ error: 'Failed to find related notes.', isLoading: false });
     }
   };
 

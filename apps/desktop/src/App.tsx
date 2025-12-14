@@ -1,30 +1,27 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
-import ReactMarkdown from "react-markdown";
+import { useEffect, useState, useCallback } from "react";
 import "./App.css";
 import { VaultPicker } from "./components/VaultPicker";
 import { FileTree } from "./components/FileTree";
 import { useTheme, ThemeId } from "./theme";
 import { useLinkIndex } from "./components/LinkIndexContext";
-import { BacklinksPanel } from "./components/BacklinksPanel";
 import { useSearchIndex } from "./components/SearchIndexContext";
 import { SearchModal } from "./components/SearchModal";
 import { GraphView } from "./components/GraphView";
 import { usePluginHost } from "./plugins/PluginHostProvider";
 import { StatusBar } from "./components/StatusBar";
 import { PluginsSettings } from "./components/PluginsSettings";
-import { AiSidebar } from "./features/ai/AiSidebar";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
-import { useNote } from "./hooks/useNote";
-import { updateFrontmatter } from "./utils/frontmatter";
 import { writeNote, renameItem } from "./commands";
-import { PuzzleIcon, SearchIcon, DocumentTextIcon, ShareIcon, SparklesIcon, PencilSquareIcon } from "./components/Icons";
-import { CodeMirrorEditor, EditorHandle } from "./components/Editor/CodeMirrorEditor";
+import { PuzzleIcon, SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon } from "./components/Icons";
+import { TabsProvider, useTabs } from "./contexts/TabsContext";
+import { EditorPane } from "./components/Editor/EditorPane";
 
-function App() {
+// Main App Component Content (Inside TabsProvider)
+function AppContent() {
   const { themeId, setThemeId, availableThemes } = useTheme();
-  const { resolvePath, isLoadingIndex } = useLinkIndex();
-  const { isIndexing: isSearchIndexing } = useSearchIndex();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { isLoadingIndex } = useLinkIndex(); // Keep for side effects if any, or remove if unused
   const { enabledPlugins } = usePluginHost();
 
   const {
@@ -36,82 +33,60 @@ function App() {
     refreshFiles
   } = useVault();
 
-  const {
-    selectedFile,
-    noteContent,
-    isDirty,
-    isLoadingNote,
-    isSaving,
-    handleFileSelect,
-    handleSave,
-    updateContent,
-    clearSelection
-  } = useNote();
+  // Use Tabs Context
+  const { openTab, switchTab, openTabs, closeTab, activeTabId, dispatch } = useTabs();
 
-  const editorRef = useRef<EditorHandle>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPluginsOpen, setIsPluginsOpen] = useState(false);
-  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'notes' | 'graph'>('notes');
 
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Handle Vault Reset wrapper to also clear note selection
+  // Computed selectedFile for Graph View / interactions
+  const activeTab = openTabs.find(t => t.id === activeTabId);
+  const selectedFile = activeTab?.path || null;
+
+  // Handle Vault Reset wrapper
   const onResetVault = async () => {
     await resetVault();
-    clearSelection();
-  };
-
-  const handleInsertAtCursor = (text: string) => {
-    if (editorRef.current) {
-      editorRef.current.insertAtCursor(text);
-    } else {
-      // Fallback if ref is not available (e.g. view mode not ready), append to end
-      updateContent(noteContent + "\n" + text);
-    }
-  };
-
-  const handleUpdateFrontmatter = (updater: (data: any) => void) => {
-    const newContent = updateFrontmatter(noteContent, updater);
-    updateContent(newContent);
+    // Clear tabs? Or let them persist until re-open?
+    // Probably clear tabs as they are vault-specific.
+    // For now, reload logic in TabsProvider handles it via localStorage check on mount,
+    // but if we switch vaults without reload, we might see old tabs.
+    // Ideally we dispatch a CLEAR_ALL_TABS action.
+    // For this MVP, we rely on user manually closing or page refresh.
+    // Actually, let's clear local storage key for tabs?
+    localStorage.removeItem('liminal-notes.tabs');
+    window.location.reload(); // Simplest way to reset everything state-wise
   };
 
   const handleStartCreate = useCallback(() => {
-    setIsCreating(true);
-    setEditingPath(null);
+    // New behavior: Open "Untitled" tab
+    // New tabs via "New Note" are always permanent (not preview)
+    const newId = crypto.randomUUID();
+    openTab({
+        id: newId,
+        path: '',
+        title: 'Untitled',
+        mode: 'source',
+        isDirty: true,
+        isLoading: false,
+        isUnsaved: true,
+        isPreview: false,
+        editorState: ''
+    });
+  }, [openTab]);
+
+  const handleCreateCommit = useCallback(async (name: string) => {
+      // This is for the FileTree input if we still use it.
   }, []);
 
   const handleCreateCancel = useCallback(() => {
     setIsCreating(false);
     setEditingPath(null);
   }, []);
-
-  const handleCreateCommit = useCallback(async (name: string) => {
-    if (!name) {
-        handleCreateCancel();
-        return;
-    }
-    let filename = name.trim();
-    if (!filename.endsWith('.md')) filename += '.md';
-
-    // Check for duplicates
-    if (files.some(f => f.path === filename)) {
-        alert(`A file named "${filename}" already exists.`);
-        return;
-    }
-
-    try {
-        await writeNote(filename, "");
-        await refreshFiles();
-        handleFileSelect(filename);
-        setIsCreating(false);
-    } catch (e) {
-        alert("Failed to create note: " + String(e));
-        setIsCreating(false);
-    }
-  }, [files, handleCreateCancel, refreshFiles, handleFileSelect]);
 
   const handleRenameCommit = useCallback(async (oldPath: string, newName: string) => {
       if (!newName || !newName.trim()) {
@@ -138,15 +113,53 @@ function App() {
       try {
           await renameItem(oldPath, newPath);
           await refreshFiles();
-          if (selectedFile === oldPath) {
-              handleFileSelect(newPath);
+
+          const oldTab = openTabs.find(t => t.id === oldPath); // Assuming ID=path
+          if (oldTab) {
+              closeTab(oldPath);
+              openTab({
+                  id: newPath,
+                  path: newPath,
+                  title: newFilename.replace('.md', ''),
+                  mode: 'source',
+                  isDirty: oldTab.isDirty,
+                  isLoading: false,
+                  isUnsaved: false,
+                  isPreview: oldTab.isPreview, // Preserve preview state? Or force permanent? Usually permanent on rename.
+                  editorState: oldTab.editorState
+              });
           }
+
       } catch (e) {
           alert("Failed to rename: " + String(e));
       } finally {
           setEditingPath(null);
       }
-  }, [refreshFiles, selectedFile, handleFileSelect]);
+  }, [refreshFiles, openTabs, closeTab, openTab]);
+
+  const handleFileSelect = useCallback((path: string, isDoubleClick: boolean = false) => {
+      // Check if already open
+      const existing = openTabs.find(t => t.id === path); // Assuming ID=path
+      if (existing) {
+          if (isDoubleClick && existing.isPreview) {
+              dispatch({ type: 'KEEP_TAB', tabId: existing.id });
+          }
+          switchTab(existing.id);
+      } else {
+          const title = path.split('/').pop()?.replace('.md', '') || path;
+          openTab({
+              id: path,
+              path,
+              title,
+              mode: 'source',
+              isDirty: false,
+              isLoading: false,
+              isUnsaved: false,
+              isPreview: !isDoubleClick, // Preview if single click
+              editorState: ''
+          });
+      }
+  }, [openTabs, switchTab, openTab, dispatch]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -154,17 +167,6 @@ function App() {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setIsSearchOpen(true);
-      }
-
-      // Save: Ctrl+S
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
-        // If editor is focused, CodeMirror will handle it
-        if (document.activeElement?.closest('.cm-editor')) {
-          return; // Let CodeMirror handle it
-        }
-
-        e.preventDefault();
-        handleSave();
       }
 
       // New Note: Ctrl+N
@@ -181,50 +183,7 @@ function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave, selectedFile]);
-
-  // Wikilink support
-  const preprocessContent = (content: string) => {
-    // Replace [[target]] with [target](wikilink:target)
-    // Using a capture group for target.
-    return content.replace(/\[\[([^\]]+)\]\]/g, (_match, target) => {
-       return `[${target}](wikilink:${target})`;
-    });
-  };
-
-  const MarkdownComponents = {
-    a: ({ href, children, ...props }: any) => {
-      if (href && href.startsWith('wikilink:')) {
-        const targetRaw = href.replace('wikilink:', '');
-        const targetPath = resolvePath(targetRaw);
-
-        if (targetPath) {
-          return (
-            <a
-              href="#"
-              className="wikilink resolved"
-              onClick={(e) => {
-                e.preventDefault();
-                handleFileSelect(targetPath);
-              }}
-              title={`Go to ${targetPath}`}
-            >
-              {children}
-            </a>
-          );
-        } else {
-          return (
-            <span className="wikilink unresolved" title="Unresolved link">
-              {children}
-            </span>
-          );
-        }
-      }
-      return <a href={href} {...props}>{children}</a>;
-    }
-  };
-
-  const processedContent = useMemo(() => preprocessContent(noteContent), [noteContent]);
+  }, [handleStartCreate, selectedFile]);
 
   if (isVaultLoading) {
     return <div className="container center">Loading...</div>;
@@ -289,12 +248,12 @@ function App() {
         </div>
         <FileTree
             files={files}
-            onFileSelect={handleFileSelect}
+            onFileSelect={(path, isDoubleClick) => handleFileSelect(path, isDoubleClick)}
             editingPath={editingPath}
-            isCreating={isCreating}
+            isCreating={isCreating} // We aren't using this for now via button, but prop required
             onRename={handleRenameCommit}
             onCreate={handleCreateCommit}
-            onStartCreate={handleStartCreate}
+            onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
             onCancel={handleCreateCancel}
         />
       </aside>
@@ -304,7 +263,7 @@ function App() {
           <SearchModal
             onClose={() => setIsSearchOpen(false)}
             onSelect={(path) => {
-              handleFileSelect(path);
+              handleFileSelect(path, false); // Search select is usually single click
               setIsSearchOpen(false);
             }}
           />
@@ -313,85 +272,23 @@ function App() {
         {isHelpOpen && <HelpModal onClose={() => setIsHelpOpen(false)} />}
 
         {viewMode === 'graph' ? (
-           <GraphView selectedFile={selectedFile} onSelect={handleFileSelect} />
+           <GraphView selectedFile={selectedFile} onSelect={(path) => handleFileSelect(path, false)} />
         ) : (
-          selectedFile ? (
-            <div className="editor-container">
-              <div className="editor-header">
-                <div className="file-info">
-                  <span className="file-name">{selectedFile}</span>
-                  {isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
-                  {(isLoadingIndex || isSearchIndexing) && <span className="indexing-indicator" title="Indexing vault..."> (Indexing...)</span>}
-                </div>
-                <div className="editor-actions">
-                  {enabledPlugins.has('ai-assistant') && (
-                      <button
-                        className={`action-btn ${isAiSidebarOpen ? 'active' : ''}`}
-                        onClick={() => setIsAiSidebarOpen(!isAiSidebarOpen)}
-                        title="Toggle AI Assistant"
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <SparklesIcon size={16} /> AI
-                        </span>
-                      </button>
-                  )}
-                  <button onClick={handleSave} disabled={isSaving || isLoadingNote}>
-                    {isSaving ? "Saving..." : "Save"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="split-pane">
-                <div className="editor-pane">
-                  {isLoadingNote ? (
-                    <div className="loading-indicator">Loading...</div>
-                  ) : (
-                    <CodeMirrorEditor
-                      ref={editorRef}
-                      value={noteContent}
-                      onChange={updateContent}
-                      onSave={handleSave}
-                    />
-                  )}
-                </div>
-                <div className="preview-pane">
-                  <div className="markdown-preview">
-                    <ReactMarkdown
-                      components={MarkdownComponents}
-                      urlTransform={(url) => url}
-                    >
-                      {processedContent}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-
-              <BacklinksPanel currentFile={selectedFile} onNavigate={handleFileSelect} />
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p>Select a file to view</p>
-            </div>
-          )
+           <EditorPane />
         )}
         </main>
         <StatusBar />
       </div>
-      {enabledPlugins.has('ai-assistant') && isAiSidebarOpen && (
-          <AiSidebar
-            currentNote={selectedFile ? {
-              path: selectedFile,
-              title: selectedFile.split('/').pop()?.replace('.md', '') || selectedFile,
-              content: noteContent
-            } : null}
-            onNavigate={handleFileSelect}
-            onClose={() => setIsAiSidebarOpen(false)}
-            onInsertAtCursor={handleInsertAtCursor}
-            onUpdateFrontmatter={handleUpdateFrontmatter}
-          />
-      )}
     </div>
   );
+}
+
+function App() {
+    return (
+        <TabsProvider>
+            <AppContent />
+        </TabsProvider>
+    );
 }
 
 export default App;
