@@ -34,6 +34,8 @@ We should consider adding a printing feature for notes.
 - Folders as implicit tags: Display folders in the UI with distinct colors and treat them as tags for the notes they contain.
 - Format inline but don't hide the markdown syntax in the editor view (e.g., bold, italics). Eg. _rendered_ **markdown** `syntax` should still be visible in the editor, like VSCode.
 - Replace native `<select>` with a custom dropdown component to ensure consistent theming across platforms, as native controls on Linux/Tauri often ignore CSS for dropdown menus.
+- **Integrate Prettier:** Add support for Prettier, either auto or manual. Maybe it should be a plugin with a formatter hook.
+- **Link preview pop-up:** Add a pop-up preview for WikiLinks on hover.
 
 ## Theming
 
@@ -44,6 +46,7 @@ We should consider adding a printing feature for notes.
 - Verify if explicit theme reconfiguration is needed for CodeMirror when complex theme changes occur (currently relies on CSS variables updating automatically).
 - Implement undo history reset when switching notes to prevent undoing into a previous note's content state.
 - Refactor legacy `saveUnsavedTab` helper in `EditorPane.tsx`. It is currently kept for confirmClose logic but ideally should be routed through the command registry or a dedicated context to support non-active tabs.
+- **CodeMirror WikiLinks:** Refactor WikiLink parsing to use a custom CodeMirror Markdown language extension instead of manual regex scanning for better performance and robustness.
 
 ## Tab Persistence in Vault
 

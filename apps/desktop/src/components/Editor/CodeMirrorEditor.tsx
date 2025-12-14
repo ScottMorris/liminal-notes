@@ -5,6 +5,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { closeBrackets } from '@codemirror/autocomplete';
 import { createEditorTheme } from './editorTheme';
+import { markdownDecorations } from './decorations';
 import { useTheme } from '../../theme';
 import { ContextMenu } from './ContextMenu/ContextMenu';
 import { buildContextMenu } from './ContextMenu/menuBuilder';
@@ -28,15 +29,17 @@ interface CodeMirrorEditorProps {
   noteId: string;
   path: string;
   getEditorContext: (view: EditorView) => EditorContext;
+  onLinkClick?: (target: string) => void;
 }
 
 export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
-  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext }, ref) => {
+  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const onSaveRef = useRef(onSave);
     const onChangeRef = useRef(onChange);
     const onBlurRef = useRef(onBlur);
+    const onLinkClickRef = useRef(onLinkClick);
     const { themeId } = useTheme();
 
     // Context Menu State
@@ -57,6 +60,10 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     useEffect(() => {
         onBlurRef.current = onBlur;
     }, [onBlur]);
+
+    useEffect(() => {
+        onLinkClickRef.current = onLinkClick;
+    }, [onLinkClick]);
 
     useImperativeHandle(ref, () => ({
       insertAtCursor: (text: string) => {
@@ -113,6 +120,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         history(),
         closeBrackets(),
         markdown(),
+        markdownDecorations,
         createEditorTheme(),
         keymap.of([
           ...registryKeymap,
@@ -136,6 +144,19 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
             blur: () => {
                 if (onBlurRef.current) {
                     onBlurRef.current();
+                }
+            },
+            click: (event, view) => {
+                const target = event.target as HTMLElement;
+                // Traverse up to find the wikilink element, since the target might be a text node or inner element
+                const wikilinkElement = target.closest?.('.cm-wikilink') || (target.parentElement?.closest?.('.cm-wikilink'));
+
+                if (wikilinkElement && (event.ctrlKey || event.metaKey)) {
+                     const linkTarget = wikilinkElement.getAttribute('data-wikilink-target');
+                     if (linkTarget && onLinkClickRef.current) {
+                         event.preventDefault();
+                         onLinkClickRef.current(linkTarget);
+                     }
                 }
             }
         })
