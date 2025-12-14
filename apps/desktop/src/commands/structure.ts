@@ -226,4 +226,5 @@ const paragraphCommand: Command = {
 
 export function registerStructureCommands() {
   commandRegistry.register(paragraphCommand);
+  paragraphCommand.children?.forEach(cmd => commandRegistry.register(cmd));
 }
