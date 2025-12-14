@@ -88,7 +88,7 @@ export interface CommandRegistry {
   register(command: Command): void;
   unregister(commandId: string): void;
   getCommand(commandId: string): Command | undefined;
-  getAllCommands(): Command[]; // Added
+  getAllCommands(): Command[];
   getCommands(context: EditorContext): Command[];
   getCommandsByGroup(group: CommandGroup, context: EditorContext): Command[];
   executeCommand(commandId: string, context: EditorContext, view: EditorView): Promise<void>;
