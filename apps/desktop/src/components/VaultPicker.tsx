@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { setVaultConfig } from "../commands";
+import { setVaultConfig } from "../ipc";
 import { VaultConfig } from "../types";
 
 interface VaultPickerProps {

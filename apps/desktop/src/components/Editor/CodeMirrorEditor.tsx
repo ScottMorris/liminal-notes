@@ -11,6 +11,7 @@ export interface EditorHandle {
   insertAtCursor: (text: string) => void;
   focus: () => void;
   getEditorState: () => string;
+  view: EditorView | null;
 }
 
 interface CodeMirrorEditorProps {
@@ -70,6 +71,9 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
           },
         });
       },
+      get view() {
+          return viewRef.current;
+      }
     }));
 
     // Initialize Editor
