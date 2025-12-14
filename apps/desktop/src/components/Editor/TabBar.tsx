@@ -4,6 +4,12 @@ import { OpenTab } from '../../types/tabs';
 import { ChevronDownIcon } from '../Icons';
 import { useTabs } from '../../contexts/TabsContext';
 
+// Preload a tiny transparent image for optional drag ghost suppression
+const dragGhostImg = new Image();
+let dragGhostReady = false;
+dragGhostImg.onload = () => { dragGhostReady = true; };
+dragGhostImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
 interface TabBarProps {
   tabs: OpenTab[];
   activeTabId: string | null;
@@ -47,6 +53,10 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
           try {
               dataTransfer.effectAllowed = 'move';
               dataTransfer.setData('text/plain', tabId);
+              // Suppress giant default ghost when the preloaded image is ready
+              if (dragGhostReady) {
+                  dataTransfer.setDragImage(dragGhostImg, 0, 0);
+              }
           } catch (err) {
               console.warn('Tab drag start failed to configure dataTransfer', err);
           }
