@@ -1,7 +1,38 @@
 
-  VITE v7.2.7  ready in 532 ms
+> @liminal-notes/desktop@0.1.0 dev /app/apps/desktop
+> vite --port 1420 --strictPort
+
+
+  VITE v7.2.7  ready in 246 ms
 
   ➜  Local:   http://localhost:1420/
-8:13:11 AM [vite] (client) hmr update /src/components/FileTree.tsx
-8:24:15 AM [vite] (client) hmr update /src/App.tsx
-8:24:20 AM [vite] (client) hmr update /src/components/FileTree.tsx
+4:27:11 AM [vite] (client) hmr update /src/components/Editor/ContextMenu/MenuItem.tsx
+4:27:16 AM [vite] (client) Pre-transform error: Failed to resolve import "@/components/Icons" from "src/components/Editor/ContextMenu/iconMapper.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/apps/desktop/src/components/Editor/ContextMenu/iconMapper.tsx:2:86
+  15 |    window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+  16 |  }
+  17 |  import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon } from "@/components/Icons";
+     |                                                                                         ^
+  18 |  const LinkIcon = () => /* @__PURE__ */ jsxDEV("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none",...
+  19 |    /* @__PURE__ */ jsxDEV("path", { d: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" }, void 0, false, {
+4:27:16 AM [vite] Internal server error: Failed to resolve import "@/components/Icons" from "src/components/Editor/ContextMenu/iconMapper.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/apps/desktop/src/components/Editor/ContextMenu/iconMapper.tsx:2:86
+  15 |    window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+  16 |  }
+  17 |  import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon } from "@/components/Icons";
+     |                                                                                         ^
+  18 |  const LinkIcon = () => /* @__PURE__ */ jsxDEV("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none",...
+  19 |    /* @__PURE__ */ jsxDEV("path", { d: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" }, void 0, false, {
+      at TransformPluginContext._formatLog (file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:28998:43)
+      at TransformPluginContext.error (file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:28995:14)
+      at normalizeUrl (file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:27118:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:27176:32
+      at async Promise.all (index 3)
+      at async TransformPluginContext.transform (file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:27144:4)
+      at async EnvironmentPluginContainer.transform (file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:28796:14)
+      at async loadAndTransform (file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:22669:26)
+      at async viteTransformMiddleware (file:///app/node_modules/.pnpm/vite@7.2.7_@types+node@25.0.0/node_modules/vite/dist/node/chunks/config.js:24541:20)
+4:27:41 AM [vite] (client) hmr update /src/components/Editor/ContextMenu/MenuItem.tsx
