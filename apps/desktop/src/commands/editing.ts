@@ -36,6 +36,7 @@ function wrapSelection(view: EditorView, before: string, after: string = before)
 const formatCommand: Command = {
   id: 'editor.format.group',
   label: 'Format',
+  context: 'Editor',
   group: 'Format',
   icon: 'format',
   run: () => {}, // No-op parent
@@ -43,6 +44,7 @@ const formatCommand: Command = {
     {
       id: 'editor.format.bold',
       label: 'Bold',
+      context: 'Editor',
       group: 'Format',
       icon: 'bold',
       shortcut: 'Ctrl+B',
@@ -51,6 +53,7 @@ const formatCommand: Command = {
     {
       id: 'editor.format.italic',
       label: 'Italic',
+      context: 'Editor',
       group: 'Format',
       icon: 'italic',
       shortcut: 'Ctrl+I',
@@ -59,6 +62,7 @@ const formatCommand: Command = {
     {
       id: 'editor.format.strikethrough',
       label: 'Strikethrough',
+      context: 'Editor',
       group: 'Format',
       icon: 'strike',
       run: (ctx, view) => wrapSelection(view, '~~'),
@@ -66,6 +70,7 @@ const formatCommand: Command = {
     {
       id: 'editor.format.highlight',
       label: 'Highlight',
+      context: 'Editor',
       group: 'Format',
       icon: 'highlight',
       run: (ctx, view) => wrapSelection(view, '=='),
@@ -73,6 +78,7 @@ const formatCommand: Command = {
     {
       id: 'editor.format.code',
       label: 'Code',
+      context: 'Editor',
       group: 'Format',
       icon: 'code',
       shortcut: 'Ctrl+E',
@@ -81,6 +87,7 @@ const formatCommand: Command = {
     {
       id: 'editor.format.clear',
       label: 'Clear formatting',
+      context: 'Editor',
       group: 'Format',
       icon: 'clear',
       run: (ctx, view) => {
@@ -100,6 +107,7 @@ const formatCommand: Command = {
 const insertCommand: Command = {
   id: 'editor.insert.group',
   label: 'Insert',
+  context: 'Editor',
   group: 'Insert',
   icon: 'insert',
   run: () => {}, // No-op parent
@@ -107,6 +115,7 @@ const insertCommand: Command = {
     {
       id: 'editor.insert.table',
       label: 'Table',
+      context: 'Editor',
       group: 'Insert',
       icon: 'table',
       run: (ctx, view) => {
@@ -124,6 +133,7 @@ const insertCommand: Command = {
     {
       id: 'editor.insert.callout',
       label: 'Callout',
+      context: 'Editor',
       group: 'Insert',
       icon: 'callout',
       run: (ctx, view) => {
@@ -136,6 +146,7 @@ const insertCommand: Command = {
     {
       id: 'editor.insert.hr',
       label: 'Horizontal rule',
+      context: 'Editor',
       group: 'Insert',
       icon: 'hr',
       run: (ctx, view) => {
@@ -148,6 +159,7 @@ const insertCommand: Command = {
     {
       id: 'editor.insert.codeblock',
       label: 'Code block',
+      context: 'Editor',
       group: 'Insert',
       icon: 'code',
       run: (ctx, view) => {
@@ -161,6 +173,7 @@ const insertCommand: Command = {
     {
       id: 'editor.insert.mathblock',
       label: 'Math block',
+      context: 'Editor',
       group: 'Insert',
       icon: 'math',
       run: (ctx, view) => {
@@ -178,6 +191,7 @@ const insertCommand: Command = {
 const cutCommand: Command = {
   id: 'editor.edit.cut',
   label: 'Cut',
+  context: 'Editor',
   group: 'Edit',
   icon: 'cut',
   shortcut: 'Ctrl+X',
@@ -197,6 +211,7 @@ const cutCommand: Command = {
 const copyCommand: Command = {
   id: 'editor.edit.copy',
   label: 'Copy',
+  context: 'Editor',
   group: 'Edit',
   icon: 'copy',
   shortcut: 'Ctrl+C',
@@ -210,6 +225,7 @@ const copyCommand: Command = {
 const pasteCommand: Command = {
   id: 'editor.edit.paste',
   label: 'Paste',
+  context: 'Editor',
   group: 'Edit',
   icon: 'paste',
   shortcut: 'Ctrl+V',
@@ -231,6 +247,7 @@ const pasteCommand: Command = {
 const pastePlainCommand: Command = {
   id: 'editor.edit.pastePlain',
   label: 'Paste as plain text',
+  context: 'Editor',
   group: 'Edit',
   icon: 'paste-plain',
   shortcut: 'Ctrl+Shift+V',
@@ -252,6 +269,7 @@ const pastePlainCommand: Command = {
 const selectAllCommand: Command = {
   id: 'editor.edit.selectAll',
   label: 'Select all',
+  context: 'Editor',
   group: 'Edit',
   icon: 'selection', // Might need an icon in mapper if not present, but it's optional
   shortcut: 'Ctrl+A',

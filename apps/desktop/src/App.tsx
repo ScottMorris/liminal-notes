@@ -180,6 +180,12 @@ function AppContent() {
          e.preventDefault();
          setEditingPath(selectedFile);
       }
+
+      // Save (Global)
+      if (matchShortcut(e, 'editor.file.save')) {
+        e.preventDefault();
+        window.dispatchEvent(new Event('liminal:save'));
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);

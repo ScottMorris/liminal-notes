@@ -102,8 +102,9 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       if (!editorRef.current) return;
 
       // Build keymap from command registry
+      // Exclude global commands so they bubble up to window listeners
       const registryKeymap = commandRegistry.getAllCommands()
-        .filter(cmd => cmd.shortcut)
+        .filter(cmd => cmd.shortcut && cmd.context !== 'Global')
         .map(cmd => ({
           key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-'),
           run: (view: EditorView) => {
@@ -126,14 +127,6 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
           ...registryKeymap,
           ...defaultKeymap,
           ...historyKeymap,
-          {
-            key: 'Mod-s',
-            run: () => {
-              // Call the current onSave from ref
-              onSaveRef.current();
-              return true;
-            },
-          },
         ]),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {

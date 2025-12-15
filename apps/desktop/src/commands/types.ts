@@ -1,6 +1,11 @@
 import { EditorView } from '@codemirror/view';
 
 /**
+ * Command context (scope)
+ */
+export type CommandContext = 'Global' | 'Editor' | 'FileTree';
+
+/**
  * Context passed to commands when they execute or evaluate conditions
  */
 export interface EditorContext {
@@ -61,6 +66,9 @@ export interface Command {
 
   // Display name
   label: string;
+
+  // Context where command is active
+  context: CommandContext;
 
   // Grouping for menus
   group: CommandGroup;

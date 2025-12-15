@@ -4,6 +4,7 @@ import { commandRegistry } from './CommandRegistry';
 const saveCommand: Command = {
   id: 'editor.file.save',
   label: 'Save',
+  context: 'Global',
   group: 'File',
   icon: 'save',
   shortcut: 'Ctrl+S',

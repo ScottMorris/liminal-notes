@@ -1,0 +1,9 @@
+
+> @liminal-notes/desktop@0.1.0 dev /app/apps/desktop
+> vite --port 1420
+
+
+  VITE v7.2.7  ready in 402 ms
+
+  ➜  Local:   http://localhost:1420/
+7:58:12 AM [vite] (client) page reload src/commands/registerDefaults.ts

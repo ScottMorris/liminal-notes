@@ -5,6 +5,7 @@ import { commandRegistry } from './CommandRegistry';
 const addInternalLinkCommand: Command = {
   id: 'editor.links.addInternal',
   label: 'Add backlink',
+  context: 'Editor',
   group: 'Links',
   icon: 'link',
   run: (ctx, view) => {
@@ -35,6 +36,7 @@ const addInternalLinkCommand: Command = {
 const addExternalLinkCommand: Command = {
   id: 'editor.links.addExternal',
   label: 'Add external link',
+  context: 'Editor',
   group: 'Links',
   icon: 'external-link',
   run: (ctx, view) => {
