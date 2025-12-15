@@ -50,7 +50,8 @@ export type CommandGroup =
   | 'Edit'
   | 'File'
   | 'View'
-  | 'Navigation';
+  | 'Navigation'
+  | 'Global';
 
 /**
  * Individual command definition
@@ -88,6 +89,7 @@ export interface CommandRegistry {
   register(command: Command): void;
   unregister(commandId: string): void;
   getCommand(commandId: string): Command | undefined;
+  getAllCommands(): Command[];
   getCommands(context: EditorContext): Command[];
   getCommandsByGroup(group: CommandGroup, context: EditorContext): Command[];
   executeCommand(commandId: string, context: EditorContext, view: EditorView): Promise<void>;

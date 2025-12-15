@@ -1,6 +1,8 @@
 import { registerEditingCommands } from './editing';
 import { registerLinkCommands } from './links';
 import { registerFileCommands } from './file';
+import { registerStructureCommands } from './structure';
+import { registerGlobalCommands } from './global';
 
 /**
  * Register all built-in commands
@@ -10,4 +12,6 @@ export function registerAllCommands() {
   registerEditingCommands();
   registerLinkCommands();
   registerFileCommands();
+  registerStructureCommands();
+  registerGlobalCommands();
 }

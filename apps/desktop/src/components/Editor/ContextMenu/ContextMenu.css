@@ -1,0 +1,132 @@
+.context-menu {
+  position: fixed;
+  background: var(--ln-menu-bg);
+  border: 1px solid var(--ln-menu-border);
+  border-radius: var(--ln-menu-radius);
+  box-shadow: var(--ln-menu-shadow);
+  padding: 4px;
+  min-width: 200px;
+  max-width: 300px;
+  z-index: 10000;
+  color: var(--ln-menu-fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+/* Submenu shares same styling as main menu */
+.submenu {
+  position: fixed;
+  background: var(--ln-menu-bg);
+  border: 1px solid var(--ln-menu-border);
+  border-radius: var(--ln-menu-radius);
+  box-shadow: var(--ln-menu-shadow);
+  padding: 4px;
+  min-width: 200px;
+  max-width: 300px;
+  z-index: 10001; /* Above main menu */
+  color: var(--ln-menu-fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+.menu-section {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-section + .menu-section {
+  border-top: 1px solid var(--ln-menu-border);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.menu-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ln-menu-muted);
+  padding: 4px 12px;
+  margin-bottom: 2px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--ln-menu-fg);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.1s;
+  outline: none;
+}
+
+.menu-item:hover:not(.disabled) {
+  background: var(--ln-menu-hover);
+}
+
+.menu-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Chevron indicator for items with submenus */
+.menu-item.has-submenu {
+  padding-right: 12px; /* Already includes standard padding, but good to be explicit if needed */
+}
+
+.menu-item-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ln-menu-muted);
+}
+
+.menu-item:hover:not(.disabled) .menu-item-icon {
+    color: var(--ln-menu-fg);
+}
+
+.menu-item-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.menu-item-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.menu-item-shortcut {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--ln-menu-muted);
+  margin-left: 12px;
+}
+
+.menu-item-chevron {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--ln-menu-muted);
+  line-height: 1;
+  margin-left: 4px;
+  margin-right: -4px; /* Pull right slightly */
+}
+
+.menu-separator {
+  height: 1px;
+  background: var(--ln-menu-border);
+  margin: 4px 0;
+}

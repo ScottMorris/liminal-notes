@@ -55,6 +55,19 @@ describe('CommandRegistry', () => {
         expect(registry.getCommand('test.cmd')).toBe(cmd);
     });
 
+    it('should register a Global command', () => {
+        const cmd: Command = {
+            id: 'test.global',
+            label: 'Global Command',
+            group: 'Global',
+            run: vi.fn()
+        };
+
+        registry.register(cmd);
+        expect(registry.getCommand('test.global')).toBe(cmd);
+        expect(registry.getCommand('test.global')?.group).toBe('Global');
+    });
+
     it('should execute a command', async () => {
         const runFn = vi.fn();
         const cmd: Command = {

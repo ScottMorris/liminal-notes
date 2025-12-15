@@ -34,6 +34,8 @@ We should consider adding a printing feature for notes.
 - Folders as implicit tags: Display folders in the UI with distinct colors and treat them as tags for the notes they contain.
 - Format inline but don't hide the markdown syntax in the editor view (e.g., bold, italics). Eg. _rendered_ **markdown** `syntax` should still be visible in the editor, like VSCode.
 - Replace native `<select>` with a custom dropdown component to ensure consistent theming across platforms, as native controls on Linux/Tauri often ignore CSS for dropdown menus.
+- **Integrate Prettier:** Add support for Prettier, either auto or manual. Maybe it should be a plugin with a formatter hook.
+- **Link preview pop-up:** Add a pop-up preview for WikiLinks on hover.
 
 ## Theming
 
@@ -44,6 +46,7 @@ We should consider adding a printing feature for notes.
 - Verify if explicit theme reconfiguration is needed for CodeMirror when complex theme changes occur (currently relies on CSS variables updating automatically).
 - Implement undo history reset when switching notes to prevent undoing into a previous note's content state.
 - Refactor legacy `saveUnsavedTab` helper in `EditorPane.tsx`. It is currently kept for confirmClose logic but ideally should be routed through the command registry or a dedicated context to support non-active tabs.
+- **CodeMirror WikiLinks:** Refactor WikiLink parsing to use a custom CodeMirror Markdown language extension instead of manual regex scanning for better performance and robustness.
 
 ## Tab Persistence in Vault
 
@@ -65,3 +68,24 @@ Currently, unsaved tabs are stored in `localStorage` which means:
 - Format: JSON array of `{ id, title, content, createdAt, modifiedAt }`
 - Load on vault open, save on change (debounced)
 - Merge strategy for conflicts (last-write-wins for MVP)
+
+## Editor Enhancements
+
+- **Specialized Clipboard Support:** Add support for specialized clipboard formats (HTML, Image) via `clipboard-manager:allow-write-html`, `clipboard-manager:allow-write-image`, etc. Currently only plain text is supported.
+- **Advanced Editing Commands:** Expose native CodeMirror commands in the Command Registry/Palette ([Reference](https://codemirror.net/docs/ref/#commands)):
+  - Undo / Redo
+  - Move Line Up / Down
+  - Indentation commands (Tab / Shift+Tab) - [Details](https://codemirror.net/examples/tab/)
+  - Toggle Comment (Ctrl+/) - Add to Context Menu
+- **Editor Enhancements:**
+  - **Multiple Selections:** Enable [`allowMultipleSelections`](https://codemirror.net/docs/ref/#state.EditorState^allowMultipleSelections).
+  - **Tab Size:** specific config via [`tabSize`](https://codemirror.net/docs/ref/#state.EditorState^tabSize).
+- **AI Features:**
+  - **Thought Summarizer:** Highlight text and have AI summarize and insert it.
+- **Advanced Editing Commands:** Expose native CodeMirror commands in the Command Registry/Palette:
+  - Undo / Redo
+  - Move Line Up / Down
+  - Add Cursor Above / Below (Multi-cursor)
+  - Delete Line
+  - Select Line
+  - Duplicate Line

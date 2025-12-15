@@ -504,6 +504,10 @@ export function EditorPane() {
                             onChange={handleContentChange}
                             onSave={handleSave}
                             onBlur={handleEditorBlur}
+                            noteId={activeTab.id}
+                            path={activeTab.path}
+                            getEditorContext={getEditorContext}
+                            onLinkClick={handleNavigate}
                             />
                         )}
                         </div>

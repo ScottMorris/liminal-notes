@@ -4,7 +4,7 @@ import { commandRegistry } from './CommandRegistry';
 // Links: Add internal link (wikilink)
 const addInternalLinkCommand: Command = {
   id: 'editor.links.addInternal',
-  label: 'Add link (internal)',
+  label: 'Add backlink',
   group: 'Links',
   icon: 'link',
   run: (ctx, view) => {

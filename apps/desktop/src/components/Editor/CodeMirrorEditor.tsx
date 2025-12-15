@@ -1,11 +1,17 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { closeBrackets } from '@codemirror/autocomplete';
 import { createEditorTheme } from './editorTheme';
+import { markdownDecorations } from './decorations';
 import { useTheme } from '../../theme';
+import { ContextMenu } from './ContextMenu/ContextMenu';
+import { buildContextMenu } from './ContextMenu/menuBuilder';
+import { commandRegistry } from '../../commands/CommandRegistry';
+import type { MenuModel, MenuPosition } from './ContextMenu/types';
+import type { EditorContext } from '../../commands/types';
 
 export interface EditorHandle {
   insertAtCursor: (text: string) => void;
@@ -20,16 +26,27 @@ interface CodeMirrorEditorProps {
   onChange: (value: string) => void;
   onSave: () => void;
   onBlur?: () => void;
+  noteId: string;
+  path: string;
+  getEditorContext: (view: EditorView) => EditorContext;
+  onLinkClick?: (target: string) => void;
 }
 
 export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
-  ({ value, initialState, onChange, onSave, onBlur }, ref) => {
+  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const onSaveRef = useRef(onSave);
     const onChangeRef = useRef(onChange);
     const onBlurRef = useRef(onBlur);
+    const onLinkClickRef = useRef(onLinkClick);
     const { themeId } = useTheme();
+
+    // Context Menu State
+    const [contextMenu, setContextMenu] = useState<{
+      model: MenuModel;
+      position: MenuPosition;
+    } | null>(null);
 
     // Keep refs up to date
     useEffect(() => {
@@ -43,6 +60,10 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     useEffect(() => {
         onBlurRef.current = onBlur;
     }, [onBlur]);
+
+    useEffect(() => {
+        onLinkClickRef.current = onLinkClick;
+    }, [onLinkClick]);
 
     useImperativeHandle(ref, () => ({
       insertAtCursor: (text: string) => {
@@ -80,6 +101,19 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     useEffect(() => {
       if (!editorRef.current) return;
 
+      // Build keymap from command registry
+      // Exclude 'Global' commands so they bubble up to App.tsx
+      const registryKeymap = commandRegistry.getAllCommands()
+        .filter(cmd => cmd.shortcut && cmd.group !== 'Global')
+        .map(cmd => ({
+          key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-'),
+          run: (view: EditorView) => {
+            const context = getEditorContext(view);
+            commandRegistry.executeCommand(cmd.id, context, view);
+            return true;
+          }
+        }));
+
       let startState: EditorState;
       const extensions = [
         lineNumbers(),
@@ -87,8 +121,10 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         history(),
         closeBrackets(),
         markdown(),
+        markdownDecorations,
         createEditorTheme(),
         keymap.of([
+          ...registryKeymap,
           ...defaultKeymap,
           ...historyKeymap,
           {
@@ -109,6 +145,19 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
             blur: () => {
                 if (onBlurRef.current) {
                     onBlurRef.current();
+                }
+            },
+            click: (event, view) => {
+                const target = event.target as HTMLElement;
+                // Traverse up to find the wikilink element, since the target might be a text node or inner element
+                const wikilinkElement = target.closest?.('.cm-wikilink') || (target.parentElement?.closest?.('.cm-wikilink'));
+
+                if (wikilinkElement && (event.ctrlKey || event.metaKey)) {
+                     const linkTarget = wikilinkElement.getAttribute('data-wikilink-target');
+                     if (linkTarget && onLinkClickRef.current) {
+                         event.preventDefault();
+                         onLinkClickRef.current(linkTarget);
+                     }
                 }
             }
         })
@@ -173,7 +222,59 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       // Since we use CSS variables in our theme definition, styles update automatically.
     }, [themeId]);
 
-    return <div ref={editorRef} style={{ height: '100%', width: '100%' }} className="cm-editor-container" />;
+    // Context Menu Handler
+    function handleContextMenu(e: MouseEvent) {
+      if (!viewRef.current) return;
+
+      e.preventDefault();
+
+      // Get full context from parent
+      const context = getEditorContext(viewRef.current);
+      const model = buildContextMenu(context, commandRegistry);
+
+      setContextMenu({
+        model,
+        position: { x: e.clientX, y: e.clientY },
+      });
+    }
+
+    // Attach Context Menu Listener
+    useEffect(() => {
+      const editorEl = viewRef.current?.dom;
+      if (!editorEl) return;
+
+      editorEl.addEventListener('contextmenu', handleContextMenu);
+      return () => {
+        editorEl.removeEventListener('contextmenu', handleContextMenu);
+      };
+    }, [noteId, path]);
+
+    async function handleMenuItemClick(commandId: string) {
+      if (!viewRef.current) return;
+
+      try {
+        const context = getEditorContext(viewRef.current);
+        await commandRegistry.executeCommand(commandId, context, viewRef.current);
+        viewRef.current.focus();
+      } catch (e) {
+        console.error("Failed to execute command from menu:", e);
+      }
+    }
+
+    return (
+      <>
+        <div ref={editorRef} style={{ height: '100%', width: '100%' }} className="cm-editor-container" />
+
+        {contextMenu && (
+          <ContextMenu
+            model={contextMenu.model}
+            position={contextMenu.position}
+            onClose={() => setContextMenu(null)}
+            onItemClick={handleMenuItemClick}
+          />
+        )}
+      </>
+    );
   }
 );
 
