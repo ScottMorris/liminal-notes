@@ -1,5 +1,5 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Compartment } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
@@ -31,10 +31,13 @@ interface CodeMirrorEditorProps {
   path: string;
   getEditorContext: (view: EditorView) => EditorContext;
   onLinkClick?: (target: string) => void;
+  showLineNumbers?: boolean;
+  readableLineLength?: boolean;
+  wordWrap?: boolean;
 }
 
 export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
-  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick }, ref) => {
+  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick, showLineNumbers = true, readableLineLength = false, wordWrap = false }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const onSaveRef = useRef(onSave);
@@ -42,6 +45,9 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     const onBlurRef = useRef(onBlur);
     const onLinkClickRef = useRef(onLinkClick);
     const { themeId } = useTheme();
+
+    const lineNumbersCompartment = useRef(new Compartment()).current;
+    const wordWrapCompartment = useRef(new Compartment()).current;
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{
@@ -117,7 +123,8 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
 
       let startState: EditorState;
       const extensions = [
-        lineNumbers(),
+        lineNumbersCompartment.of(showLineNumbers ? lineNumbers() : []),
+        wordWrapCompartment.of(wordWrap ? EditorView.lineWrapping : []),
         highlightActiveLine(),
         history(),
         closeBrackets(),
@@ -142,7 +149,6 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
             },
             click: (event, view) => {
                 const target = event.target as HTMLElement;
-                // Traverse up to find the wikilink element, since the target might be a text node or inner element
                 const wikilinkElement = target.closest?.('.cm-wikilink') || (target.parentElement?.closest?.('.cm-wikilink'));
 
                 if (wikilinkElement && (event.ctrlKey || event.metaKey)) {
@@ -192,12 +198,22 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         view.destroy();
         viewRef.current = null;
       };
-      // We explicitly do not depend on `value` or `themeId` here to avoid re-creating the editor
-      // Updates are handled by other effects
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Handle incoming value changes (e.g. from loading a new note)
+    // Reconfigure extensions when props change
+    useEffect(() => {
+        if (viewRef.current) {
+            viewRef.current.dispatch({
+                effects: [
+                    lineNumbersCompartment.reconfigure(showLineNumbers ? lineNumbers() : []),
+                    wordWrapCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : [])
+                ]
+            });
+        }
+    }, [showLineNumbers, wordWrap]);
+
+    // Handle incoming value changes
     useEffect(() => {
       const view = viewRef.current;
       if (!view) return;
@@ -210,32 +226,22 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       }
     }, [value]);
 
-    // Handle Theme Changes
     useEffect(() => {
-      // Since we use CSS variables in our theme definition, styles update automatically.
+      // Theme changes handled by CSS vars
     }, [themeId]);
 
-    // Context Menu Handler
+    // Context Menu Handler (same as before)
     function handleContextMenu(e: MouseEvent) {
       if (!viewRef.current) return;
-
       e.preventDefault();
-
-      // Get full context from parent
       const context = getEditorContext(viewRef.current);
       const model = buildContextMenu(context, commandRegistry);
-
-      setContextMenu({
-        model,
-        position: { x: e.clientX, y: e.clientY },
-      });
+      setContextMenu({ model, position: { x: e.clientX, y: e.clientY } });
     }
 
-    // Attach Context Menu Listener
     useEffect(() => {
       const editorEl = viewRef.current?.dom;
       if (!editorEl) return;
-
       editorEl.addEventListener('contextmenu', handleContextMenu);
       return () => {
         editorEl.removeEventListener('contextmenu', handleContextMenu);
@@ -244,7 +250,6 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
 
     async function handleMenuItemClick(commandId: string) {
       if (!viewRef.current) return;
-
       try {
         const context = getEditorContext(viewRef.current);
         await commandRegistry.executeCommand(commandId, context, viewRef.current);
@@ -256,7 +261,11 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
 
     return (
       <>
-        <div ref={editorRef} style={{ height: '100%', width: '100%' }} className="cm-editor-container" />
+        <div
+            ref={editorRef}
+            style={{ height: '100%', width: '100%' }}
+            className={`cm-editor-container ${readableLineLength ? 'readable-line-length' : ''}`}
+        />
 
         {contextMenu && (
           <ContextMenu

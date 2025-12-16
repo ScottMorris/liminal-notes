@@ -74,7 +74,7 @@ body {
   border-right: 1px solid var(--ln-border);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden; /* Changed from auto to hidden to manage scroll in children */
   color: var(--ln-sidebar-fg);
 }
 
@@ -85,6 +85,16 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 10px;
+  border-top: 1px solid var(--ln-border);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  background-color: var(--ln-sidebar-bg);
 }
 
 .sidebar-header h3 {
@@ -827,4 +837,16 @@ input:checked + .slider:before {
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+/* Editor Improvements */
+.cm-editor-container.readable-line-length .cm-content {
+  max-width: 800px;
+  /* margin: 0 auto; Removed to align left per feedback */
+}
+
+/* Dropdown Theming (Best Effort) */
+select option {
+    background-color: var(--ln-bg);
+    color: var(--ln-fg);
 }

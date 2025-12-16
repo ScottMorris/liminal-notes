@@ -22,6 +22,7 @@ Desktop-only. Mobile renderer is out of scope.
 
 ### Settings Modal Shell
 
+* Entry point: **Settings icon (cog)** in the bottom footer of the main sidebar.
 * Modal (or dedicated window) with:
 
   * **Left navigation sidebar** (fixed width)
@@ -36,7 +37,7 @@ Desktop-only. Mobile renderer is out of scope.
 
   * Group header: `Options`
 
-    * `General`, `Editor`, `Files and links`, `Appearance`, `Hotkeys`
+    * `General`, `Vault`, `Editor`, `Files and links`, `Appearance`, `Hotkeys`
   * Group header: `Core plugins`
 
     * `Backlinks`, `Canvas`, `Command palette`, `Daily notes`, `File recovery`, `Note composer`, `Page preview`, `Quick switcher`, …
@@ -169,7 +170,15 @@ Implement reusable components:
 
 Implement enough sections to exercise the system end-to-end:
 
-#### A) Editor
+#### A) General
+
+* App version (read-only)
+
+#### B) Vault
+
+* Switch Vault (action button)
+
+#### C) Editor
 
 Example rows:
 
@@ -179,7 +188,7 @@ Example rows:
 * `Readable line length` (toggle)
 * `Show line numbers` (toggle)
 
-#### B) Appearance
+#### D) Appearance
 
 Must include at least one example of each:
 
@@ -188,7 +197,7 @@ Must include at least one example of each:
 * `Font size` (slider)
 * `Quick font size adjustment` (toggle)
 
-#### C) Core plugins
+#### E) Core plugins
 
 Collection list with:
 
@@ -200,7 +209,7 @@ Collection list with:
   * Optional gear (open plugin settings section)
   * Optional plus (plugin-specific add action; can be stubbed)
 
-#### D) Hotkeys
+#### F) Hotkeys
 
 Collection list with:
 

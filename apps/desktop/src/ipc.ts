@@ -28,3 +28,11 @@ export const writeNote = async (relativePath: string, contents: string): Promise
 export const renameItem = async (oldPath: string, newPath: string): Promise<void> => {
   return await invoke("rename_item", { oldPath, newPath });
 };
+
+export const getSettings = async (): Promise<Record<string, unknown>> => {
+  return await invoke("get_settings");
+};
+
+export const setSetting = async (key: string, value: unknown): Promise<void> => {
+  return await invoke("set_setting", { key, value });
+};
