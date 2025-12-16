@@ -35,10 +35,21 @@ const SettingsGroup: React.FC<{ group: SettingsGroupDef; onAction: (id: string) 
 };
 
 const SettingRow: React.FC<{ row: SettingRowDef; onAction: (id: string) => void }> = ({ row, onAction }) => {
+    // Check if this is a full-width collection row
+    const isCollection = row.controls.length === 1 && row.controls[0].kind === 'collection';
+
+    if (isCollection) {
+        return (
+            <div className="setting-row" style={{ padding: '12px 0', borderBottom: '1px solid var(--ln-border)' }}>
+                 <Control def={row.controls[0]} onAction={onAction} />
+            </div>
+        );
+    }
+
     return (
         <div className="setting-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--ln-border)' }}>
             <div className="setting-info" style={{ flex: 1, paddingRight: '20px' }}>
-                <div className="setting-label" style={{ fontWeight: 500 }}>{row.label}</div>
+                {row.label && <div className="setting-label" style={{ fontWeight: 500 }}>{row.label}</div>}
                 {row.description && <div className="setting-desc" style={{ fontSize: '0.85rem', color: 'var(--ln-muted)', marginTop: '4px' }}>{row.description}</div>}
             </div>
             <div className="setting-controls" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

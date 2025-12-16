@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { readNote, writeNote } from '../../ipc';
 import { useTabs } from '../../contexts/TabsContext';
+import { useSettings } from '../../contexts/SettingsContext';
 import { usePluginHost } from '../../plugins/PluginHostProvider';
 import { useLinkIndex } from '../LinkIndexContext';
 import { useSearchIndex } from '../SearchIndexContext';
@@ -40,6 +41,7 @@ export function EditorPane() {
     closeTab: closeTabContext
   } = useTabs();
 
+  const { settings } = useSettings();
   const activeTab = openTabs.find(t => t.id === activeTabId);
   const { notifyNoteOpened, notifyNoteContentChanged, notifyNoteSaved, enabledPlugins } = usePluginHost();
   const { updateNote, resolvePath } = useLinkIndex();
@@ -517,6 +519,8 @@ export function EditorPane() {
                             path={activeTab.path}
                             getEditorContext={getEditorContext}
                             onLinkClick={handleNavigate}
+                            showLineNumbers={settings['editor.showLineNumbers'] !== false}
+                            readableLineLength={settings['editor.readableLineLength'] === true}
                             />
                         )}
                         </div>

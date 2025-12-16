@@ -3,6 +3,7 @@ import { useTheme } from '../../theme';
 import { getSections } from './schemas';
 import { SettingsSection } from './SettingsRenderer';
 import { XMarkIcon } from '../Icons';
+import pkg from '../../../package.json';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -11,7 +12,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVault }) => {
     const { availableThemes } = useTheme();
-    const appVersion = "0.1.0"; // TODO: import from package.json or config
+    const appVersion = pkg.version;
 
     const sections = useMemo(() => getSections(availableThemes, appVersion), [availableThemes, appVersion]);
 
@@ -25,7 +26,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
 
     const handleAction = (actionId: string) => {
         if (actionId === 'switch-vault') {
-            onResetVault();
+            if (window.confirm("Are you sure you want to switch vaults?")) {
+                onResetVault();
+            }
         }
     };
 

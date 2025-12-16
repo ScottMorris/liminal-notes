@@ -3,17 +3,17 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { SettingControlDef } from './types';
 import { ChevronDownIcon } from '../Icons';
 
-function useSettingValue(key?: string) {
+function useSettingValue<T = any>(key?: string) {
     const { settings, updateSetting } = useSettings();
-    const val = key ? settings[key] : undefined;
-    const setVal = (v: any) => {
+    const val = key ? (settings[key] as T) : undefined;
+    const setVal = (v: T) => {
         if (key) updateSetting(key, v);
     };
     return [val, setVal] as const;
 }
 
 export const ToggleSwitch: React.FC<{ def: SettingControlDef }> = ({ def }) => {
-    const [value, setValue] = useSettingValue(def.key);
+    const [value, setValue] = useSettingValue<boolean>(def.key);
     const checked = value === true; // Strict check? or !!value
 
     return (
@@ -29,9 +29,9 @@ export const ToggleSwitch: React.FC<{ def: SettingControlDef }> = ({ def }) => {
 };
 
 export const SelectDropdown: React.FC<{ def: SettingControlDef }> = ({ def }) => {
-    const [value, setValue] = useSettingValue(def.key);
+    const [value, setValue] = useSettingValue<string>(def.key);
     // If value is undefined, use first option or empty
-    const current = (value as string) ?? def.options?.[0]?.value ?? "";
+    const current = value ?? def.options?.[0]?.value ?? "";
 
     return (
         <div className="select-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
@@ -48,7 +48,8 @@ export const SelectDropdown: React.FC<{ def: SettingControlDef }> = ({ def }) =>
                     color: 'var(--ln-fg)',
                     fontSize: '0.9rem',
                     cursor: 'pointer',
-                    minWidth: '100px'
+                    minWidth: '100px',
+                    outlineColor: 'var(--ln-accent)'
                 }}
             >
                 {def.options?.map(opt => (
@@ -150,8 +151,8 @@ export const NumberInput: React.FC<{ def: SettingControlDef }> = ({ def }) => {
 };
 
 export const Slider: React.FC<{ def: SettingControlDef }> = ({ def }) => {
-    const [value, setValue] = useSettingValue(def.key);
-    const val = (value as number) ?? def.min ?? 0;
+    const [value, setValue] = useSettingValue<number>(def.key);
+    const val = value ?? def.min ?? 0;
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -162,7 +163,7 @@ export const Slider: React.FC<{ def: SettingControlDef }> = ({ def }) => {
                 step={def.step}
                 value={val}
                 onChange={(e) => setValue(parseFloat(e.target.value))}
-                style={{ width: '120px' }}
+                style={{ width: '120px', accentColor: 'var(--ln-accent)' }}
             />
             <span style={{ minWidth: '30px', textAlign: 'right', fontSize: '0.9rem' }}>{val}</span>
         </div>

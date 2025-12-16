@@ -77,6 +77,10 @@ function AppContent() {
         const size = settings['appearance.fontSize'];
         document.documentElement.style.setProperty('--ln-font-size', `${size}px`);
         document.body.style.fontSize = `${size}px`;
+    } else {
+        // Default font size
+        document.documentElement.style.setProperty('--ln-font-size', '16px');
+        document.body.style.fontSize = '16px';
     }
   }, [settings, setThemeId]);
 
@@ -236,8 +240,7 @@ function AppContent() {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h3 title={vaultConfig.name}>{vaultConfig.name}</h3>
-          <div style={{ display: 'flex', gap: '5px' }}>
+          <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
             <button className="reset-btn" onClick={handleStartCreate} title="New Note (Ctrl+N)"><PencilSquareIcon size={18} /></button>
             <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)"><SearchIcon size={18} /></button>
             <button className="reset-btn" onClick={() => setIsHelpOpen(true)} title="Help">?</button>

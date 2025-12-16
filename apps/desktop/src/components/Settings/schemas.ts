@@ -4,7 +4,25 @@ import { Theme } from '../../theme';
 export const getSections = (
     availableThemes: Theme[],
     appVersion: string
-): SettingsSectionDef[] => [
+): SettingsSectionDef[] => {
+    // Sort themes: System, then Light themes, then Dark themes
+    const lightThemes = availableThemes
+        .filter(t => t.category === 'light')
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(t => ({ value: t.id, label: t.name }));
+
+    const darkThemes = availableThemes
+        .filter(t => t.category === 'dark')
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(t => ({ value: t.id, label: t.name }));
+
+    const themeOptions = [
+        { value: 'system', label: 'System' },
+        ...lightThemes,
+        ...darkThemes
+    ];
+
+    return [
     {
         id: 'general',
         title: 'General',
@@ -81,10 +99,7 @@ export const getSections = (
                         controls: [{
                             kind: 'select',
                             key: 'appearance.theme',
-                            options: [
-                                { value: 'system', label: 'System' },
-                                ...availableThemes.map(t => ({ value: t.id, label: t.name }))
-                            ]
+                            options: themeOptions
                         }]
                     },
                     {
@@ -129,3 +144,4 @@ export const getSections = (
         ]
     }
 ];
+};

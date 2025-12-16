@@ -838,3 +838,9 @@ input:checked + .slider:before {
     opacity: 1;
   }
 }
+
+/* Editor Improvements */
+.cm-editor-container.readable-line-length .cm-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
