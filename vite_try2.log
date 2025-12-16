@@ -1,0 +1,15 @@
+
+> @liminal-notes/desktop@0.1.0 dev /app/apps/desktop
+> vite --port 1420
+
+
+  VITE v7.2.7  ready in 402 ms
+
+  ➜  Local:   http://localhost:1420/
+7:58:12 AM [vite] (client) page reload src/commands/registerDefaults.ts
+4:39:29 AM [vite] (client) hmr update /src/App.tsx
+4:52:24 AM [vite] (client) hmr update /src/components/Editor/CodeMirrorEditor.tsx
+5:05:12 AM [vite] (client) page reload src/commands/editing.ts
+5:13:36 AM [vite] (client) page reload src/commands/editing.ts
+5:19:23 AM [vite] (client) page reload src/commands/editing.ts
+5:26:54 AM [vite] (client) hmr update /src/components/Editor/CodeMirrorEditor.tsx

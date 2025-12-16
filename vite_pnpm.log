@@ -1,0 +1,9 @@
+
+> @liminal-notes/desktop@0.1.0 dev /app/apps/desktop
+> vite
+
+sh: 1: vite: not found
+/app/apps/desktop:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @liminal-notes/desktop@0.1.0 dev: `vite`
+spawn ENOENT
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

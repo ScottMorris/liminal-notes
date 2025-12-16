@@ -282,6 +282,15 @@ export function EditorPane() {
     }
   };
 
+  // Listen for global save event
+  useEffect(() => {
+    const onGlobalSave = () => {
+       handleSave();
+    };
+    window.addEventListener('liminal:save', onGlobalSave);
+    return () => window.removeEventListener('liminal:save', onGlobalSave);
+  }, [activeTab]);
+
   const handleContentChange = (newContent: string) => {
     if (newContent !== content) {
         setContent(newContent);

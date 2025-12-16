@@ -3,6 +3,7 @@ import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
+import { GFM } from '@lezer/markdown';
 import { closeBrackets } from '@codemirror/autocomplete';
 import { createEditorTheme } from './editorTheme';
 import { markdownDecorations } from './decorations';
@@ -102,10 +103,11 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       if (!editorRef.current) return;
 
       // Build keymap from command registry
+      // Exclude global commands so they bubble up to window listeners
       const registryKeymap = commandRegistry.getAllCommands()
-        .filter(cmd => cmd.shortcut)
+        .filter(cmd => cmd.shortcut && cmd.context !== 'Global')
         .map(cmd => ({
-          key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-'),
+          key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-').toLowerCase(),
           run: (view: EditorView) => {
             const context = getEditorContext(view);
             commandRegistry.executeCommand(cmd.id, context, view);
@@ -119,21 +121,13 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         highlightActiveLine(),
         history(),
         closeBrackets(),
-        markdown(),
+        markdown({ extensions: [GFM] }),
         markdownDecorations,
         createEditorTheme(),
         keymap.of([
           ...registryKeymap,
           ...defaultKeymap,
           ...historyKeymap,
-          {
-            key: 'Mod-s',
-            run: () => {
-              // Call the current onSave from ref
-              onSaveRef.current();
-              return true;
-            },
-          },
         ]),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {

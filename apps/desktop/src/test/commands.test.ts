@@ -47,6 +47,7 @@ describe('CommandRegistry', () => {
         const cmd: Command = {
             id: 'test.cmd',
             label: 'Test Command',
+            context: 'Editor',
             group: 'Edit',
             run: vi.fn()
         };
@@ -60,6 +61,7 @@ describe('CommandRegistry', () => {
         const cmd: Command = {
             id: 'test.run',
             label: 'Run Test',
+            context: 'Editor',
             group: 'Edit',
             run: runFn
         };
@@ -74,6 +76,7 @@ describe('CommandRegistry', () => {
         const cmd: Command = {
             id: 'test.when',
             label: 'When Test',
+            context: 'Editor',
             group: 'Edit',
             when: (ctx) => false,
             run: runFn
@@ -88,12 +91,14 @@ describe('CommandRegistry', () => {
         const cmd1: Command = {
             id: 'cmd1',
             label: 'Cmd 1',
+            context: 'Editor',
             group: 'Edit',
             run: vi.fn()
         };
         const cmd2: Command = {
             id: 'cmd2',
             label: 'Cmd 2',
+            context: 'Editor',
             group: 'Edit',
             when: () => false,
             run: vi.fn()
@@ -111,6 +116,7 @@ describe('CommandRegistry', () => {
         const cmd: Command = {
             id: 'test.error',
             label: 'Error Test',
+            context: 'Editor',
             group: 'Edit',
             run: () => { throw new Error('Boom'); }
         };
@@ -118,5 +124,22 @@ describe('CommandRegistry', () => {
         registry.register(cmd);
         await registry.executeCommand('test.error', mockContext, mockView);
         expect(mockOperations.notify).toHaveBeenCalledWith(expect.stringContaining('Error executing command'), 'error');
+    });
+
+    it('should register Global commands successfully', () => {
+        const cmd: Command = {
+            id: 'global.test',
+            label: 'Global Test',
+            context: 'Global',
+            group: 'File',
+            shortcut: 'Ctrl+T',
+            run: vi.fn()
+        };
+
+        registry.register(cmd);
+        const retrieved = registry.getCommand('global.test');
+        expect(retrieved).toBeDefined();
+        expect(retrieved?.context).toBe('Global');
+        expect(retrieved?.shortcut).toBe('Ctrl+T');
     });
 });

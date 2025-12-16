@@ -128,6 +128,7 @@ function toBody(view: EditorView) {
 const paragraphCommand: Command = {
   id: 'editor.structure.paragraph',
   label: 'Paragraph',
+  context: 'Editor',
   group: 'Structure',
   icon: 'paragraph',
   run: () => {}, // No-op, this just holds submenu
@@ -136,6 +137,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.bulletList',
       label: 'Bullet list',
+      context: 'Editor',
       group: 'Structure',
       icon: 'list',
       run: (ctx, view) => toggleList(view, '-'),
@@ -144,6 +146,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.numberedList',
       label: 'Numbered list',
+      context: 'Editor',
       group: 'Structure',
       icon: 'list-ordered',
       run: (ctx, view) => toggleList(view, '1.'),
@@ -152,6 +155,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.taskList',
       label: 'Task list',
+      context: 'Editor',
       group: 'Structure',
       icon: 'list-task',
       run: (ctx, view) => toggleList(view, '- [ ]'),
@@ -160,6 +164,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.heading1',
       label: 'Heading 1',
+      context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+1',
       run: (ctx, view) => toHeading(view, 1),
@@ -168,6 +173,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.heading2',
       label: 'Heading 2',
+      context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+2',
       run: (ctx, view) => toHeading(view, 2),
@@ -176,6 +182,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.heading3',
       label: 'Heading 3',
+      context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+3',
       run: (ctx, view) => toHeading(view, 3),
@@ -184,6 +191,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.heading4',
       label: 'Heading 4',
+      context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+4',
       run: (ctx, view) => toHeading(view, 4),
@@ -192,6 +200,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.heading5',
       label: 'Heading 5',
+      context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+5',
       run: (ctx, view) => toHeading(view, 5),
@@ -200,6 +209,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.heading6',
       label: 'Heading 6',
+      context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+6',
       run: (ctx, view) => toHeading(view, 6),
@@ -208,6 +218,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.body',
       label: 'Body',
+      context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+0',
       icon: 'clear',
@@ -217,6 +228,7 @@ const paragraphCommand: Command = {
     {
       id: 'editor.structure.quote',
       label: 'Quote',
+      context: 'Editor',
       group: 'Structure',
       icon: 'quote',
       run: (ctx, view) => toggleQuote(view),
