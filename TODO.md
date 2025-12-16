@@ -89,3 +89,7 @@ Currently, unsaved tabs are stored in `localStorage` which means:
   - Delete Line
   - Select Line
   - Duplicate Line
+
+## Known Issues
+
+- **Window Buttons on Linux/GTK:** Window buttons (Minimize, Maximize, Close) are not clickable on initial launch when using `visible: false` in Tauri configuration. They become clickable after resizing the window. This is likely related to the interaction between the window state plugin's restoration logic and GTK window visibility.
