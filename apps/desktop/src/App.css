@@ -844,3 +844,9 @@ input:checked + .slider:before {
   max-width: 800px;
   /* margin: 0 auto; Removed to align left per feedback */
 }
+
+/* Dropdown Theming (Best Effort) */
+select option {
+    background-color: var(--ln-bg);
+    color: var(--ln-fg);
+}
