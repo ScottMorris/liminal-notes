@@ -9,14 +9,15 @@ import { SearchModal } from "./components/SearchModal";
 import { GraphView } from "./components/GraphView";
 import { usePluginHost } from "./plugins/PluginHostProvider";
 import { StatusBar } from "./components/StatusBar";
-import { PluginsSettings } from "./components/PluginsSettings";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
 import { writeNote, renameItem } from "./ipc";
-import { PuzzleIcon, SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon } from "./components/Icons";
+import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon } from "./components/Icons";
 import { TabsProvider, useTabs } from "./contexts/TabsContext";
 import { EditorPane } from "./components/Editor/EditorPane";
 import { commandRegistry } from "./commands/CommandRegistry";
+import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
+import { SettingsModal } from "./components/Settings/SettingsModal";
 
 function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
   const cmd = commandRegistry.getCommand(commandId);
@@ -41,10 +42,9 @@ function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
 
 // Main App Component Content (Inside TabsProvider)
 function AppContent() {
-  const { themeId, setThemeId, availableThemes } = useTheme();
+  const { setThemeId } = useTheme();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isLoadingIndex } = useLinkIndex(); // Keep for side effects if any, or remove if unused
-  const { enabledPlugins } = usePluginHost();
 
   const {
     vaultConfig,
@@ -57,14 +57,28 @@ function AppContent() {
 
   // Use Tabs Context
   const { openTab, switchTab, openTabs, closeTab, activeTabId, dispatch } = useTabs();
+  // Use Settings Context
+  const { settings } = useSettings();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isPluginsOpen, setIsPluginsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'notes' | 'graph'>('notes');
 
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+
+  // Sync settings
+  useEffect(() => {
+    if (settings['appearance.theme']) {
+      setThemeId(settings['appearance.theme'] as ThemeId);
+    }
+    if (settings['appearance.fontSize']) {
+        const size = settings['appearance.fontSize'];
+        document.documentElement.style.setProperty('--ln-font-size', `${size}px`);
+        document.body.style.fontSize = `${size}px`;
+    }
+  }, [settings, setThemeId]);
 
   // Computed selectedFile for Graph View / interactions
   const activeTab = openTabs.find(t => t.id === activeTabId);
@@ -223,33 +237,11 @@ function AppContent() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h3 title={vaultConfig.name}>{vaultConfig.name}</h3>
-          <select
-            className="theme-selector"
-            value={themeId}
-            onChange={(e) => setThemeId(e.target.value as ThemeId)}
-            title="Select Theme"
-          >
-            <option value="system">System</option>
-            <optgroup label="Light">
-              {availableThemes.filter(t => t.category === 'light').map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Dark">
-              {availableThemes.filter(t => t.category === 'dark').map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-          <button className="reset-btn" onClick={handleStartCreate} title="New Note (Ctrl+N)"><PencilSquareIcon size={18} /></button>
-          <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)"><SearchIcon size={18} /></button>
-          <button className="reset-btn" onClick={() => setIsPluginsOpen(true)} title="Plugins"><PuzzleIcon size={18} /></button>
-          <button className="reset-btn" onClick={() => setIsHelpOpen(true)} title="Help">?</button>
-          <button className="reset-btn" onClick={onResetVault} title="Switch Vault">⚙</button>
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <button className="reset-btn" onClick={handleStartCreate} title="New Note (Ctrl+N)"><PencilSquareIcon size={18} /></button>
+            <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)"><SearchIcon size={18} /></button>
+            <button className="reset-btn" onClick={() => setIsHelpOpen(true)} title="Help">?</button>
+          </div>
           <div className="view-toggle">
             <button
               className={`toggle-btn ${viewMode === 'notes' ? 'active' : ''}`}
@@ -267,16 +259,23 @@ function AppContent() {
             </button>
           </div>
         </div>
-        <FileTree
-            files={files}
-            onFileSelect={(path, isDoubleClick) => handleFileSelect(path, isDoubleClick)}
-            editingPath={editingPath}
-            isCreating={isCreating} // We aren't using this for now via button, but prop required
-            onRename={handleRenameCommit}
-            onCreate={handleCreateCommit}
-            onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
-            onCancel={handleCreateCancel}
-        />
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+            <FileTree
+                files={files}
+                onFileSelect={(path, isDoubleClick) => handleFileSelect(path, isDoubleClick)}
+                editingPath={editingPath}
+                isCreating={isCreating} // We aren't using this for now via button, but prop required
+                onRename={handleRenameCommit}
+                onCreate={handleCreateCommit}
+                onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
+                onCancel={handleCreateCancel}
+            />
+        </div>
+        <div className="sidebar-footer">
+            <button className="reset-btn" onClick={() => setIsSettingsOpen(true)} title="Settings">
+                <CogIcon size={20} />
+            </button>
+        </div>
       </aside>
       <div className="content-wrapper">
         <main className="main-content">
@@ -289,7 +288,7 @@ function AppContent() {
             }}
           />
         )}
-        {isPluginsOpen && <PluginsSettings onClose={() => setIsPluginsOpen(false)} />}
+        {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} onResetVault={onResetVault} />}
         {isHelpOpen && <HelpModal onClose={() => setIsHelpOpen(false)} />}
 
         {viewMode === 'graph' ? (
@@ -307,7 +306,9 @@ function AppContent() {
 function App() {
     return (
         <TabsProvider>
+          <SettingsProvider>
             <AppContent />
+          </SettingsProvider>
         </TabsProvider>
     );
 }

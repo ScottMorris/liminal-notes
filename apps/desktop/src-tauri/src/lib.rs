@@ -1,4 +1,5 @@
 mod vault;
+mod settings;
 
 #[cfg(target_os = "linux")]
 fn configure_linux_env() {
@@ -62,7 +63,9 @@ pub fn run() {
             vault::list_markdown_files,
             vault::read_note_command,
             vault::write_note_command,
-            vault::rename_item
+            vault::rename_item,
+            settings::get_settings,
+            settings::set_setting
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
