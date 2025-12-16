@@ -3,68 +3,102 @@ import { commandRegistry } from './CommandRegistry';
 import { EditorView } from '@codemirror/view';
 import { writeText, readText } from '@tauri-apps/plugin-clipboard-manager';
 
+// Known markdown markers for smart toggling
+const FORMAT_MARKERS = [
+  ['**', '**'], // Bold
+  ['_', '_'],   // Italic
+  ['~~', '~~'], // Strikethrough
+  ['==', '=='], // Highlight
+  ['`', '`']    // Code
+];
+
 /**
- * Wrap selection with markers (e.g., **bold**)
+ * Wrap selection with markers (e.g., **bold**) with smart toggle logic
  */
 function wrapSelection(view: EditorView, before: string, after: string = before) {
   const { from, to } = view.state.selection.main;
-  const selectedText = view.state.sliceDoc(from, to);
 
-  // Check if selection is already wrapped (user selected **text**)
-  if (selectedText.startsWith(before) && selectedText.endsWith(after) && selectedText.length >= before.length + after.length) {
-    view.dispatch({
-      changes: {
-        from,
-        to,
-        insert: selectedText.slice(before.length, selectedText.length - after.length),
-      },
-      selection: {
-        anchor: from,
-        head: to - before.length - after.length,
-      }
-    });
-    return;
-  }
+  // 1. Expand selection to include surrounding known markers
+  let expandedFrom = from;
+  let expandedTo = to;
+  let expansionHappened = true;
 
-  // Check if surrounding text is wrapped (user selected 'text' inside **text**)
-  const beforeRange = view.state.sliceDoc(from - before.length, from);
-  const afterRange = view.state.sliceDoc(to, to + after.length);
-
-  if (beforeRange === before && afterRange === after) {
-      view.dispatch({
-          changes: {
-              from: from - before.length,
-              to: to + after.length,
-              insert: selectedText
-          },
-          selection: {
-              anchor: from - before.length,
-              head: to - before.length
+  while (expansionHappened) {
+      expansionHappened = false;
+      // Check all markers to see if we are wrapped by them
+      for (const [b, a] of FORMAT_MARKERS) {
+          const contextBefore = view.state.sliceDoc(expandedFrom - b.length, expandedFrom);
+          const contextAfter = view.state.sliceDoc(expandedTo, expandedTo + a.length);
+          if (contextBefore === b && contextAfter === a) {
+              expandedFrom -= b.length;
+              expandedTo += a.length;
+              expansionHappened = true;
+              // Restart loop to check for outer markers (e.g. found ** inside _)
+              break;
           }
-      });
-      return;
+      }
   }
 
-  if (selectedText) {
-    // Wrap existing selection
-    view.dispatch({
+  // Get the fully wrapped text
+  const fullText = view.state.sliceDoc(expandedFrom, expandedTo);
+
+  // 2. Peel off existing markers to find the core text and the stack of styles
+  let currentText = fullText;
+  const stack: string[][] = []; // Stack of [b, a] (Outer -> Inner)
+
+  let peeling = true;
+  while (peeling) {
+      peeling = false;
+      for (const [b, a] of FORMAT_MARKERS) {
+          if (currentText.startsWith(b) && currentText.endsWith(a) && currentText.length >= b.length + a.length) {
+              stack.push([b, a]);
+              currentText = currentText.slice(b.length, currentText.length - a.length);
+              peeling = true;
+              break;
+          }
+      }
+  }
+
+  // 3. Toggle the target marker
+  // Check if target is already in the stack
+  const targetIndex = stack.findIndex(([b, a]) => b === before && a === after);
+
+  if (targetIndex !== -1) {
+      // Remove it (Toggle Off)
+      stack.splice(targetIndex, 1);
+  } else {
+      // Add it to the start (Outer) so it wraps existing styles (Toggle On)
+      // e.g. _text_ -> **_text_**
+      stack.unshift([before, after]);
+  }
+
+  // 4. Reconstruct the text with the new stack
+  let resultText = currentText;
+  // Apply styles from Inner (end of stack) to Outer (start of stack)
+  for (let i = stack.length - 1; i >= 0; i--) {
+      const [b, a] = stack[i];
+      resultText = `${b}${resultText}${a}`;
+  }
+
+  // 5. Calculate new selection range (focus on the core text)
+  let newAnchor = expandedFrom;
+  // Add lengths of all left-side markers that are now present
+  for (const [b, _] of stack) {
+      newAnchor += b.length;
+  }
+
+  // 6. Apply change
+  view.dispatch({
       changes: {
-        from,
-        to,
-        insert: `${before}${selectedText}${after}`,
+          from: expandedFrom,
+          to: expandedTo,
+          insert: resultText
       },
       selection: {
-        anchor: from + before.length,
-        head: to + before.length,
-      },
-    });
-  } else {
-    // Insert markers and position cursor between them
-    view.dispatch({
-      changes: { from, insert: `${before}${after}` },
-      selection: { anchor: from + before.length },
-    });
-  }
+          anchor: newAnchor,
+          head: newAnchor + currentText.length
+      }
+  });
 }
 
 // Parent Command: Format
