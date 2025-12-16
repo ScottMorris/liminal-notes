@@ -3,6 +3,7 @@ import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
+import { GFM } from '@lezer/markdown';
 import { closeBrackets } from '@codemirror/autocomplete';
 import { createEditorTheme } from './editorTheme';
 import { markdownDecorations } from './decorations';
@@ -120,7 +121,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         highlightActiveLine(),
         history(),
         closeBrackets(),
-        markdown(),
+        markdown({ extensions: [GFM] }),
         markdownDecorations,
         createEditorTheme(),
         keymap.of([
