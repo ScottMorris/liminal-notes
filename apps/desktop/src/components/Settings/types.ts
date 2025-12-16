@@ -9,11 +9,21 @@ export type SettingKind =
   | "collection"
   | "search";
 
+export interface SettingOption {
+    value: string;
+    label: string;
+}
+
+export interface SettingOptionGroup {
+    label: string;
+    options: SettingOption[];
+}
+
 export interface SettingControlDef {
   key?: string; // Key in settings store. If missing, it might be an action or pure UI.
   kind: SettingKind;
   label?: string; // Label for the control itself (e.g. button text, or aria-label)
-  options?: { value: string; label: string }[];
+  options?: (SettingOption | SettingOptionGroup)[];
   placeholder?: string;
   min?: number;
   max?: number;

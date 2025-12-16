@@ -16,7 +16,7 @@ const PluginsCollection = () => {
 
     const filtered = useMemo(() => builtInPlugins.filter(p =>
         p.meta.name.toLowerCase().includes(filter.toLowerCase()) ||
-        p.meta.description.toLowerCase().includes(filter.toLowerCase())
+        (p.meta.description && p.meta.description.toLowerCase().includes(filter.toLowerCase()))
     ), [filter]);
 
     return (
@@ -43,7 +43,9 @@ const PluginsCollection = () => {
                     <div key={p.meta.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--ln-border)' }}>
                         <div style={{ flex: 1, paddingRight: '10px' }}>
                             <div style={{ fontWeight: 'bold' }}>{p.meta.name}</div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--ln-muted)' }}>{p.meta.description}</div>
+                            {p.meta.description && (
+                                <div style={{ fontSize: '0.85rem', color: 'var(--ln-muted)' }}>{p.meta.description}</div>
+                            )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <label className="toggle-switch">

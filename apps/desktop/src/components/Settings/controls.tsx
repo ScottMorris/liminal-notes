@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
-import { SettingControlDef } from './types';
+import { SettingControlDef, SettingOption } from './types';
 import { ChevronDownIcon } from '../Icons';
 
 function useSettingValue<T = any>(key?: string) {
@@ -14,7 +14,6 @@ function useSettingValue<T = any>(key?: string) {
 
 export const ToggleSwitch: React.FC<{ def: SettingControlDef }> = ({ def }) => {
     const [value, setValue] = useSettingValue<boolean>(def.key);
-    const checked = value === true; // Strict check? or !!value
 
     return (
         <label className="toggle-switch" title={def.label}>
@@ -30,8 +29,35 @@ export const ToggleSwitch: React.FC<{ def: SettingControlDef }> = ({ def }) => {
 
 export const SelectDropdown: React.FC<{ def: SettingControlDef }> = ({ def }) => {
     const [value, setValue] = useSettingValue<string>(def.key);
-    // If value is undefined, use first option or empty
-    const current = value ?? def.options?.[0]?.value ?? "";
+
+    const getFirstValue = () => {
+        if (!def.options || def.options.length === 0) return "";
+        const first = def.options[0];
+        if ('options' in first) { // It's a group
+            return first.options[0]?.value ?? "";
+        }
+        return (first as SettingOption).value;
+    };
+
+    const current = value ?? getFirstValue();
+
+    const renderOptions = () => {
+        return def.options?.map((opt, idx) => {
+            if ('options' in opt) {
+                // Group
+                return (
+                    <optgroup key={idx} label={opt.label}>
+                        {opt.options.map(subOpt => (
+                             <option key={subOpt.value} value={subOpt.value}>{subOpt.label}</option>
+                        ))}
+                    </optgroup>
+                );
+            } else {
+                // Option
+                return <option key={opt.value} value={opt.value}>{opt.label}</option>;
+            }
+        });
+    };
 
     return (
         <div className="select-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
@@ -52,9 +78,7 @@ export const SelectDropdown: React.FC<{ def: SettingControlDef }> = ({ def }) =>
                     outlineColor: 'var(--ln-accent)'
                 }}
             >
-                {def.options?.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
+                {renderOptions()}
             </select>
             <div style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--ln-muted)' }}>
                 <ChevronDownIcon size={14} />
@@ -194,10 +218,6 @@ export const ActionButton: React.FC<{ def: SettingControlDef; onAction?: (id: st
 };
 
 export const ComputedText: React.FC<{ def: SettingControlDef }> = ({ def }) => {
-    // Value is passed in def.label usually for computed text, or we bind to a key?
-    // Spec says "derived from setting value".
-    // Or it might just be static text if the schema generator computed it.
-    // If def.key is present, show that value.
     const [value] = useSettingValue(def.key);
     const display = value !== undefined ? String(value) : (def.label || "");
 

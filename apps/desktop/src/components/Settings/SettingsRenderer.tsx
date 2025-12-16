@@ -11,7 +11,6 @@ interface RendererProps {
 export const SettingsSection: React.FC<RendererProps> = ({ section, onAction }) => {
     return (
         <div className="settings-section" style={{ paddingBottom: '50px' }}>
-            <h2 style={{ marginBottom: '20px', borderBottom: '1px solid var(--ln-border)', paddingBottom: '10px' }}>{section.title}</h2>
             {section.groups.map(group => (
                 <SettingsGroup key={group.id} group={group} onAction={onAction} />
             ))}

@@ -16,10 +16,17 @@ export const getSections = (
         .sort((a, b) => a.name.localeCompare(b.name))
         .map(t => ({ value: t.id, label: t.name }));
 
+    // Using optgroup structure for clearer UI
     const themeOptions = [
         { value: 'system', label: 'System' },
-        ...lightThemes,
-        ...darkThemes
+        {
+            label: 'Light Themes',
+            options: lightThemes
+        },
+        {
+            label: 'Dark Themes',
+            options: darkThemes
+        }
     ];
 
     return [
@@ -61,8 +68,8 @@ export const getSections = (
         title: 'Editor',
         groups: [
             {
-                id: 'behavior',
-                title: 'Behavior',
+                id: 'behaviour',
+                title: 'Behaviour',
                 rows: [
                     {
                         id: 'focus-new-tabs',
@@ -81,6 +88,12 @@ export const getSections = (
                         label: 'Readable line length',
                         description: 'Limit maximum line length.',
                         controls: [{ kind: 'boolean', key: 'editor.readableLineLength' }]
+                    },
+                    {
+                        id: 'word-wrap',
+                        label: 'Word wrap',
+                        description: 'Wrap long lines to fit the window.',
+                        controls: [{ kind: 'boolean', key: 'editor.wordWrap' }]
                     }
                 ]
             }
@@ -95,7 +108,7 @@ export const getSections = (
                 rows: [
                     {
                         id: 'base-theme',
-                        label: 'Base color scheme',
+                        label: 'Base colour scheme',
                         controls: [{
                             kind: 'select',
                             key: 'appearance.theme',

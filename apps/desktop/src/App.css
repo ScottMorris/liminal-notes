@@ -842,5 +842,5 @@ input:checked + .slider:before {
 /* Editor Improvements */
 .cm-editor-container.readable-line-length .cm-content {
   max-width: 800px;
-  margin: 0 auto;
+  /* margin: 0 auto; Removed to align left per feedback */
 }

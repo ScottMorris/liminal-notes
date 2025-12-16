@@ -19,13 +19,6 @@ import { commandRegistry } from '../../commands/CommandRegistry';
 import { EditorContext } from '../../commands/types';
 import { EditorView } from '@codemirror/view';
 
-// Confirm Dialog (Simple implementation for now)
-const confirmCloseDirty = async (title: string): Promise<'Save' | 'Don\'t Save' | 'Cancel'> => {
-  return new Promise((resolve) => {
-      // Mock or UI
-  });
-};
-
 export function EditorPane() {
   const {
     openTabs,
@@ -94,16 +87,10 @@ export function EditorPane() {
 
                 await writeNote(path, text);
 
-                dispatch({
-                  type: 'UPDATE_TAB',
-                  tabId: activeTab.id,
-                  updates: {
-                    path,
-                    title,
-                    isUnsaved: false,
-                    isDirty: false,
-                  },
-                });
+                // Use context helpers instead of direct dispatch with unsupported action
+                updateTabPath(activeTab.id, path, false);
+                updateTabTitle(activeTab.id, title);
+                updateTabDirty(activeTab.id, false);
 
                 // Update indexes (need to update with new path)
                 updateNote(path, text);
@@ -114,11 +101,7 @@ export function EditorPane() {
                 // Normal save
                 await writeNote(activeTab.path, text);
 
-                dispatch({
-                  type: 'UPDATE_TAB_DIRTY',
-                  tabId: activeTab.id,
-                  isDirty: false,
-                });
+                updateTabDirty(activeTab.id, false);
 
                 updateNote(activeTab.path, text);
                 updateSearchEntry(activeTab.path, text);
@@ -140,7 +123,7 @@ export function EditorPane() {
         }
       }
     };
-  }, [activeTab, dispatch, updateNote, updateSearchEntry, notifyNoteSaved, notify]);
+  }, [activeTab, updateTabPath, updateTabTitle, updateTabDirty, updateNote, updateSearchEntry, notifyNoteSaved, notify]);
 
 
   // Load content when active tab changes
@@ -521,6 +504,7 @@ export function EditorPane() {
                             onLinkClick={handleNavigate}
                             showLineNumbers={settings['editor.showLineNumbers'] !== false}
                             readableLineLength={settings['editor.readableLineLength'] === true}
+                            wordWrap={settings['editor.wordWrap'] === true}
                             />
                         )}
                         </div>

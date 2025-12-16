@@ -33,10 +33,11 @@ interface CodeMirrorEditorProps {
   onLinkClick?: (target: string) => void;
   showLineNumbers?: boolean;
   readableLineLength?: boolean;
+  wordWrap?: boolean;
 }
 
 export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
-  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick, showLineNumbers = true, readableLineLength = false }, ref) => {
+  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick, showLineNumbers = true, readableLineLength = false, wordWrap = false }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const onSaveRef = useRef(onSave);
@@ -46,6 +47,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     const { themeId } = useTheme();
 
     const lineNumbersCompartment = useRef(new Compartment()).current;
+    const wordWrapCompartment = useRef(new Compartment()).current;
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{
@@ -122,6 +124,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       let startState: EditorState;
       const extensions = [
         lineNumbersCompartment.of(showLineNumbers ? lineNumbers() : []),
+        wordWrapCompartment.of(wordWrap ? EditorView.lineWrapping : []),
         highlightActiveLine(),
         history(),
         closeBrackets(),
@@ -202,10 +205,13 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     useEffect(() => {
         if (viewRef.current) {
             viewRef.current.dispatch({
-                effects: lineNumbersCompartment.reconfigure(showLineNumbers ? lineNumbers() : [])
+                effects: [
+                    lineNumbersCompartment.reconfigure(showLineNumbers ? lineNumbers() : []),
+                    wordWrapCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : [])
+                ]
             });
         }
-    }, [showLineNumbers]);
+    }, [showLineNumbers, wordWrap]);
 
     // Handle incoming value changes
     useEffect(() => {
