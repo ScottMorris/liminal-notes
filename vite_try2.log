@@ -9,3 +9,4 @@
 7:58:12 AM [vite] (client) page reload src/commands/registerDefaults.ts
 4:39:29 AM [vite] (client) hmr update /src/App.tsx
 4:52:24 AM [vite] (client) hmr update /src/components/Editor/CodeMirrorEditor.tsx
+5:05:12 AM [vite] (client) page reload src/commands/editing.ts

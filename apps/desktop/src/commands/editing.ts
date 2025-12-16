@@ -10,6 +10,38 @@ function wrapSelection(view: EditorView, before: string, after: string = before)
   const { from, to } = view.state.selection.main;
   const selectedText = view.state.sliceDoc(from, to);
 
+  // Check if selection is already wrapped (user selected **text**)
+  if (selectedText.startsWith(before) && selectedText.endsWith(after) && selectedText.length >= before.length + after.length) {
+    view.dispatch({
+      changes: {
+        from,
+        to,
+        insert: selectedText.slice(before.length, selectedText.length - after.length),
+      },
+      selection: {
+        anchor: from,
+        head: to - before.length - after.length,
+      }
+    });
+    return;
+  }
+
+  // Check if surrounding text is wrapped (user selected 'text' inside **text**)
+  const beforeRange = view.state.sliceDoc(from - before.length, from);
+  const afterRange = view.state.sliceDoc(to, to + after.length);
+
+  if (beforeRange === before && afterRange === after) {
+      view.dispatch({
+          changes: {
+              from: from - before.length,
+              to: to + after.length,
+              insert: selectedText
+          }
+          // Preserve selection on the text
+      });
+      return;
+  }
+
   if (selectedText) {
     // Wrap existing selection
     view.dispatch({
