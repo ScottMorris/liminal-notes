@@ -16,6 +16,28 @@ import { writeNote, renameItem } from "./ipc";
 import { PuzzleIcon, SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon } from "./components/Icons";
 import { TabsProvider, useTabs } from "./contexts/TabsContext";
 import { EditorPane } from "./components/Editor/EditorPane";
+import { commandRegistry } from "./commands/CommandRegistry";
+
+function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
+  const cmd = commandRegistry.getCommand(commandId);
+  if (!cmd || !cmd.shortcut) return false;
+
+  const parts = cmd.shortcut.toLowerCase().split('+');
+  const key = parts.pop(); // Last part is the key (e.g., 'f', 'n', 'f2')
+
+  const wantsCtrl = parts.includes('ctrl') || parts.includes('cmd') || parts.includes('mod');
+  const wantsShift = parts.includes('shift');
+  const wantsAlt = parts.includes('alt');
+
+  // Loose check for Ctrl/Cmd to be cross-platform friendly without OS detection
+  const hasCtrl = e.ctrlKey || e.metaKey;
+
+  if (wantsCtrl !== hasCtrl) return false;
+  if (wantsShift !== e.shiftKey) return false;
+  if (wantsAlt !== e.altKey) return false;
+
+  return e.key.toLowerCase() === key;
+}
 
 // Main App Component Content (Inside TabsProvider)
 function AppContent() {
@@ -51,15 +73,8 @@ function AppContent() {
   // Handle Vault Reset wrapper
   const onResetVault = async () => {
     await resetVault();
-    // Clear tabs? Or let them persist until re-open?
-    // Probably clear tabs as they are vault-specific.
-    // For now, reload logic in TabsProvider handles it via localStorage check on mount,
-    // but if we switch vaults without reload, we might see old tabs.
-    // Ideally we dispatch a CLEAR_ALL_TABS action.
-    // For this MVP, we rely on user manually closing or page refresh.
-    // Actually, let's clear local storage key for tabs?
     localStorage.removeItem('liminal-notes.tabs');
-    window.location.reload(); // Simplest way to reset everything state-wise
+    window.location.reload();
   };
 
   const handleStartCreate = useCallback(() => {
@@ -163,20 +178,20 @@ function AppContent() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Search / Quick Open: Ctrl+Shift+F
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+      // Search / Quick Open
+      if (matchShortcut(e, 'global.search')) {
         e.preventDefault();
         setIsSearchOpen(true);
       }
 
-      // New Note: Ctrl+N
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
+      // New Note
+      if (matchShortcut(e, 'global.newNote')) {
         e.preventDefault();
         handleStartCreate();
       }
 
-      // Rename: F2
-      if (e.key === 'F2' && selectedFile) {
+      // Rename
+      if (matchShortcut(e, 'global.rename') && selectedFile) {
          e.preventDefault();
          setEditingPath(selectedFile);
       }
