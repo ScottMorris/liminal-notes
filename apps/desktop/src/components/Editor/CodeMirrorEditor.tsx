@@ -106,7 +106,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       const registryKeymap = commandRegistry.getAllCommands()
         .filter(cmd => cmd.shortcut && cmd.context !== 'Global')
         .map(cmd => ({
-          key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-'),
+          key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-').toLowerCase(),
           run: (view: EditorView) => {
             const context = getEditorContext(view);
             commandRegistry.executeCommand(cmd.id, context, view);
