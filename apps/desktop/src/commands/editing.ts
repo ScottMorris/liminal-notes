@@ -36,8 +36,11 @@ function wrapSelection(view: EditorView, before: string, after: string = before)
               from: from - before.length,
               to: to + after.length,
               insert: selectedText
+          },
+          selection: {
+              anchor: from - before.length,
+              head: to - before.length
           }
-          // Preserve selection on the text
       });
       return;
   }
