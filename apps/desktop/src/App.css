@@ -790,6 +790,23 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
+/* Form Styles */
+.form-input, .form-select, .form-textarea {
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+  border: 1px solid var(--ln-border);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--ln-accent);
+}
+
 /* Notifications */
 .notification-container {
   position: fixed;

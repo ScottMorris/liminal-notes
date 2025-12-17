@@ -129,18 +129,18 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
             {isContextual ? (
                 <div style={{ marginBottom: '5px' }}>
                     <div style={{ fontSize: '0.85em', color: 'var(--ln-muted)', marginBottom: '4px' }}>Remind me about</div>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.2em' }}>{title}</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.2em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={title}>{title}</div>
                 </div>
             ) : (
                 <div className="setting-item" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     <label style={{ fontSize: '0.9em', color: 'var(--ln-muted)' }}>Title</label>
                     <input
-                        className="input-text"
+                        className="form-input"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         placeholder="Reminder title..."
                         required
-                        style={{ fontSize: '1.1em', fontWeight: 'bold', width: '100%' }}
+                        style={{ fontSize: '1.1em', fontWeight: 'bold' }}
                     />
                 </div>
             )}
@@ -149,12 +149,11 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
                 <div className="setting-item" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     <label style={{ fontSize: '0.9em', color: 'var(--ln-muted)' }}>Note</label>
                     <input
-                        className="input-text"
+                        className="form-input"
                         value={targetPath}
                         onChange={e => setTargetPath(e.target.value)}
                         placeholder="Path to note (optional)"
                         list="note-paths"
-                        style={{ width: '100%' }}
                     />
                     <datalist id="note-paths">
                         {notePaths.map(p => <option key={p} value={p} />)}
@@ -163,36 +162,35 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
             )}
 
             {/* Date & Time Row */}
-            <div style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 1 }}>
+            <div className="setting-item" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '0.9em', color: 'var(--ln-muted)' }}>When</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
                     <input
                         type="date"
-                        className="input-text"
+                        className="form-input"
                         value={dateStr}
                         onChange={e => setDateStr(e.target.value)}
                         required
-                        style={{ width: '100%' }}
+                        style={{ flex: 2 }}
                     />
-                </div>
-                <div style={{ width: '120px' }}>
                     <input
                         type="time"
-                        className="input-text"
+                        className="form-input"
                         value={timeStr}
                         onChange={e => setTimeStr(e.target.value)}
                         required
-                        style={{ width: '100%' }}
+                        style={{ flex: 1, minWidth: '120px' }}
                     />
                 </div>
             </div>
 
             {/* Repeat */}
-            <div>
-                <select
-                    className="select-input"
+            <div className="setting-item" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                 <label style={{ fontSize: '0.9em', color: 'var(--ln-muted)' }}>Repeat</label>
+                 <select
+                    className="form-select"
                     value={repeatKind}
                     onChange={e => setRepeatKind(e.target.value as any)}
-                    style={{ width: '100%' }}
                 >
                     <option value="none">Doesn't repeat</option>
                     <option value="daily">Daily</option>
@@ -204,12 +202,11 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
                     <div style={{ marginTop: '5px' }}>
                         <input
                             type="number"
-                            className="input-text"
+                            className="form-input"
                             value={intervalMin}
                             onChange={e => setIntervalMin(parseInt(e.target.value))}
                             min={1}
                             placeholder="Minutes"
-                            style={{ width: '100%' }}
                         />
                     </div>
                 )}
@@ -218,17 +215,17 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
             {/* Body */}
             <div>
                 <textarea
-                    className="input-text"
+                    className="form-textarea"
                     value={body}
                     onChange={e => setBody(e.target.value)}
-                    rows={2}
+                    rows={3}
                     placeholder="Add a note..."
-                    style={{ resize: 'vertical', width: '100%', minHeight: '60px' }}
+                    style={{ resize: 'vertical', minHeight: '80px' }}
                 />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                <button type="submit" className="btn primary" style={{ minWidth: '80px' }}>Save</button>
+                <button type="submit" className="btn primary" style={{ minWidth: '80px', backgroundColor: 'var(--ln-accent)', color: '#fff', border: 'none' }}>Save</button>
             </div>
         </form>
       </div>
