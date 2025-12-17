@@ -2,69 +2,78 @@ import React, { useState, useEffect } from 'react';
 import { Reminder, ReminderTarget } from '@liminal-notes/reminders-core';
 import { useReminders } from '../../../contexts/RemindersContext';
 import { useTabs } from '../../../contexts/TabsContext';
-import { XMarkIcon } from '../../../components/Icons';
-import { nowLocalIso, getLocalTimezone } from '@liminal-notes/reminders-core';
-import { parseISO, format } from 'date-fns';
+import { XMarkIcon, BellIcon } from '../../../components/Icons';
+import { getLocalTimezone } from '@liminal-notes/reminders-core';
+import { format, addHours, parseISO, isValid } from 'date-fns';
 
 interface ReminderModalProps {
   onClose: () => void;
   initialReminder?: Reminder;
+  defaultTarget?: { title: string; path: string };
 }
 
-export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialReminder }) => {
+export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialReminder, defaultTarget }) => {
   const { createReminder, updateReminder } = useReminders();
   const { activeTabId, openTabs } = useTabs();
 
   const activeTab = openTabs.find(t => t.id === activeTabId);
 
-  // Form State
-  const [title, setTitle] = useState(initialReminder?.title || activeTab?.title || '');
-  const [body, setBody] = useState(initialReminder?.body || '');
-
-  // Time: datetime-local input expects "yyyy-MM-ddThh:mm"
-  // We default to now + 1 hour
-  const getDefaultTime = () => {
-      if (initialReminder?.trigger.type === 'time') {
-           // Convert ISO to local "yyyy-MM-ddThh:mm"
-           // initialReminder.trigger.at is already local ISO-like, but might have seconds/ms
-           return initialReminder.trigger.at.substring(0, 16);
-      }
-      const d = new Date();
-      d.setHours(d.getHours() + 1);
-      d.setMinutes(0);
-      d.setSeconds(0);
-      // Format to local string manually or use helper?
-      // new Date().toISOString() is UTC.
-      // We want local.
-      const offset = d.getTimezoneOffset() * 60000;
-      const localISOTime = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
-      return localISOTime;
+  // Defaults
+  const getInitialDate = () => {
+    if (initialReminder?.trigger.type === 'time') {
+        const d = new Date(initialReminder.trigger.at);
+        return isValid(d) ? d : new Date();
+    }
+    const d = new Date();
+    d.setHours(d.getHours() + 1);
+    d.setMinutes(0);
+    d.setSeconds(0);
+    return d;
   };
 
-  const [at, setAt] = useState(getDefaultTime());
+  const initialDateObj = getInitialDate();
+
+  const [dateStr, setDateStr] = useState(format(initialDateObj, 'yyyy-MM-dd'));
+  const [timeStr, setTimeStr] = useState(format(initialDateObj, 'HH:mm'));
+
+  const [title, setTitle] = useState(initialReminder?.title || defaultTarget?.title || activeTab?.title || '');
+  const [body, setBody] = useState(initialReminder?.body || '');
 
   const [repeatKind, setRepeatKind] = useState<'none' | 'daily' | 'weekly' | 'interval'>('none');
   const [intervalMin, setIntervalMin] = useState(60);
 
-  // Target
-  // If editing, use existing. If new, use current tab if available.
+  // Target Logic
+  // If defaultTarget provided (from Note), we use it.
+  // If not, we let user edit path.
   const [targetPath, setTargetPath] = useState<string>(
-      initialReminder?.target.type === 'path' ? initialReminder.target.path : (activeTab?.path || '')
+      initialReminder?.target.type === 'path' ? initialReminder.target.path : (defaultTarget?.path || activeTab?.path || '')
   );
+
+  // Initialize repeat kind from reminder if editing
+  useEffect(() => {
+      if (initialReminder?.trigger.type === 'time' && initialReminder.trigger.repeat) {
+          if (initialReminder.trigger.repeat.kind === 'interval') {
+              setRepeatKind('interval');
+              setIntervalMin(initialReminder.trigger.repeat.minutes);
+          } else if (initialReminder.trigger.repeat.kind === 'daily') {
+              setRepeatKind('daily');
+          } else if (initialReminder.trigger.repeat.kind === 'weekly') {
+              setRepeatKind('weekly');
+          }
+      }
+  }, [initialReminder]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    // Construct trigger
-    // "at" is local time. We store it as such, with timezone.
-    // Ensure seconds are 00
-    const atIso = at + ':00';
+    // Combine Date + Time
+    const combinedIso = `${dateStr}T${timeStr}:00`;
     const timezone = getLocalTimezone();
 
     const trigger: any = {
         type: 'time',
-        at: atIso,
+        at: combinedIso,
         timezone
     };
 
@@ -99,58 +108,120 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
     onClose();
   };
 
+  // Determine if we show target input
+  // If creating from a note (defaultTarget present), maybe hide it or show as static?
+  // User said "uses the note for the base information".
+  const isContextual = !!defaultTarget;
+
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-content" style={{ maxWidth: '500px' }}>
-        <div className="modal-header">
-          <h2>{initialReminder ? 'Edit Reminder' : 'New Reminder'}</h2>
-          <button className="reset-btn" onClick={onClose}><XMarkIcon /></button>
+      <div className="modal-content" style={{ maxWidth: '400px', padding: '0' }}>
+        <div className="modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid var(--ln-border)', display: 'flex', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '1.1em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {!initialReminder && <BellIcon size={18} />}
+              {initialReminder ? 'Edit Reminder' : 'Set Reminder'}
+          </h3>
+          <button className="reset-btn" onClick={onClose} style={{ marginLeft: 'auto' }}><XMarkIcon /></button>
         </div>
-        <form onSubmit={handleSubmit} className="modal-body settings-content">
-            <div className="setting-item">
-                <label>Title</label>
-                <input className="input-text" value={title} onChange={e => setTitle(e.target.value)} required />
-            </div>
-            <div className="setting-item">
-                <label>Note Path</label>
-                <input className="input-text" value={targetPath} onChange={e => setTargetPath(e.target.value)} placeholder="path/to/note.md" />
-            </div>
-            <div className="setting-item">
-                <label>When</label>
-                <input
-                    type="datetime-local"
-                    className="input-text"
-                    value={at}
-                    onChange={e => setAt(e.target.value)}
-                    required
-                />
+
+        <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+
+            {/* Title / Context */}
+            {isContextual ? (
+                <div style={{ marginBottom: '5px' }}>
+                    <div style={{ fontSize: '0.85em', color: 'var(--ln-muted)', marginBottom: '2px' }}>Remind me about</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.1em' }}>{title}</div>
+                    {/* Hidden input to keep state sync if needed, or just rely on state */}
+                </div>
+            ) : (
+                <div className="setting-item" style={{ marginBottom: 0 }}>
+                    <input
+                        className="input-text"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder="Reminder title..."
+                        required
+                        style={{ fontSize: '1.1em', fontWeight: 'bold' }}
+                    />
+                </div>
+            )}
+
+            {!isContextual && (
+                <div className="setting-item" style={{ marginBottom: 0 }}>
+                    <input
+                        className="input-text"
+                        value={targetPath}
+                        onChange={e => setTargetPath(e.target.value)}
+                        placeholder="Path to note (optional)"
+                        style={{ fontSize: '0.9em' }}
+                    />
+                </div>
+            )}
+
+            {/* Date & Time Row */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                    <input
+                        type="date"
+                        className="input-text"
+                        value={dateStr}
+                        onChange={e => setDateStr(e.target.value)}
+                        required
+                    />
+                </div>
+                <div style={{ width: '120px' }}>
+                    <input
+                        type="time"
+                        className="input-text"
+                        value={timeStr}
+                        onChange={e => setTimeStr(e.target.value)}
+                        required
+                    />
+                </div>
             </div>
 
-            <div className="setting-item">
-                <label>Repeat</label>
-                <select className="select-input" value={repeatKind} onChange={e => setRepeatKind(e.target.value as any)}>
-                    <option value="none">Does not repeat</option>
+            {/* Repeat */}
+            <div>
+                <select
+                    className="select-input"
+                    value={repeatKind}
+                    onChange={e => setRepeatKind(e.target.value as any)}
+                    style={{ width: '100%' }}
+                >
+                    <option value="none">Doesn't repeat</option>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="interval">Every X minutes</option>
                 </select>
+
+                {repeatKind === 'interval' && (
+                    <div style={{ marginTop: '5px' }}>
+                        <input
+                            type="number"
+                            className="input-text"
+                            value={intervalMin}
+                            onChange={e => setIntervalMin(parseInt(e.target.value))}
+                            min={1}
+                            placeholder="Minutes"
+                        />
+                    </div>
+                )}
             </div>
 
-            {repeatKind === 'interval' && (
-                <div className="setting-item">
-                    <label>Interval (minutes)</label>
-                    <input type="number" className="input-text" value={intervalMin} onChange={e => setIntervalMin(parseInt(e.target.value))} min={1} />
-                </div>
-            )}
-
-            <div className="setting-item">
-                <label>Body (Optional)</label>
-                <textarea className="input-text" value={body} onChange={e => setBody(e.target.value)} rows={3} />
+            {/* Body */}
+            <div>
+                <textarea
+                    className="input-text"
+                    value={body}
+                    onChange={e => setBody(e.target.value)}
+                    rows={2}
+                    placeholder="Add a note..."
+                    style={{ resize: 'none' }}
+                />
             </div>
 
-            <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn" onClick={onClose}>Cancel</button>
-                <button type="submit" className="btn primary">Save</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button type="submit" className="btn primary" style={{ minWidth: '80px' }}>Save</button>
             </div>
         </form>
       </div>

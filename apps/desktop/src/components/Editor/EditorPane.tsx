@@ -10,9 +10,10 @@ import { useNotification } from '../NotificationContext';
 import { sanitizeFilename } from '../../utils/sanitizeFilename';
 import { TabBar } from './TabBar';
 import { CodeMirrorEditor, EditorHandle } from './CodeMirrorEditor';
-import { SparklesIcon, EyeIcon, EyeSlashIcon } from '../Icons';
+import { SparklesIcon, EyeIcon, EyeSlashIcon, BellIcon } from '../Icons';
 import { AiSidebar } from '../../features/ai/AiSidebar';
 import { updateFrontmatter } from '../../utils/frontmatter';
+import { ReminderModal } from '../../features/reminders/components/ReminderModal';
 import { BacklinksPanel } from '../BacklinksPanel';
 import { buildEditorContext } from '../../commands/contextBuilder';
 import { commandRegistry } from '../../commands/CommandRegistry';
@@ -50,6 +51,7 @@ export function EditorPane() {
     return localStorage.getItem('liminal-notes.showPreview') === 'true';
   });
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
 
   // Track which tab the current 'content' belongs to to prevent data bleed
   const [loadedTabId, setLoadedTabId] = useState<string | null>(null);
@@ -520,6 +522,13 @@ export function EditorPane() {
                       </button>
                   )}
                   <button
+                    className={`action-btn ${isReminderModalOpen ? 'active' : ''}`}
+                    onClick={() => setIsReminderModalOpen(true)}
+                    title="Set Reminder"
+                  >
+                    <BellIcon size={16} />
+                  </button>
+                  <button
                     className={`action-btn ${showPreview ? 'active' : ''}`}
                     onClick={() => setShowPreview(!showPreview)}
                     title={showPreview ? 'Hide preview' : 'Show preview'}
@@ -607,6 +616,16 @@ export function EditorPane() {
         <div className="empty-state">
             <p>Select a file to view or create a new note (Ctrl+N)</p>
         </div>
+       )}
+
+       {isReminderModalOpen && activeTab && (
+            <ReminderModal
+                onClose={() => setIsReminderModalOpen(false)}
+                defaultTarget={{
+                    title: activeTab.title,
+                    path: activeTab.path
+                }}
+            />
        )}
 
        {/* Dirty Confirmation Modal */}

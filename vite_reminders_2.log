@@ -1,0 +1,9 @@
+
+> @liminal-notes/desktop@0.1.0 dev /app/apps/desktop
+> vite --port 1420
+
+
+  VITE v7.2.7  ready in 650 ms
+
+  ➜  Local:   http://localhost:1420/
+ ELIFECYCLE  Command failed.
