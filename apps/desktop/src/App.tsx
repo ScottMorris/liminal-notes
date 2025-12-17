@@ -8,7 +8,7 @@ import { GraphView } from "./components/GraphView";
 import { StatusBar } from "./components/StatusBar";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
-import { renameItem } from "./ipc";
+import { renameItem, writeNote } from "./ipc";
 import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon } from "./components/Icons";
 import { TabsProvider, useTabs } from "./contexts/TabsContext";
 import { EditorPane } from "./components/Editor/EditorPane";
@@ -16,6 +16,7 @@ import { commandRegistry } from "./commands/CommandRegistry";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { SettingsModal } from "./components/Settings/SettingsModal";
 import { setSpellcheckIgnoredWords, setSpellcheckEnabled } from "./components/Editor/spellcheck/spellcheckExtension";
+import { useLinkIndex } from "./components/LinkIndexContext";
 
 function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
   const cmd = commandRegistry.getCommand(commandId);
@@ -55,6 +56,7 @@ function AppContent() {
   const { openTab, switchTab, openTabs, closeTab, activeTabId, dispatch } = useTabs();
   // Use Settings Context
   const { settings } = useSettings();
+  const { resolvePath } = useLinkIndex();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -94,16 +96,8 @@ function AppContent() {
               const { readNote } = await import('./ipc');
               const content = await readNote('.liminal/spellcheck/personal-en-CA.txt');
               const words = content.split('\n').map(w => w.trim()).filter(w => w.length > 0);
-
-              // We need to pass this to:
-              // 1. spellcheckCore (for worker to skip them during check)
-              // 2. spellcheckExtension (for check() call to pass them)
-
-              // Currently spellcheckExtension.check() uses a module-level variable `currentIgnoredWords`.
-              // We exported `setSpellcheckIgnoredWords` for this.
               setSpellcheckIgnoredWords(words);
           } catch (e) {
-              // Ignore if file missing
               setSpellcheckIgnoredWords([]);
           }
       };
@@ -120,7 +114,6 @@ function AppContent() {
       const handleAdd = async (e: Event) => {
           const detail = (e as CustomEvent).detail;
           if (detail && detail.word) {
-             // Read current, append, save
              try {
                 const { readNote, writeNote } = await import('./ipc');
                 let words: string[] = [];
@@ -197,22 +190,46 @@ function AppContent() {
     window.location.reload();
   };
 
-  const handleStartCreate = useCallback(() => {
-    // New behavior: Open "Untitled" tab
-    // New tabs via "New Note" are always permanent (not preview)
-    const newId = crypto.randomUUID();
-    openTab({
-        id: newId,
-        path: '',
-        title: 'Untitled',
-        mode: 'source',
-        isDirty: true,
-        isLoading: false,
-        isUnsaved: true,
-        isPreview: false,
-        editorState: ''
-    });
-  }, [openTab]);
+  const handleStartCreate = useCallback(async () => {
+    // New behavior: Immediately create "Untitled" file
+    let title = 'Untitled';
+    let path = 'Untitled.md';
+    let counter = 1;
+
+    // Iterate until we find a unique name
+    while (resolvePath(path)) {
+       title = `Untitled ${counter}`;
+       path = `Untitled ${counter}.md`;
+       counter++;
+    }
+
+    try {
+        await writeNote(path, '');
+        // Refresh to ensure file tree is updated?
+        // We probably should await refreshFiles() but openTab handles the view.
+        // openTab handles state.
+
+        openTab({
+            id: path,
+            path: path,
+            title: title,
+            mode: 'source',
+            isDirty: false,
+            isLoading: false,
+            isUnsaved: false, // It is now saved
+            isPreview: false,
+            editorState: ''
+        });
+
+        // Refresh files in background to update tree
+        refreshFiles();
+
+    } catch (e) {
+        console.error("Failed to create new note", e);
+        alert("Failed to create new note");
+    }
+
+  }, [openTab, resolvePath, refreshFiles]);
 
   const handleCreateCommit = useCallback(async (_name: string) => {
       // This is for the FileTree input if we still use it.
