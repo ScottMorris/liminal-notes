@@ -123,8 +123,11 @@ export function createEditorTheme() {
 
     // Spellcheck
     '.cm-misspelling': {
-      textDecoration: 'underline wavy #db2828', // Standard red for error
+      textDecoration: 'underline wavy #db2828',
       textDecorationSkipInk: 'none',
+      // Ensure text decoration is visible
+      textDecorationThickness: '2px',
+      textUnderlineOffset: '3px',
     },
   });
 }
