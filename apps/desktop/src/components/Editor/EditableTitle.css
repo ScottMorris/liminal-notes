@@ -1,0 +1,59 @@
+.editable-title-container {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.editable-title-input {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ln-fg);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  padding: 2px 4px;
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: text;
+  transition: background-color 0.1s, border-color 0.1s;
+}
+
+.editable-title-input:hover {
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.editable-title-input:focus {
+  background: var(--ln-bg);
+  border-color: var(--ln-border);
+  box-shadow: 0 0 0 2px var(--ln-accent-transparent, rgba(66, 153, 225, 0.3));
+}
+
+.editable-title-error-banner {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  background-color: #ef4444; /* Standard red */
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  z-index: 1000;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.editable-title-error-banner::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 12px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #ef4444;
+}

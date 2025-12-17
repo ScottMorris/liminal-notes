@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { readNote, writeNote } from '../../ipc';
+import { readNote, writeNote, renameItem } from '../../ipc';
 import { useTabs } from '../../contexts/TabsContext';
 import { useSettings } from '../../contexts/SettingsContext';
 import { usePluginHost } from '../../plugins/PluginHostProvider';
@@ -18,6 +18,7 @@ import { buildEditorContext } from '../../commands/contextBuilder';
 import { commandRegistry } from '../../commands/CommandRegistry';
 import { EditorContext } from '../../commands/types';
 import { EditorView } from '@codemirror/view';
+import { EditableTitle } from './EditableTitle';
 
 export function EditorPane() {
   const {
@@ -31,7 +32,8 @@ export function EditorPane() {
     updateTabTitle,
     updateTabPath,
     updateTabAiState,
-    closeTab: closeTabContext
+    closeTab: closeTabContext,
+    openTab
   } = useTabs();
 
   const { settings } = useSettings();
@@ -78,21 +80,22 @@ export function EditorPane() {
         saveNote: async (text: string) => {
             if (activeTab.isUnsaved) {
                 // Handle unsaved file
-                const h1Match = text.match(/^#\s+(.+)$/m);
-                const title = h1Match ? h1Match[1].trim() : 'Untitled';
-                let filename = sanitizeFilename(title);
-                if (!filename) filename = "Untitled";
-                filename += '.md';
-                const path = filename;
+                // Use existing path (which should be "Untitled X.md" from creation time now)
+                let path = activeTab.path;
+                let title = activeTab.title;
+
+                if (!path) {
+                    title = 'Untitled';
+                    path = 'Untitled.md';
+                }
 
                 await writeNote(path, text);
 
-                // Use context helpers instead of direct dispatch with unsupported action
+                // Update tab to saved state
                 updateTabPath(activeTab.id, path, false);
-                updateTabTitle(activeTab.id, title);
                 updateTabDirty(activeTab.id, false);
 
-                // Update indexes (need to update with new path)
+                // Update indexes
                 updateNote(path, text);
                 updateSearchEntry(path, text);
                 notifyNoteSaved({ path, title, content: text });
@@ -300,23 +303,16 @@ export function EditorPane() {
   };
 
   const saveUnsavedTab = async (tab: typeof activeTab, text: string) => {
-      // NOTE: This legacy helper is kept for confirmClose logic, but handleSave uses CommandRegistry now
-      // Ideally we would route this through the command registry too if we had a way to provide context for a non-active tab
-      // For now, duplicate logic is acceptable or we could refactor.
-      // Given the complexity, let's keep this as fallback for the modal logic which might close an INACTIVE tab.
-      // The CommandRegistry works best for the ACTIVE tab/editor.
-
+      // Fallback for modal closing logic on unsaved tabs
     if (!tab) return;
-    // Extract title from H1 or use 'Untitled'
-    const h1Match = text.match(/^#\s+(.+)$/m);
-    const title = h1Match ? h1Match[1].trim() : 'Untitled';
 
-    // Sanitize for filesystem
-    let filename = sanitizeFilename(title);
-    if (!filename) filename = "Untitled";
-    filename += '.md';
+    // Default to current title/path if available
+    let title = tab.title || 'Untitled';
+    let path = tab.path;
 
-    const path = filename;
+    if (!path) {
+         path = sanitizeFilename(title) + '.md';
+    }
 
     await writeNote(path, text);
 
@@ -353,6 +349,54 @@ export function EditorPane() {
     const newContent = updateFrontmatter(content, updater);
     setContent(newContent);
     editorRef.current?.insertAtCursor("");
+  };
+
+  const handleRename = async (newName: string) => {
+      if (!activeTab || !activeTab.path) return;
+
+      const oldPath = activeTab.path;
+      // Get directory
+      const parts = oldPath.split('/');
+      parts.pop();
+      const parent = parts.join('/');
+
+      let newFilename = newName;
+      if (!newFilename.endsWith('.md')) {
+          newFilename += '.md';
+      }
+
+      const newPath = parent ? `${parent}/${newFilename}` : newFilename;
+
+      if (newPath === oldPath) return;
+
+      try {
+          await renameItem(oldPath, newPath);
+
+          // Re-open tab with new ID
+          const newTab = {
+              ...activeTab,
+              id: newPath,
+              path: newPath,
+              title: newName,
+          };
+
+          // Close old and open new to update ID
+          closeTabContext(activeTab.id);
+          openTab(newTab);
+
+          notify('Renamed successfully', 'success');
+      } catch (e) {
+          notify("Failed to rename: " + String(e), 'error');
+          throw e; // Propagate to EditableTitle
+      }
+  };
+
+  const checkFileExists = (name: string) => {
+      // Approximate check using resolvePath
+      // Note: This checks if *any* file matches the name.
+      const resolved = resolvePath(name);
+      // It's a collision if it resolves AND it's not the current file
+      return !!resolved && resolved !== activeTab?.path;
   };
 
   // Wikilink support
@@ -454,7 +498,12 @@ export function EditorPane() {
          <>
            <div className="editor-header">
                 <div className="file-info">
-                  <span className="file-name" style={activeTab.isPreview ? { fontStyle: 'italic' } : {}}>{activeTab.title}</span>
+                  <EditableTitle
+                    initialTitle={activeTab.title}
+                    parentPath={activeTab.path.split('/').slice(0, -1).join('/')}
+                    onRename={handleRename}
+                    checkExists={checkFileExists}
+                  />
                   {activeTab.isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
                   {activeTab.isUnsaved && <span className="indexing-indicator"> (Unsaved)</span>}
                 </div>
