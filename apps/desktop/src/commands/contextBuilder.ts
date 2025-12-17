@@ -14,9 +14,11 @@ export function buildEditorContext(
   const selection = state.selection.main;
 
   return {
+    type: 'Editor',
     noteId,
     path,
     editorMode: 'source',
+    view,
     selection: {
       from: selection.from,
       to: selection.to,

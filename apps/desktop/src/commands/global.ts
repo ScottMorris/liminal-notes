@@ -1,7 +1,7 @@
-import type { Command } from './types';
+import type { Command, EditorContext } from './types';
 import { commandRegistry } from './CommandRegistry';
 
-const globalCommands: Command[] = [
+const globalCommands: Command<EditorContext>[] = [
   {
     id: 'global.search',
     label: 'Search / Quick Open',

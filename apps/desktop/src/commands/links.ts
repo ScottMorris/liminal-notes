@@ -1,20 +1,20 @@
-import type { Command } from './types';
+import type { Command, EditorContext } from './types';
 import { commandRegistry } from './CommandRegistry';
 
 // Links: Add internal link (wikilink)
-const addInternalLinkCommand: Command = {
+const addInternalLinkCommand: Command<EditorContext> = {
   id: 'editor.links.addInternal',
   label: 'Add backlink',
   context: 'Editor',
   group: 'Links',
   icon: 'link',
-  run: (ctx, view) => {
-    const { from, to } = view.state.selection.main;
-    const selectedText = view.state.sliceDoc(from, to);
+  run: (ctx) => {
+    const { from, to } = ctx.view.state.selection.main;
+    const selectedText = ctx.view.state.sliceDoc(from, to);
 
     if (selectedText) {
       // Wrap selection
-      view.dispatch({
+      ctx.view.dispatch({
         changes: {
           from,
           to,
@@ -24,7 +24,7 @@ const addInternalLinkCommand: Command = {
       });
     } else {
       // Insert empty wikilink
-      view.dispatch({
+      ctx.view.dispatch({
         changes: { from, insert: '[[]]' },
         selection: { anchor: from + 2 },
       });
@@ -33,19 +33,19 @@ const addInternalLinkCommand: Command = {
 };
 
 // Links: Add external link
-const addExternalLinkCommand: Command = {
+const addExternalLinkCommand: Command<EditorContext> = {
   id: 'editor.links.addExternal',
   label: 'Add external link',
   context: 'Editor',
   group: 'Links',
   icon: 'external-link',
-  run: (ctx, view) => {
-    const { from, to } = view.state.selection.main;
-    const selectedText = view.state.sliceDoc(from, to);
+  run: (ctx) => {
+    const { from, to } = ctx.view.state.selection.main;
+    const selectedText = ctx.view.state.sliceDoc(from, to);
 
     if (selectedText) {
       // Wrap selection
-      view.dispatch({
+      ctx.view.dispatch({
         changes: {
           from,
           to,
@@ -55,7 +55,7 @@ const addExternalLinkCommand: Command = {
       });
     } else {
       // Insert empty markdown link
-      view.dispatch({
+      ctx.view.dispatch({
         changes: { from, insert: '[]()' },
         selection: { anchor: from + 1 },
       });

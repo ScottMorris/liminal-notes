@@ -6,9 +6,17 @@ import { EditorView } from '@codemirror/view';
 export type CommandContext = 'Global' | 'Editor' | 'FileTree';
 
 /**
+ * Base operations available in most contexts
+ */
+export interface BaseOperations {
+  notify: (message: string, type: 'success' | 'error') => void;
+}
+
+/**
  * Context passed to commands when they execute or evaluate conditions
  */
 export interface EditorContext {
+  type: 'Editor';
   // Note info
   noteId: string;
   path: string;
@@ -16,6 +24,9 @@ export interface EditorContext {
 
   // Editor state
   editorMode: 'source';  // Later: 'livePreview' | 'reading'
+
+  // Editor instance (moved from run argument to context)
+  view: EditorView;
 
   // Selection info
   selection: {
@@ -32,17 +43,38 @@ export interface EditorContext {
   documentLength: number;
 
   // App-level operations
-  operations: {
+  operations: BaseOperations & {
     // Save note with full app integration
     saveNote: (content: string) => Promise<void>;
 
     // Update indexes after content change
     updateIndexes: (content: string) => void;
-
-    // Show notification
-    notify: (message: string, type: 'success' | 'error') => void;
   };
 }
+
+/**
+ * Context for file tree operations
+ */
+export interface FileContext {
+  type: 'FileTree';
+  path: string;
+  isDir: boolean;
+  // List of all file paths in vault (useful for uniqueness checks)
+  allFiles: Set<string>;
+
+  // Operations specific to file tree
+  operations: BaseOperations & {
+    startRename: (path: string) => void;
+    delete: (path: string) => void;
+    openTab: (path: string) => void;
+    createNote: (name: string) => void;
+  };
+}
+
+/**
+ * Union type for all contexts
+ */
+export type CommandContextValue = EditorContext | FileContext;
 
 /**
  * Command groups for organisation
@@ -60,7 +92,7 @@ export type CommandGroup =
 /**
  * Individual command definition
  */
-export interface Command {
+export interface Command<C = any> {
   // Unique identifier
   id: string;
 
@@ -80,13 +112,13 @@ export interface Command {
   shortcut?: string;
 
   // Condition determining if command is available
-  when?: (ctx: EditorContext) => boolean;
+  when?: (ctx: C) => boolean;
 
   // Command execution
-  run: (ctx: EditorContext, view: EditorView) => void | Promise<void>;
+  run: (ctx: C) => void | Promise<void>;
 
   // Optional submenu items
-  children?: Command[];
+  children?: Command<C>[];
 }
 
 /**
@@ -97,7 +129,7 @@ export interface CommandRegistry {
   unregister(commandId: string): void;
   getCommand(commandId: string): Command | undefined;
   getAllCommands(): Command[];
-  getCommands(context: EditorContext): Command[];
-  getCommandsByGroup(group: CommandGroup, context: EditorContext): Command[];
-  executeCommand(commandId: string, context: EditorContext, view: EditorView): Promise<void>;
+  getCommands(context: CommandContextValue): Command[];
+  getCommandsByGroup(group: CommandGroup, context: CommandContextValue): Command[];
+  executeCommand(commandId: string, context: CommandContextValue): Promise<void>;
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CommandRegistry } from '../commands/CommandRegistry';
-import { EditorContext, Command } from '../commands/types';
+import { EditorContext, Command, FileContext } from '../commands/types';
 import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 
@@ -18,12 +18,14 @@ const mockOperations = {
     notify: vi.fn()
 };
 
-// Mock Context
-const mockContext: EditorContext = {
+// Mock Editor Context
+const mockEditorContext: EditorContext = {
+    type: 'Editor',
     noteId: 'test-note',
     path: 'test.md',
     isUnsaved: false,
     editorMode: 'source',
+    view: mockView,
     selection: {
         text: '',
         from: 0,
@@ -33,6 +35,21 @@ const mockContext: EditorContext = {
     cursor: 0,
     documentLength: 12,
     operations: mockOperations
+};
+
+// Mock File Context
+const mockFileContext: FileContext = {
+    type: 'FileTree',
+    path: 'test.md',
+    isDir: false,
+    allFiles: new Set(),
+    operations: {
+        notify: vi.fn(),
+        startRename: vi.fn(),
+        delete: vi.fn(),
+        openTab: vi.fn(),
+        createNote: vi.fn()
+    }
 };
 
 describe('CommandRegistry', () => {
@@ -67,8 +84,8 @@ describe('CommandRegistry', () => {
         };
 
         registry.register(cmd);
-        await registry.executeCommand('test.run', mockContext, mockView);
-        expect(runFn).toHaveBeenCalledWith(mockContext, mockView);
+        await registry.executeCommand('test.run', mockEditorContext);
+        expect(runFn).toHaveBeenCalledWith(mockEditorContext);
     });
 
     it('should not execute command if condition (when) fails', async () => {
@@ -83,7 +100,7 @@ describe('CommandRegistry', () => {
         };
 
         registry.register(cmd);
-        await registry.executeCommand('test.when', mockContext, mockView);
+        await registry.executeCommand('test.when', mockEditorContext);
         expect(runFn).not.toHaveBeenCalled();
     });
 
@@ -107,9 +124,49 @@ describe('CommandRegistry', () => {
         registry.register(cmd1);
         registry.register(cmd2);
 
-        const available = registry.getCommands(mockContext);
+        const available = registry.getCommands(mockEditorContext);
         expect(available).toHaveLength(1);
         expect(available[0].id).toBe('cmd1');
+    });
+
+    it('should STRICTLY filter commands by context type', () => {
+        const editorCmd: Command = {
+            id: 'editor.cmd',
+            label: 'Editor Cmd',
+            context: 'Editor',
+            group: 'Edit',
+            run: vi.fn()
+        };
+        const fileCmd: Command = {
+            id: 'file.cmd',
+            label: 'File Cmd',
+            context: 'FileTree',
+            group: 'File',
+            run: vi.fn()
+        };
+        const globalCmd: Command = {
+            id: 'global.cmd',
+            label: 'Global Cmd',
+            context: 'Global',
+            group: 'Navigation',
+            run: vi.fn()
+        };
+
+        registry.register(editorCmd);
+        registry.register(fileCmd);
+        registry.register(globalCmd);
+
+        // Test Editor Context
+        const editorCommands = registry.getCommands(mockEditorContext);
+        expect(editorCommands.map(c => c.id)).toContain('editor.cmd');
+        expect(editorCommands.map(c => c.id)).toContain('global.cmd');
+        expect(editorCommands.map(c => c.id)).not.toContain('file.cmd');
+
+        // Test File Context
+        const fileCommands = registry.getCommands(mockFileContext);
+        expect(fileCommands.map(c => c.id)).toContain('file.cmd');
+        expect(fileCommands.map(c => c.id)).toContain('global.cmd');
+        expect(fileCommands.map(c => c.id)).not.toContain('editor.cmd');
     });
 
     it('should handle execution errors gracefully', async () => {
@@ -122,7 +179,7 @@ describe('CommandRegistry', () => {
         };
 
         registry.register(cmd);
-        await registry.executeCommand('test.error', mockContext, mockView);
+        await registry.executeCommand('test.error', mockEditorContext);
         expect(mockOperations.notify).toHaveBeenCalledWith(expect.stringContaining('Error executing command'), 'error');
     });
 

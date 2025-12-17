@@ -1,5 +1,4 @@
-import type { Command, CommandRegistry as ICommandRegistry, EditorContext, CommandGroup } from './types';
-import { EditorView } from '@codemirror/view';
+import type { Command, CommandRegistry as ICommandRegistry, CommandContextValue, CommandGroup } from './types';
 
 export class CommandRegistry implements ICommandRegistry {
   private commands: Map<string, Command> = new Map();
@@ -30,8 +29,21 @@ export class CommandRegistry implements ICommandRegistry {
   /**
    * Get all commands that are enabled in the current context
    */
-  getCommands(context: EditorContext): Command[] {
+  getCommands(context: CommandContextValue): Command[] {
     return Array.from(this.commands.values()).filter(cmd => {
+      // STRICT CONTEXT CHECK
+      // Prevent running Editor commands in FileTree context and vice-versa.
+      // Global commands are generally allowed unless 'when' restricts them.
+      // But if cmd.context is specific (e.g. 'Editor'), we MUST ensure context.type matches.
+
+      if (cmd.context !== 'Global') {
+          // cmd.context is 'Editor' or 'FileTree'
+          // context.type is 'Editor' or 'FileTree'
+          if (cmd.context !== context.type) {
+              return false;
+          }
+      }
+
       if (!cmd.when) return true;
       return cmd.when(context);
     });
@@ -40,7 +52,7 @@ export class CommandRegistry implements ICommandRegistry {
   /**
    * Get commands by group, filtered by context
    */
-  getCommandsByGroup(group: CommandGroup, context: EditorContext): Command[] {
+  getCommandsByGroup(group: CommandGroup, context: CommandContextValue): Command[] {
     return this.getCommands(context).filter(cmd => cmd.group === group);
   }
 
@@ -49,8 +61,7 @@ export class CommandRegistry implements ICommandRegistry {
    */
   async executeCommand(
     commandId: string,
-    context: EditorContext,
-    view: EditorView
+    context: CommandContextValue
   ): Promise<void> {
     const command = this.commands.get(commandId);
 
@@ -60,13 +71,19 @@ export class CommandRegistry implements ICommandRegistry {
     }
 
     // Check if command is available in this context
+    // Same strict check as getCommands
+    if (command.context !== 'Global' && command.context !== context.type) {
+        console.warn(`Command ${commandId} (context: ${command.context}) not available in current context (${context.type})`);
+        return;
+    }
+
     if (command.when && !command.when(context)) {
-      console.warn(`Command ${commandId} not available in current context`);
+      console.warn(`Command ${commandId} not available in current context (when condition failed)`);
       return;
     }
 
     try {
-      await command.run(context, view);
+      await command.run(context);
     } catch (error) {
       console.error(`Error executing command ${commandId}:`, error);
       context.operations.notify(`Error executing command: ${command.label}`, 'error');

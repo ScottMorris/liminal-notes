@@ -140,33 +140,6 @@ function AppContent() {
       const handleIgnore = (e: Event) => {
           const detail = (e as CustomEvent).detail;
           if (detail && detail.word) {
-              // Add to session ignored words
-              // But setSpellcheckIgnoredWords replaces the list.
-              // We need to maintain session + persistent.
-              // For MVP, "Ignore word" -> Add to personal dictionary (persistent ignore).
-              // Or if we want session-only, we need a separate list.
-              // The requirements say "Add to personal dictionary and Ignore word".
-              // Usually Ignore is session.
-              // But `setSpellcheckIgnoredWords` is just a list of strings passed to the check function.
-              // I will just add it to the list in memory for now.
-              // Wait, I need to know the current list to append.
-              // I can't read it back from the module easily.
-              // I'll re-implement `spellcheckExtension` state management properly if I have time.
-              // For now, I will map "Ignore" to "Add to Dictionary" for simplicity
-              // OR I will read the file again (slow).
-
-              // Let's make "Ignore" add to a session-based set in `App` and merge.
-              // But `loadDict` sets the base.
-
-              // Simpler: Ignore adds to dictionary but maybe we don't save to disk?
-              // No, user expects ignore to be temporary usually.
-              // Let's just treat Ignore as "Add to dictionary" for now or skip it if it's too complex.
-              // Actually, I can just dispatch 'liminal-spellcheck-add' for Ignore too if I want it persistent.
-              // If I want session only, I'd need a separate store.
-              // I'll leave "Ignore" as "Add to dictionary" behavior (persistent) for MVP or just log it.
-              // Re-reading requirements: "Storage: per-vault ... so it syncs with notes." implies persistence.
-
-              // I will map Ignore to Add for now.
               window.dispatchEvent(new CustomEvent('liminal-spellcheck-add', { detail: { word: detail.word } }));
           }
       };
@@ -208,10 +181,6 @@ function AppContent() {
 
     try {
         await writeNote(path, '');
-        // Refresh to ensure file tree is updated?
-        // We probably should await refreshFiles() but openTab handles the view.
-        // openTab handles state.
-
         openTab({
             id: path,
             path: path,
@@ -291,6 +260,18 @@ function AppContent() {
           setEditingPath(null);
       }
   }, [refreshFiles, openTabs, closeTab, openTab]);
+
+  const handleFileDelete = useCallback(async (path: string) => {
+      try {
+         const { invoke } = await import("@tauri-apps/api/core");
+         await invoke('delete_item', { path });
+         await refreshFiles();
+         closeTab(path);
+      } catch (e) {
+         console.error("Failed to delete", e);
+         alert("Failed to delete file: " + String(e));
+      }
+  }, [refreshFiles, closeTab]);
 
   const handleFileSelect = useCallback((path: string, isDoubleClick: boolean = false) => {
       // Check if already open
@@ -414,6 +395,8 @@ function AppContent() {
                 onCreate={handleCreateCommit}
                 onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
                 onCancel={handleCreateCancel}
+                onStartRename={(path) => setEditingPath(path)}
+                onDelete={handleFileDelete}
             />
         </div>
         <div className="sidebar-footer">
@@ -442,7 +425,7 @@ function AppContent() {
         ) : viewMode === 'reminders' ? (
            <RemindersPanel />
         ) : (
-           <EditorPane />
+           <EditorPane onRefreshFiles={refreshFiles} />
         )}
         </main>
         <StatusBar />

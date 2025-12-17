@@ -1,5 +1,11 @@
 import { FileEntry, FileNode } from "../types";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { ContextMenu } from "./Editor/ContextMenu/ContextMenu";
+import { buildContextMenu } from "./Editor/ContextMenu/menuBuilder";
+import { commandRegistry } from "../commands/CommandRegistry";
+import type { MenuModel, MenuPosition } from "./Editor/ContextMenu/types";
+import type { FileContext } from "../commands/types";
+import { useTabs } from "../contexts/TabsContext";
 
 interface FileTreeProps {
   files: FileEntry[];
@@ -10,6 +16,8 @@ interface FileTreeProps {
   onCreate?: (name: string) => void;
   onStartCreate?: () => void;
   onCancel?: () => void;
+  onDelete?: (path: string) => void;
+  onStartRename?: (path: string) => void;
 }
 
 interface DisplayNode extends FileNode {
@@ -24,15 +32,27 @@ export function FileTree({
   onRename,
   onCreate,
   onStartCreate,
-  onCancel
+  onCancel,
+  onDelete,
+  onStartRename
 }: FileTreeProps) {
+  const { openTab } = useTabs();
+  const [contextMenu, setContextMenu] = useState<{
+    model: MenuModel;
+    position: MenuPosition;
+    context: FileContext;
+  } | null>(null);
 
-  // Build tree
+  useEffect(() => {
+    const closeMenu = () => setContextMenu(null);
+    window.addEventListener('click', closeMenu);
+    return () => window.removeEventListener('click', closeMenu);
+  }, []);
+
   const tree = useMemo(() => {
     const root: DisplayNode[] = [];
 
     files.forEach(entry => {
-      // Normalize path
       const parts = entry.path.split("/");
       let currentLevel = root;
 
@@ -45,11 +65,10 @@ export function FileTree({
         if (!existing) {
           existing = {
             name: part,
-            path: entry.path, // Path for intermediate nodes is constructed below
+            path: entry.path,
             isDir: isDir,
             children: isDir ? [] : undefined,
           };
-          // Correct path for intermediate nodes
           if (!isLast) {
              existing.path = parts.slice(0, index + 1).join("/");
           }
@@ -63,7 +82,6 @@ export function FileTree({
       });
     });
 
-    // Sort: directories first, then files
     const sortNodes = (nodes: DisplayNode[]) => {
       nodes.sort((a, b) => {
         if (a.isDir === b.isDir) {
@@ -80,7 +98,6 @@ export function FileTree({
 
     sortNodes(root);
 
-    // Inject temp node if creating
     if (isCreating) {
       root.unshift({
         name: "",
@@ -92,6 +109,49 @@ export function FileTree({
 
     return root;
   }, [files, isCreating]);
+
+  const handleNodeContextMenu = (e: React.MouseEvent, node: DisplayNode) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const context: FileContext = {
+      type: 'FileTree',
+      path: node.path,
+      isDir: node.isDir,
+      allFiles: new Set(files.map(f => f.path)),
+      operations: {
+        notify: (msg, type) => {
+             console.log(`[${type}] ${msg}`);
+        },
+        startRename: (path) => {
+          if (onStartRename) onStartRename(path);
+        },
+        delete: (path) => {
+          if (onDelete) onDelete(path);
+        },
+        createNote: (name) => {},
+        openTab: (path) => {
+           const name = path.split('/').pop() || 'Untitled';
+           openTab({
+             id: path,
+             title: name,
+             path: path,
+             isDirty: false,
+             isPreview: false,
+           });
+        }
+      }
+    };
+
+    const model = buildContextMenu(context, commandRegistry);
+    if (model.sections.length > 0) {
+      setContextMenu({
+        model,
+        position: { x: e.clientX, y: e.clientY },
+        context
+      });
+    }
+  };
 
   if (files.length === 0 && !isCreating) {
     return (
@@ -117,19 +177,33 @@ export function FileTree({
   }
 
   return (
-    <div className="file-tree">
-      {tree.map(node => (
-        <TreeNode
-          key={node.path}
-          node={node}
-          onFileSelect={onFileSelect}
-          editingPath={editingPath}
-          onRename={onRename}
-          onCreate={onCreate}
-          onCancel={onCancel}
+    <>
+      <div className="file-tree">
+        {tree.map(node => (
+          <TreeNode
+            key={node.path}
+            node={node}
+            onFileSelect={onFileSelect}
+            editingPath={editingPath}
+            onRename={onRename}
+            onCreate={onCreate}
+            onCancel={onCancel}
+            onContextMenu={handleNodeContextMenu}
+          />
+        ))}
+      </div>
+      {contextMenu && (
+        <ContextMenu
+          model={contextMenu.model}
+          position={contextMenu.position}
+          onClose={() => setContextMenu(null)}
+          onAction={(id) => {
+              commandRegistry.executeCommand(id, contextMenu.context);
+              setContextMenu(null);
+          }}
         />
-      ))}
-    </div>
+      )}
+    </>
   );
 }
 
@@ -140,9 +214,10 @@ interface TreeNodeProps {
   onRename?: (oldPath: string, newName: string) => void;
   onCreate?: (name: string) => void;
   onCancel?: () => void;
+  onContextMenu: (e: React.MouseEvent, node: DisplayNode) => void;
 }
 
-function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCancel }: TreeNodeProps) {
+function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCancel, onContextMenu }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const isEditing = editingPath === node.path;
   const isTemp = node.isTemp;
@@ -152,7 +227,6 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
     if (node.isDir) {
       setExpanded(!expanded);
     } else {
-      // e.detail gives click count
       onFileSelect(node.path, e.detail === 2);
     }
   };
@@ -178,6 +252,7 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
       <div
         className={`node-label ${node.isDir ? "folder" : "file"}`}
         onClick={handleClick}
+        onContextMenu={(e) => onContextMenu(e, node)}
         style={{ cursor: "pointer", userSelect: "none" }}
       >
         <span style={{ marginRight: "5px" }}>{node.isDir ? (expanded ? "📂" : "📁") : "📄"}</span>
@@ -194,6 +269,7 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
                 onRename={onRename}
                 onCreate={onCreate}
                 onCancel={onCancel}
+                onContextMenu={onContextMenu}
             />
           ))}
         </div>
