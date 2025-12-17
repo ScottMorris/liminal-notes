@@ -4,7 +4,7 @@ import { MenuItem } from './MenuItem';
 
 interface MenuSectionProps {
   section: MenuSectionType;
-  onItemClick: (itemId: string) => void;
+  onItemClick: (itemId: string, action?: () => void) => void;
 }
 
 export function MenuSection({ section, onItemClick }: MenuSectionProps) {
@@ -18,10 +18,14 @@ export function MenuSection({ section, onItemClick }: MenuSectionProps) {
           return <div key={idx} className="menu-separator" />;
         }
 
+        // At this point item is MenuItem.
+        // We cast it to ensure TS understands.
+        const menuItem = item as import('./types').MenuItem;
+
         return (
           <MenuItem
-            key={item.id}
-            item={item}
+            key={menuItem.id}
+            item={menuItem}
             onItemClick={onItemClick}
           />
         );

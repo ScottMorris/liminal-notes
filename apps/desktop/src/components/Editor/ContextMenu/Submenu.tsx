@@ -6,7 +6,7 @@ import { MenuItem } from './MenuItem';
 interface SubmenuProps {
   items: MenuItemType[];
   parentRect: DOMRect;
-  onItemClick: (itemId: string) => void;
+  onItemClick: (itemId: string, action?: () => void) => void;
   onClose: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;

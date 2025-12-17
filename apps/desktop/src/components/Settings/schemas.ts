@@ -96,6 +96,34 @@ export const getSections = (
                         controls: [{ kind: 'boolean', key: 'editor.wordWrap' }]
                     }
                 ]
+            },
+            {
+                id: 'spellcheck',
+                title: 'Spellcheck',
+                rows: [
+                    {
+                        id: 'spellcheck-enabled',
+                        label: 'Enable spellcheck',
+                        controls: [{ kind: 'boolean', key: 'editor.spellcheck.enabled' }]
+                    },
+                    {
+                        id: 'spellcheck-language',
+                        label: 'Language',
+                        controls: [{
+                            kind: 'select',
+                            key: 'editor.spellcheck.language',
+                            options: [
+                                { value: 'en-CA', label: 'English (Canada)' }
+                            ]
+                        }]
+                    },
+                    {
+                        id: 'spellcheck-dictionary',
+                        label: 'Personal Dictionary',
+                        description: 'Manage words added to your dictionary.',
+                        controls: [{ kind: 'collection', collectionId: 'personal-dictionary' }]
+                    }
+                ]
             }
         ]
     },
