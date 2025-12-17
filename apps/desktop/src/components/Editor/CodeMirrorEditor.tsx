@@ -250,7 +250,8 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         // But simply checking the word at cursor is easier and robust.
 
         const line = view.state.doc.lineAt(pos);
-        const wordRegex = /\p{L}+/gu;
+        // Word regex to match the worker's logic (including contractions)
+        const wordRegex = /\p{L}+(?:['’]\p{L}+)*/gu;
         let match;
         let clickedWord = null;
 

@@ -80,8 +80,11 @@ self.onmessage = (e: MessageEvent<WorkerMessage>) => {
     // But `check` message above handles one text string.
     // We will stick to the plan: The extension will send text segments.
 
-    // Simple word boundary regex
-    const wordRegex = /\p{L}+/gu;
+    // Word boundary regex: allow letters and apostrophes inside words (for contractions)
+    // Matches: word, doesn't, o'clock
+    // Does not match leading/trailing apostrophes if they are quotes, but this simple regex might catch them if not careful.
+    // \p{L}+(?:['’]\p{L}+)* ensures apostrophe is followed by more letters.
+    const wordRegex = /\p{L}+(?:['’]\p{L}+)*/gu;
     let match;
 
     // Add temporary ignored words to nspell instance?
