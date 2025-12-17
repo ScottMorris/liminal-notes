@@ -120,5 +120,11 @@ export function createEditorTheme() {
       fontFamily: 'var(--font-mono, monospace)',
       fontSize: '0.9em',
     },
+
+    // Spellcheck
+    '.cm-misspelling': {
+      textDecoration: 'underline wavy #db2828', // Standard red for error
+      textDecorationSkipInk: 'none',
+    },
   });
 }

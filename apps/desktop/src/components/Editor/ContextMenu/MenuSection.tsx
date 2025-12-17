@@ -18,14 +18,12 @@ export function MenuSection({ section, onItemClick }: MenuSectionProps) {
           return <div key={idx} className="menu-separator" />;
         }
 
-        // At this point item is MenuItem.
-        // We cast it to ensure TS understands.
-        const menuItem = item as import('./types').MenuItem;
-
         return (
           <MenuItem
-            key={menuItem.id}
-            item={menuItem}
+            // @ts-ignore
+            key={item.id}
+            // @ts-ignore
+            item={item}
             onItemClick={onItemClick}
           />
         );

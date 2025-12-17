@@ -300,7 +300,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
                  const spellcheckSection = {
                      items: [
                          ...suggestionItems,
-                         { type: 'separator' } as any, // Cast if separator not in type definition yet, or add it
+                         { type: 'separator' } as any,
                          {
                              id: 'spellcheck.add',
                              label: 'Add to dictionary',
@@ -308,11 +308,6 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
                              action: () => {
                                  if (clickedWord) {
                                      spellcheckCore.addWord(clickedWord);
-                                     // We also need to persist this!
-                                     // Dispatch a custom event or use a callback prop to persist.
-                                     // For now, spellcheckCore handles runtime, we need to hook up persistence.
-                                     // We will handle this by exposing an onAddWord callback prop or similar?
-                                     // Or spellcheckCore can emit an event we listen to in a top-level component.
                                      window.dispatchEvent(new CustomEvent('liminal-spellcheck-add', { detail: { word: clickedWord } }));
                                  }
                              }
@@ -323,16 +318,10 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
                              icon: 'Ban',
                              action: () => {
                                   if (clickedWord) {
-                                      // Add to ignore list (runtime only? or session?)
-                                      // Requirement: "Add to personal dictionary and Ignore word"
-                                      // "Ignore" usually means session. "Add" means persistent.
-                                      // We'll treat ignore as session-based for now.
-                                      // We need to update the ignored words list passed to checking.
                                       window.dispatchEvent(new CustomEvent('liminal-spellcheck-ignore', { detail: { word: clickedWord } }));
                                   }
                              }
                          },
-                         { type: 'separator' } as any
                      ]
                  };
 

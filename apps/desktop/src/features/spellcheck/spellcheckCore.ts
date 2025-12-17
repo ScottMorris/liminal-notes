@@ -1,10 +1,15 @@
 // Types (mirrored from worker)
 export type SpellcheckWorker = Worker;
 
+interface SpellcheckResponse {
+  type: string;
+  [key: string]: any;
+}
+
 class SpellcheckCore {
   private worker: Worker;
-  private pendingRequests = new Map<string, (data: any) => void>();
-  private listeners = new Set<(event: any) => void>();
+  private pendingRequests = new Map<string, (data: SpellcheckResponse) => void>();
+  private listeners = new Set<(event: SpellcheckResponse) => void>();
 
   constructor() {
     this.worker = new Worker(new URL('../../workers/spellcheck.worker.ts', import.meta.url), {
