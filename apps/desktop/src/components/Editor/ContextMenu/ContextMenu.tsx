@@ -8,7 +8,7 @@ interface ContextMenuProps {
   model: MenuModel;
   position: MenuPosition;
   onClose: () => void;
-  onItemClick: (itemId: string) => void;
+  onItemClick: (itemId: string, action?: () => void) => void;
 }
 
 export function ContextMenu({
@@ -76,8 +76,8 @@ export function ContextMenu({
     return () => window.removeEventListener('blur', onClose);
   }, [onClose]);
 
-  function handleItemClick(itemId: string) {
-    onItemClick(itemId);
+  function handleItemClick(itemId: string, action?: () => void) {
+    onItemClick(itemId, action);
     onClose();
   }
 

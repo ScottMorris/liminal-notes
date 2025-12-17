@@ -4,7 +4,7 @@ import { MenuItem } from './MenuItem';
 
 interface MenuSectionProps {
   section: MenuSectionType;
-  onItemClick: (itemId: string) => void;
+  onItemClick: (itemId: string, action?: () => void) => void;
 }
 
 export function MenuSection({ section, onItemClick }: MenuSectionProps) {
@@ -20,7 +20,9 @@ export function MenuSection({ section, onItemClick }: MenuSectionProps) {
 
         return (
           <MenuItem
+            // @ts-ignore
             key={item.id}
+            // @ts-ignore
             item={item}
             onItemClick={onItemClick}
           />

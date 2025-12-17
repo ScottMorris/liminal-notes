@@ -1,5 +1,5 @@
 import React from 'react';
-import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon } from '../../Icons';
+import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon, DictionaryIcon, BanIcon, RefreshIcon } from '../../Icons';
 
 // Simple SVG paths for common editor actions
 const LinkIcon = () => (
@@ -256,6 +256,11 @@ export function getIconByName(name?: string): React.ReactNode {
     case 'callout': return <CalloutIcon />;
     case 'clear': return <TextClearIcon />;
     case 'selection': return <SelectionIcon />;
+
+    // Spellcheck
+    case 'Dictionary': return <DictionaryIcon size={16} />;
+    case 'Ban': return <BanIcon size={16} />;
+    case 'Refresh': return <RefreshIcon size={16} />;
 
     default: return null;
   }

@@ -120,5 +120,16 @@ export function createEditorTheme() {
       fontFamily: 'var(--font-mono, monospace)',
       fontSize: '0.9em',
     },
+
+    // Spellcheck
+    '.cm-misspelling': {
+      // Split properties to ensure compatibility across WebKit/Gecko
+      textDecorationLine: 'underline',
+      textDecorationStyle: 'wavy',
+      textDecorationColor: '#db2828',
+      textDecorationSkipInk: 'none',
+      textDecorationThickness: '1px', // Thinner line
+      textUnderlineOffset: '3px',
+    },
   });
 }

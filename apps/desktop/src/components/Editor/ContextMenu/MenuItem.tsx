@@ -5,7 +5,7 @@ import { getIconByName } from './iconMapper';
 
 interface MenuItemProps {
   item: MenuItemType;
-  onItemClick: (id: string) => void;
+  onItemClick: (id: string, action?: () => void) => void;
 }
 
 export function MenuItem({ item, onItemClick }: MenuItemProps) {
@@ -34,7 +34,7 @@ export function MenuItem({ item, onItemClick }: MenuItemProps) {
         return;
     }
 
-    onItemClick(item.id);
+    onItemClick(item.id, item.action);
   }
 
   function handleMouseEnter() {
