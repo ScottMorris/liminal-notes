@@ -9,7 +9,7 @@ import { StatusBar } from "./components/StatusBar";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
 import { renameItem, writeNote } from "./ipc";
-import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon } from "./components/Icons";
+import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon, BellIcon } from "./components/Icons";
 import { TabsProvider, useTabs } from "./contexts/TabsContext";
 import { EditorPane } from "./components/Editor/EditorPane";
 import { commandRegistry } from "./commands/CommandRegistry";
@@ -17,6 +17,9 @@ import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { SettingsModal } from "./components/Settings/SettingsModal";
 import { setSpellcheckIgnoredWords, setSpellcheckEnabled } from "./components/Editor/spellcheck/spellcheckExtension";
 import { useLinkIndex } from "./components/LinkIndexContext";
+import { RemindersProvider } from "./contexts/RemindersContext";
+import { RemindersPanel } from "./features/reminders/RemindersPanel";
+import { ReminderSheet } from "./features/reminders/components/ReminderSheet";
 
 function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
   const cmd = commandRegistry.getCommand(commandId);
@@ -61,7 +64,7 @@ function AppContent() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'notes' | 'graph'>('notes');
+  const [viewMode, setViewMode] = useState<'notes' | 'graph' | 'reminders'>('notes');
 
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -379,6 +382,13 @@ function AppContent() {
             >
               <ShareIcon size={18} />
             </button>
+            <button
+              className={`toggle-btn ${viewMode === 'reminders' ? 'active' : ''}`}
+              onClick={() => setViewMode('reminders')}
+              title="Reminders"
+            >
+              <BellIcon size={18} />
+            </button>
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -412,9 +422,12 @@ function AppContent() {
         )}
         {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} onResetVault={onResetVault} />}
         {isHelpOpen && <HelpModal onClose={() => setIsHelpOpen(false)} />}
+        <ReminderSheet />
 
         {viewMode === 'graph' ? (
            <GraphView selectedFile={selectedFile} onSelect={(path) => handleFileSelect(path, false)} />
+        ) : viewMode === 'reminders' ? (
+           <RemindersPanel />
         ) : (
            <EditorPane />
         )}
@@ -429,7 +442,9 @@ function App() {
     return (
         <TabsProvider>
           <SettingsProvider>
-            <AppContent />
+            <RemindersProvider>
+              <AppContent />
+            </RemindersProvider>
           </SettingsProvider>
         </TabsProvider>
     );

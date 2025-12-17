@@ -1,0 +1,11 @@
+
+> @liminal-notes/desktop@0.1.0 dev /app/apps/desktop
+> vite --port 1420
+
+
+  VITE v7.2.7  ready in 291 ms
+
+  ➜  Local:   http://localhost:1420/
+4:40:21 AM [vite] (client) ✨ new dependencies optimized: nspell
+4:40:21 AM [vite] (client) ✨ optimized dependencies changed. reloading
+ ELIFECYCLE  Command failed.

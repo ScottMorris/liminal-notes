@@ -4,6 +4,7 @@ import { getSections } from './schemas';
 import { SettingsSection } from './SettingsRenderer';
 import { XMarkIcon } from '../Icons';
 import pkg from '../../../package.json';
+import { RemindersDebugModal } from '../../features/reminders/components/RemindersDebugModal';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -21,6 +22,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
     const pluginsGroups = sections.filter(s => ['core-plugins', 'community-plugins'].includes(s.id));
 
     const [activeSectionId, setActiveSectionId] = useState(optionsGroups[0]?.id || sections[0]?.id);
+    const [isDebugOpen, setIsDebugOpen] = useState(false);
 
     const activeSection = sections.find(s => s.id === activeSectionId);
 
@@ -127,6 +129,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
                                 ))}
                             </div>
                         )}
+
+                        <div className="sidebar-group" style={{ marginTop: '20px' }}>
+                            <div className="sidebar-group-header" style={{
+                                padding: '5px 20px',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold',
+                                color: 'var(--ln-muted)',
+                                textTransform: 'uppercase'
+                            }}>
+                                Developer
+                            </div>
+                            <div
+                                className="sidebar-item"
+                                onClick={() => setIsDebugOpen(true)}
+                                style={{
+                                    padding: '8px 20px',
+                                    cursor: 'pointer',
+                                    color: 'var(--ln-sidebar-fg)'
+                                }}
+                            >
+                                Reminders Debug
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -150,6 +175,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
                     </div>
                 </div>
             </div>
+            {isDebugOpen && <RemindersDebugModal onClose={() => setIsDebugOpen(false)} />}
         </div>
     );
 };
