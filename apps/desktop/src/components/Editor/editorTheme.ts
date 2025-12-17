@@ -128,7 +128,7 @@ export function createEditorTheme() {
       textDecorationStyle: 'wavy',
       textDecorationColor: '#db2828',
       textDecorationSkipInk: 'none',
-      textDecorationThickness: '2px',
+      textDecorationThickness: '1px', // Thinner line
       textUnderlineOffset: '3px',
     },
   });
