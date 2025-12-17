@@ -123,9 +123,11 @@ export function createEditorTheme() {
 
     // Spellcheck
     '.cm-misspelling': {
-      textDecoration: 'underline wavy #db2828',
+      // Split properties to ensure compatibility across WebKit/Gecko
+      textDecorationLine: 'underline',
+      textDecorationStyle: 'wavy',
+      textDecorationColor: '#db2828',
       textDecorationSkipInk: 'none',
-      // Ensure text decoration is visible
       textDecorationThickness: '2px',
       textUnderlineOffset: '3px',
     },
