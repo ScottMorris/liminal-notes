@@ -78,9 +78,6 @@ function commandToMenuItem(command: Command): MenuItem {
     icon: command.icon,
     shortcut: command.shortcut,
     disabled: false, // Already filtered by when() condition in getCommands
-    action: () => {
-      // Will be wired up by menu component
-    },
     children: command.children?.map(commandToMenuItem), // Recursively convert children
   };
 }
