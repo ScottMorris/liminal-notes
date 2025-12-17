@@ -99,28 +99,37 @@ export class DesktopRemindersAdapter implements RemindersAdapter {
   async cancel(platformIds: string[]): Promise<void> {
     const ids = platformIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
     if (ids.length > 0) {
-        await cancel(ids);
+        try {
+            await cancel(ids);
+        } catch (e) {
+            console.warn("Failed to cancel notifications", e);
+        }
     }
   }
 
   async listScheduled(): Promise<ScheduledInfo[]> {
-    const notifications = await pending();
-    return notifications.map(n => ({
-        platformId: n.id.toString(),
-        // We can't easily get extra data back from pending() in some implementations,
-        // but if we can:
-        // note: pending() returns PendingNotification which has id, title, body, schedule.
-        // It does NOT strictly guarantee `extra` is available in the type definition I saw earlier?
-        // Let's check the type definition I cat'ed.
-        // interface PendingNotification { id: number; title?: string; body?: string; schedule: Schedule; }
-        // It does NOT have extra.
-        // So we can't map back to reminderId efficiently without storing it ourselves or title parsing.
-        // However, we only use this for diffing. If we can't identify the reminder, we might assume it's stale if we don't recognize the ID?
-        // But we store IDs in the vault.
-        // So we match by platformId.
-        fireAt: n.schedule.at?.date.toISOString(), // Assuming schedule.at exists
-        title: n.title
-    }));
+    try {
+        const notifications = await pending();
+        return notifications.map(n => ({
+            platformId: n.id.toString(),
+            // We can't easily get extra data back from pending() in some implementations,
+            // but if we can:
+            // note: pending() returns PendingNotification which has id, title, body, schedule.
+            // It does NOT strictly guarantee `extra` is available in the type definition I saw earlier?
+            // Let's check the type definition I cat'ed.
+            // interface PendingNotification { id: number; title?: string; body?: string; schedule: Schedule; }
+            // It does NOT have extra.
+            // So we can't map back to reminderId efficiently without storing it ourselves or title parsing.
+            // However, we only use this for diffing. If we can't identify the reminder, we might assume it's stale if we don't recognize the ID?
+            // But we store IDs in the vault.
+            // So we match by platformId.
+            fireAt: n.schedule.at?.date.toISOString(), // Assuming schedule.at exists
+            title: n.title
+        }));
+    } catch (e) {
+        console.warn("Failed to list scheduled notifications", e);
+        return [];
+    }
   }
 
   onInteraction(handler: (evt: NotificationInteraction) => void): () => void {

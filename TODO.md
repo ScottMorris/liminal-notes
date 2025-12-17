@@ -99,5 +99,5 @@ Currently, unsaved tabs are stored in `localStorage` which means:
 - **Quiet Hours Settings UI:** Implement a UI in the Settings modal to configure quiet hours (start/end times). Currently logic exists in planner but configuration is manual/JSON only.
 - **Command Palette Entry Point:** Add a "Remind me..." command to the command palette (once implemented) or context menu.
 - **Native Notification Actions:** Investigate supporting native desktop notification buttons (Snooze, Done) to avoid opening the app for quick actions.
-- **Deep Linking:** Implement deep linking to allow external notifications/apps to open specific notes properly. Reference: https://v2.tauri.app/plugin/deep-linking/
+- **Deep Linking:** Implement `liminal://` protocol support to allow external notifications/apps to open specific notes properly. Reference: https://v2.tauri.app/plugin/deep-linking/
 - **Custom Controls:** Replace native date/time pickers with custom styled components for consistent behavior and theming.

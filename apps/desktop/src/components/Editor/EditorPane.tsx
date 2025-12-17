@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { readNote, writeNote, renameItem } from '../../ipc';
 import { useTabs } from '../../contexts/TabsContext';
