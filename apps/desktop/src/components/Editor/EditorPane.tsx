@@ -10,7 +10,7 @@ import { useNotification } from '../NotificationContext';
 import { sanitizeFilename } from '../../utils/sanitizeFilename';
 import { TabBar } from './TabBar';
 import { CodeMirrorEditor, EditorHandle } from './CodeMirrorEditor';
-import { SparklesIcon } from '../Icons';
+import { SparklesIcon, EyeIcon, EyeSlashIcon } from '../Icons';
 import { AiSidebar } from '../../features/ai/AiSidebar';
 import { updateFrontmatter } from '../../utils/frontmatter';
 import { BacklinksPanel } from '../BacklinksPanel';
@@ -475,7 +475,17 @@ export function EditorPane() {
                     onClick={() => setShowPreview(!showPreview)}
                     title={showPreview ? 'Hide preview' : 'Show preview'}
                   >
-                    {showPreview ? '👁️ Hide' : '👁️ Preview'}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {showPreview ? (
+                        <>
+                          <EyeSlashIcon size={16} /> Hide
+                        </>
+                      ) : (
+                        <>
+                          <EyeIcon size={16} /> Preview
+                        </>
+                      )}
+                    </span>
                   </button>
                   <button onClick={handleSave} disabled={isSaving || isLoading}>
                     {isSaving ? "Saving..." : "Save"}
