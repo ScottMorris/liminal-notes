@@ -40,6 +40,7 @@ export const ReminderSheet: React.FC = () => {
             isPreview: false,
             editorState: ''
         });
+        window.dispatchEvent(new CustomEvent('liminal:view-change', { detail: 'notes' }));
         closeReminderSheet();
     } else if (reminder.target.type === 'note') {
         // Find file by note ID? We don't have note IDs indexed by default in `files`.

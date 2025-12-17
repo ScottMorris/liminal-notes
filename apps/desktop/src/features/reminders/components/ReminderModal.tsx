@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Reminder, ReminderTarget } from '@liminal-notes/reminders-core';
 import { useReminders } from '../../../contexts/RemindersContext';
 import { useTabs } from '../../../contexts/TabsContext';
+import { useVault } from '../../../hooks/useVault';
 import { XMarkIcon, BellIcon } from '../../../components/Icons';
 import { getLocalTimezone } from '@liminal-notes/reminders-core';
-import { format, addHours, parseISO, isValid } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 interface ReminderModalProps {
   onClose: () => void;
@@ -15,6 +16,7 @@ interface ReminderModalProps {
 export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialReminder, defaultTarget }) => {
   const { createReminder, updateReminder } = useReminders();
   const { activeTabId, openTabs } = useTabs();
+  const { files } = useVault();
 
   const activeTab = openTabs.find(t => t.id === activeTabId);
 
@@ -43,11 +45,11 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
   const [intervalMin, setIntervalMin] = useState(60);
 
   // Target Logic
-  // If defaultTarget provided (from Note), we use it.
-  // If not, we let user edit path.
   const [targetPath, setTargetPath] = useState<string>(
       initialReminder?.target.type === 'path' ? initialReminder.target.path : (defaultTarget?.path || activeTab?.path || '')
   );
+
+  const notePaths = useMemo(() => files.filter(f => !f.is_dir).map(f => f.path), [files]);
 
   // Initialize repeat kind from reminder if editing
   useEffect(() => {
@@ -108,14 +110,11 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
     onClose();
   };
 
-  // Determine if we show target input
-  // If creating from a note (defaultTarget present), maybe hide it or show as static?
-  // User said "uses the note for the base information".
   const isContextual = !!defaultTarget;
 
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-content" style={{ maxWidth: '400px', padding: '0' }}>
+      <div className="modal-content" style={{ maxWidth: '400px', padding: '0', backgroundColor: 'var(--ln-bg)', color: 'var(--ln-fg)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
         <div className="modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid var(--ln-border)', display: 'flex', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontSize: '1.1em', display: 'flex', alignItems: 'center', gap: '8px' }}>
               {!initialReminder && <BellIcon size={18} />}
@@ -129,32 +128,37 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
             {/* Title / Context */}
             {isContextual ? (
                 <div style={{ marginBottom: '5px' }}>
-                    <div style={{ fontSize: '0.85em', color: 'var(--ln-muted)', marginBottom: '2px' }}>Remind me about</div>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.1em' }}>{title}</div>
-                    {/* Hidden input to keep state sync if needed, or just rely on state */}
+                    <div style={{ fontSize: '0.85em', color: 'var(--ln-muted)', marginBottom: '4px' }}>Remind me about</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.2em' }}>{title}</div>
                 </div>
             ) : (
-                <div className="setting-item" style={{ marginBottom: 0 }}>
+                <div className="setting-item" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.9em', color: 'var(--ln-muted)' }}>Title</label>
                     <input
                         className="input-text"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         placeholder="Reminder title..."
                         required
-                        style={{ fontSize: '1.1em', fontWeight: 'bold' }}
+                        style={{ fontSize: '1.1em', fontWeight: 'bold', width: '100%' }}
                     />
                 </div>
             )}
 
             {!isContextual && (
-                <div className="setting-item" style={{ marginBottom: 0 }}>
+                <div className="setting-item" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.9em', color: 'var(--ln-muted)' }}>Note</label>
                     <input
                         className="input-text"
                         value={targetPath}
                         onChange={e => setTargetPath(e.target.value)}
                         placeholder="Path to note (optional)"
-                        style={{ fontSize: '0.9em' }}
+                        list="note-paths"
+                        style={{ width: '100%' }}
                     />
+                    <datalist id="note-paths">
+                        {notePaths.map(p => <option key={p} value={p} />)}
+                    </datalist>
                 </div>
             )}
 
@@ -167,6 +171,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
                         value={dateStr}
                         onChange={e => setDateStr(e.target.value)}
                         required
+                        style={{ width: '100%' }}
                     />
                 </div>
                 <div style={{ width: '120px' }}>
@@ -176,6 +181,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
                         value={timeStr}
                         onChange={e => setTimeStr(e.target.value)}
                         required
+                        style={{ width: '100%' }}
                     />
                 </div>
             </div>
@@ -203,6 +209,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
                             onChange={e => setIntervalMin(parseInt(e.target.value))}
                             min={1}
                             placeholder="Minutes"
+                            style={{ width: '100%' }}
                         />
                     </div>
                 )}
@@ -216,7 +223,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ onClose, initialRe
                     onChange={e => setBody(e.target.value)}
                     rows={2}
                     placeholder="Add a note..."
-                    style={{ resize: 'none' }}
+                    style={{ resize: 'vertical', width: '100%', minHeight: '60px' }}
                 />
             </div>
 

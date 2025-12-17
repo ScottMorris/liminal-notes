@@ -50,7 +50,7 @@ export class DesktopRemindersAdapter implements RemindersAdapter {
         // We cast to be safe if types mismatch.
         this.unlistenAction = unlisten as unknown as () => void;
     } catch (e) {
-        console.error("Failed to init notification listener", e);
+        console.warn("Failed to init notification listener (this is expected if permissions are missing or in dev mode)", e);
     }
   }
 

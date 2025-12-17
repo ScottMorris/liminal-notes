@@ -7,6 +7,7 @@ import { usePluginHost } from '../../plugins/PluginHostProvider';
 import { useLinkIndex } from '../LinkIndexContext';
 import { useSearchIndex } from '../SearchIndexContext';
 import { useNotification } from '../NotificationContext';
+import { useReminders } from '../../contexts/RemindersContext';
 import { sanitizeFilename } from '../../utils/sanitizeFilename';
 import { TabBar } from './TabBar';
 import { CodeMirrorEditor, EditorHandle } from './CodeMirrorEditor';
@@ -43,6 +44,7 @@ export function EditorPane() {
   const { updateNote, resolvePath } = useLinkIndex();
   const { updateEntry: updateSearchEntry } = useSearchIndex();
   const { notify } = useNotification();
+  const { reminders } = useReminders();
 
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +62,14 @@ export function EditorPane() {
   const [closingTabId, setClosingTabId] = useState<string | null>(null);
 
   const editorRef = useRef<EditorHandle>(null);
+
+  const reminderCount = useMemo(() => {
+    if (!activeTab || !activeTab.path) return 0;
+    return reminders.filter(r =>
+        (r.target.type === 'path' && r.target.path === activeTab.path) &&
+        (r.status === 'scheduled' || r.status === 'snoozed')
+    ).length;
+  }, [reminders, activeTab]);
 
   useEffect(() => {
     localStorage.setItem('liminal-notes.showPreview', String(showPreview));
@@ -526,7 +536,28 @@ export function EditorPane() {
                     onClick={() => setIsReminderModalOpen(true)}
                     title="Set Reminder"
                   >
-                    <BellIcon size={16} />
+                    <div style={{ position: 'relative', display: 'flex' }}>
+                        <BellIcon size={16} />
+                        {reminderCount > 0 && (
+                            <span style={{
+                                position: 'absolute',
+                                top: '-4px',
+                                right: '-4px',
+                                backgroundColor: 'var(--ln-accent)',
+                                color: 'white',
+                                borderRadius: '50%',
+                                fontSize: '0.6em',
+                                minWidth: '12px',
+                                height: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '1px'
+                            }}>
+                                {reminderCount}
+                            </span>
+                        )}
+                    </div>
                   </button>
                   <button
                     className={`action-btn ${showPreview ? 'active' : ''}`}

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useReminders } from '../../contexts/RemindersContext';
+import { useSettings } from '../../contexts/SettingsContext';
 import { Reminder } from '@liminal-notes/reminders-core';
 import { ReminderModal } from './components/ReminderModal';
 import { PencilSquareIcon, CheckCircleIcon } from '../../components/Icons';
@@ -8,6 +9,7 @@ type Tab = 'upcoming' | 'snoozed' | 'done';
 
 export const RemindersPanel: React.FC = () => {
   const { reminders, openReminderSheet, completeReminder } = useReminders();
+  const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState<Tab>('upcoming');
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -80,7 +82,10 @@ export const RemindersPanel: React.FC = () => {
                       )}
                   </div>
                   <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
-                      {r.nextFireAt ? new Date(r.nextFireAt).toLocaleString() : (r.status === 'done' ? 'Done' : 'No date')}
+                      {r.nextFireAt ? new Date(r.nextFireAt).toLocaleString(undefined, {
+                          hour12: settings['appearance.timeFormat'] === '12h' ? true :
+                                  settings['appearance.timeFormat'] === '24h' ? false : undefined
+                      }) : (r.status === 'done' ? 'Done' : 'No date')}
                   </div>
                   {r.target.type === 'path' && (
                       <div style={{ fontSize: '0.8em', opacity: 0.6, fontFamily: 'monospace' }}>

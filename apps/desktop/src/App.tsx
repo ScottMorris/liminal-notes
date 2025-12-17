@@ -314,6 +314,7 @@ function AppContent() {
               editorState: ''
           });
       }
+      setViewMode('notes');
   }, [openTabs, switchTab, openTab, dispatch]);
 
   useEffect(() => {
@@ -345,6 +346,18 @@ function AppContent() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleStartCreate, selectedFile]);
+
+  // Listen for view change events
+  useEffect(() => {
+    const handleViewChange = (e: Event) => {
+        const detail = (e as CustomEvent).detail;
+        if (detail === 'notes' || detail === 'graph' || detail === 'reminders') {
+            setViewMode(detail);
+        }
+    };
+    window.addEventListener('liminal:view-change', handleViewChange);
+    return () => window.removeEventListener('liminal:view-change', handleViewChange);
+  }, []);
 
   if (isVaultLoading) {
     return <div className="container center">Loading...</div>;
