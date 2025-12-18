@@ -254,6 +254,11 @@ interface TreeNodeProps {
 }
 
 function getExtension(filename: string): string {
+    // Handle hidden files with no extension (e.g. .gitignore)
+    if (filename.startsWith('.') && filename.indexOf('.', 1) === -1) {
+        return '';
+    }
+
     const parts = filename.split('.');
     if (parts.length > 1) {
         return parts.pop() || '';
@@ -262,6 +267,11 @@ function getExtension(filename: string): string {
 }
 
 function stripExtension(filename: string): string {
+    // Handle hidden files with no extension (e.g. .gitignore)
+    if (filename.startsWith('.') && filename.indexOf('.', 1) === -1) {
+        return filename;
+    }
+
     const parts = filename.split('.');
     if (parts.length > 1) {
         parts.pop();
