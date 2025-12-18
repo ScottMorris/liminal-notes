@@ -189,10 +189,10 @@ const deleteCommand: Command<FileContext> = {
   context: 'FileTree',
   group: 'File',
   icon: 'trash',
-  run: (ctx) => {
+  run: async (ctx) => {
     const shouldDelete = window.confirm(`Are you sure you want to delete ${ctx.path}?`);
     if (!shouldDelete) return;
-    ctx.operations.delete(ctx.path);
+    await ctx.operations.deleteFile(ctx.path);
   },
 };
 

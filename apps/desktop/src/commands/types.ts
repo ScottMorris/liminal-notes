@@ -66,7 +66,7 @@ export interface FileContext {
   operations: BaseOperations & {
     refreshFiles: () => Promise<void>;
     startRename: (path: string) => void;
-    delete: (path: string) => void;
+    deleteFile: (path: string) => Promise<void>;
     openTab: (path: string) => void;
     createNote: (name: string) => void;
   };
