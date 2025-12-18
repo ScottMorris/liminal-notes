@@ -3,6 +3,7 @@ import { commandRegistry } from './CommandRegistry';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import * as opener from '@tauri-apps/plugin-opener';
 import { readNote, writeNote, getVaultConfig } from '../ipc';
+import { confirm } from '@tauri-apps/plugin-dialog';
 
 // Open in new tab
 const openInNewTabCommand: Command<FileContext> = {
@@ -190,7 +191,7 @@ const deleteCommand: Command<FileContext> = {
   group: 'File',
   icon: 'trash',
   run: async (ctx) => {
-    const shouldDelete = window.confirm(`Are you sure you want to delete ${ctx.path}?`);
+    const shouldDelete = await confirm(`Are you sure you want to delete ${ctx.path}?`, { title: 'Delete file' });
     if (!shouldDelete) return;
     await ctx.operations.deleteFileAndCleanup(ctx.path);
   },
