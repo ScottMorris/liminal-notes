@@ -39,6 +39,7 @@ export function FileTree({
   onRefresh
 }: FileTreeProps) {
   const { openTab } = useTabs();
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     model: MenuModel;
     position: MenuPosition;
@@ -130,6 +131,7 @@ export function FileTree({
   const handleNodeContextMenu = (e: React.MouseEvent, node: DisplayNode) => {
     e.preventDefault();
     e.stopPropagation();
+    setSelectedPath(node.path);
 
     const context: FileContext = {
       type: 'FileTree',
@@ -173,6 +175,13 @@ export function FileTree({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Delete' && selectedPath && onDelete) {
+      e.preventDefault();
+      onDelete(selectedPath);
+    }
+  };
+
   if (files.length === 0 && !isCreating) {
     return (
       <div className="file-tree empty-state-sidebar" style={{ padding: '20px', textAlign: 'center', color: 'var(--ln-muted)' }}>
@@ -198,7 +207,11 @@ export function FileTree({
 
   return (
     <>
-      <div className="file-tree">
+      <div
+        className="file-tree"
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+      >
         {tree.map(node => (
           <TreeNode
             key={node.path}
@@ -209,6 +222,7 @@ export function FileTree({
             onCreate={onCreate}
             onCancel={onCancel}
             onContextMenu={handleNodeContextMenu}
+            onSelect={setSelectedPath}
           />
         ))}
       </div>
@@ -232,15 +246,17 @@ interface TreeNodeProps {
   onCreate?: (name: string) => void;
   onCancel?: () => void;
   onContextMenu: (e: React.MouseEvent, node: DisplayNode) => void;
+  onSelect: (path: string) => void;
 }
 
-function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCancel, onContextMenu }: TreeNodeProps) {
+function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCancel, onContextMenu, onSelect }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const isEditing = editingPath === node.path;
   const isTemp = node.isTemp;
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    onSelect(node.path);
     if (node.isDir) {
       setExpanded(!expanded);
     } else {

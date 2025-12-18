@@ -332,15 +332,10 @@ function AppContent() {
         window.dispatchEvent(new Event('liminal:save'));
       }
 
-      // Delete current file
-      if (e.key === 'Delete' && selectedFile) {
-        e.preventDefault();
-        handleFileDelete(selectedFile);
-      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleStartCreate, selectedFile, handleFileDelete]);
+  }, [handleStartCreate, selectedFile]);
 
   // Listen for view change events
   useEffect(() => {
