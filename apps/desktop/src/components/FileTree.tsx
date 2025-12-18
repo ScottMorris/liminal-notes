@@ -18,6 +18,7 @@ interface FileTreeProps {
   onCancel?: () => void;
   onDelete?: (path: string) => void;
   onStartRename?: (path: string) => void;
+  onRefresh?: () => Promise<void>;
 }
 
 interface DisplayNode extends FileNode {
@@ -34,7 +35,8 @@ export function FileTree({
   onStartCreate,
   onCancel,
   onDelete,
-  onStartRename
+  onStartRename,
+  onRefresh
 }: FileTreeProps) {
   const { openTab } = useTabs();
   const [contextMenu, setContextMenu] = useState<{
@@ -137,6 +139,9 @@ export function FileTree({
       operations: {
         notify: (msg, type) => {
              console.log(`[${type}] ${msg}`);
+        },
+        refreshFiles: async () => {
+          if (onRefresh) await onRefresh();
         },
         startRename: (path) => {
           if (onStartRename) onStartRename(path);

@@ -397,6 +397,7 @@ function AppContent() {
                 onCancel={handleCreateCancel}
                 onStartRename={(path) => setEditingPath(path)}
                 onDelete={handleFileDelete}
+                onRefresh={refreshFiles}
             />
         </div>
         <div className="sidebar-footer">

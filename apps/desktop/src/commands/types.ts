@@ -64,6 +64,7 @@ export interface FileContext {
 
   // Operations specific to file tree
   operations: BaseOperations & {
+    refreshFiles: () => Promise<void>;
     startRename: (path: string) => void;
     delete: (path: string) => void;
     openTab: (path: string) => void;

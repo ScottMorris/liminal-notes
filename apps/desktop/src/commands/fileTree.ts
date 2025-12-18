@@ -50,6 +50,7 @@ const duplicateCommand: Command<FileContext> = {
 
       await writeNote(newPath, content);
       ctx.operations.notify(`Created ${newName}`, 'success');
+      await ctx.operations.refreshFiles();
 
       // Optionally open the new note? Not requested but nice.
       // if (ctx.operations.openTab) ctx.operations.openTab(newPath);

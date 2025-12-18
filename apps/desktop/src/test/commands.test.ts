@@ -45,6 +45,7 @@ const mockFileContext: FileContext = {
     allFiles: new Set(),
     operations: {
         notify: vi.fn(),
+        refreshFiles: vi.fn(),
         startRename: vi.fn(),
         delete: vi.fn(),
         openTab: vi.fn(),
