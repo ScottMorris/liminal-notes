@@ -39,7 +39,7 @@ export function FileTree({
   onRefresh
 }: FileTreeProps) {
   const { openTab } = useTabs();
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<DisplayNode | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     model: MenuModel;
     position: MenuPosition;
@@ -128,42 +128,44 @@ export function FileTree({
     return root;
   }, [files, isCreating]);
 
+  const buildContext = (node: DisplayNode): FileContext => ({
+    type: 'FileTree',
+    path: node.path,
+    isDir: node.isDir,
+    allFiles: new Set(files.map(f => f.path)),
+    operations: {
+      notify: (msg, type) => {
+        console.log(`[${type}] ${msg}`);
+      },
+      refreshFiles: async () => {
+        if (onRefresh) await onRefresh();
+      },
+      startRename: (path) => {
+        if (onStartRename) onStartRename(path);
+      },
+      delete: (path) => {
+        if (onDelete) onDelete(path);
+      },
+      createNote: (name) => {},
+      openTab: (path) => {
+        const name = path.split('/').pop() || 'Untitled';
+        openTab({
+          id: path,
+          title: name,
+          path: path,
+          isDirty: false,
+          isPreview: false,
+        });
+      }
+    }
+  });
+
   const handleNodeContextMenu = (e: React.MouseEvent, node: DisplayNode) => {
     e.preventDefault();
     e.stopPropagation();
-    setSelectedPath(node.path);
+    setSelectedNode(node);
 
-    const context: FileContext = {
-      type: 'FileTree',
-      path: node.path,
-      isDir: node.isDir,
-      allFiles: new Set(files.map(f => f.path)),
-      operations: {
-        notify: (msg, type) => {
-             console.log(`[${type}] ${msg}`);
-        },
-        refreshFiles: async () => {
-          if (onRefresh) await onRefresh();
-        },
-        startRename: (path) => {
-          if (onStartRename) onStartRename(path);
-        },
-        delete: (path) => {
-          if (onDelete) onDelete(path);
-        },
-        createNote: (name) => {},
-        openTab: (path) => {
-           const name = path.split('/').pop() || 'Untitled';
-           openTab({
-             id: path,
-             title: name,
-             path: path,
-             isDirty: false,
-             isPreview: false,
-           });
-        }
-      }
-    };
+    const context = buildContext(node);
 
     const model = buildContextMenu(context, commandRegistry);
     if (model.sections.length > 0) {
@@ -175,10 +177,11 @@ export function FileTree({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Delete' && selectedPath && onDelete) {
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Delete' && selectedNode) {
       e.preventDefault();
-      onDelete(selectedPath);
+      const context = buildContext(selectedNode);
+      await commandRegistry.executeCommand('fileTree.delete', context);
     }
   };
 
@@ -222,7 +225,7 @@ export function FileTree({
             onCreate={onCreate}
             onCancel={onCancel}
             onContextMenu={handleNodeContextMenu}
-            onSelect={setSelectedPath}
+            onSelect={setSelectedNode}
           />
         ))}
       </div>
@@ -246,7 +249,7 @@ interface TreeNodeProps {
   onCreate?: (name: string) => void;
   onCancel?: () => void;
   onContextMenu: (e: React.MouseEvent, node: DisplayNode) => void;
-  onSelect: (path: string) => void;
+  onSelect: (node: DisplayNode) => void;
 }
 
 function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCancel, onContextMenu, onSelect }: TreeNodeProps) {
@@ -256,7 +259,7 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onSelect(node.path);
+    onSelect(node);
     if (node.isDir) {
       setExpanded(!expanded);
     } else {
@@ -303,6 +306,7 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
                 onCreate={onCreate}
                 onCancel={onCancel}
                 onContextMenu={onContextMenu}
+                onSelect={onSelect}
             />
           ))}
         </div>
