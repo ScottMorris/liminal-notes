@@ -26,6 +26,13 @@ We should consider adding a printing feature for notes.
 
 ## Release & Packaging
 
+- **Research Code Signing and Notarization requirements for Windows and macOS distribution.**
+  - **macOS:** Research Apple Developer ID Application certificate costs ($99/year), notarization process using `xcrun notarytool`, and integration with Tauri action.
+  - **Windows:** Research EV vs. Standard Code Signing certificates (DigiCert, Sectigo), costs (~$400/year for OV), and setting up Azure Key Vault for signing in CI.
+- **Investigate automating version bumps and git tagging.**
+  - Consider tools like `changesets` or `standard-version` to manage changelogs and automatic version bumping based on commit messages.
+  - Explore building a release management TUI (e.g., using Ink) to simplify the interactive process of selecting versions and triggering builds.
+  - Investigate using AI to generate release notes from commit messages or PR descriptions.
 - Investigate setting up cross-compilation for Windows/macOS from Linux, or configuring GitHub Actions for multi-platform builds.
 - Current Linux builds produce `.deb` and `.AppImage`.
 
