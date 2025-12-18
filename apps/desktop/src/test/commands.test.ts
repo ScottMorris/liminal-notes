@@ -1,8 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CommandRegistry } from '../commands/CommandRegistry';
 import { EditorContext, Command, FileContext } from '../commands/types';
 import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
+import { commandRegistry } from '../commands/CommandRegistry';
+import { registerFileTreeCommands } from '../commands/fileTree';
+import { confirm } from '@tauri-apps/plugin-dialog';
+const confirmMock = vi.mocked(confirm);
+
+vi.mock('@tauri-apps/plugin-dialog', () => ({
+    confirm: vi.fn(),
+}));
 
 // Mock EditorView and State
 const mockView = {
@@ -199,5 +207,31 @@ describe('CommandRegistry', () => {
         expect(retrieved).toBeDefined();
         expect(retrieved?.context).toBe('Global');
         expect(retrieved?.shortcut).toBe('Ctrl+T');
+    });
+
+    describe('fileTree.delete command', () => {
+        beforeEach(() => {
+            commandRegistry.unregister('fileTree.delete');
+            registerFileTreeCommands();
+            vi.clearAllMocks();
+        });
+
+        afterEach(() => {
+            commandRegistry.unregister('fileTree.delete');
+        });
+
+        it('should not delete when user cancels', async () => {
+            confirmMock.mockResolvedValue(false);
+            await commandRegistry.executeCommand('fileTree.delete', mockFileContext);
+            expect(confirm).toHaveBeenCalledTimes(1);
+            expect(mockFileContext.operations.deleteFileAndCleanup).not.toHaveBeenCalled();
+        });
+
+        it('should delete when user confirms', async () => {
+            confirmMock.mockResolvedValue(true);
+            await commandRegistry.executeCommand('fileTree.delete', mockFileContext);
+            expect(confirm).toHaveBeenCalledTimes(1);
+            expect(mockFileContext.operations.deleteFileAndCleanup).toHaveBeenCalledWith('test.md');
+        });
     });
 });
