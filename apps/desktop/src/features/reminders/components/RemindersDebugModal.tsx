@@ -16,8 +16,19 @@ export const RemindersDebugModal: React.FC<{ onClose: () => void }> = ({ onClose
     }, [getDebugInfo]);
 
     return (
-        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-           <div className="modal-content" style={{ maxWidth: '800px', width: '90%', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+        <div
+            className="modal-overlay"
+            onClick={(e) => {
+                // Prevent bubbling to parent modals (e.g., Settings)
+                e.stopPropagation();
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
+           <div
+                className="modal-content"
+                style={{ maxWidth: '800px', width: '90%', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}
+                onClick={(e) => e.stopPropagation()}
+           >
                <div className="modal-header">
                    <h2>Reminders Debug</h2>
                    <div style={{ display: 'flex', gap: '10px' }}>
