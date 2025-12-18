@@ -807,6 +807,19 @@ input:checked + .slider:before {
   border-color: var(--ln-accent);
 }
 
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+}
+
+.form-select option {
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+}
+
 /* Notifications */
 .notification-container {
   position: fixed;
