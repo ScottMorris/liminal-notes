@@ -14,6 +14,7 @@ export function MenuItem({ item, onItemClick }: MenuItemProps) {
   const itemRef = useRef<HTMLButtonElement>(null);
 
   const hasSubmenu = item.children && item.children.length > 0;
+  const isDestructive = item.id === 'fileTree.delete';
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -89,7 +90,7 @@ export function MenuItem({ item, onItemClick }: MenuItemProps) {
     <>
       <button
         ref={itemRef}
-        className={`menu-item ${item.disabled ? 'disabled' : ''} ${hasSubmenu ? 'has-submenu' : ''}`}
+        className={`menu-item ${item.disabled ? 'disabled' : ''} ${hasSubmenu ? 'has-submenu' : ''} ${isDestructive ? 'danger' : ''}`}
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}

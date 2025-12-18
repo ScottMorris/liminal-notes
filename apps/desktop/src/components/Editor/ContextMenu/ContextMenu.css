@@ -101,6 +101,22 @@
   height: 100%;
 }
 
+.menu-item.danger {
+  color: var(--ln-danger, #d14343);
+}
+
+.menu-item.danger .menu-item-icon {
+  color: var(--ln-danger, #d14343);
+}
+
+.menu-item.danger:hover:not(.disabled) {
+  color: var(--ln-danger, #d14343);
+}
+
+.menu-item.danger:hover:not(.disabled) .menu-item-icon {
+  color: var(--ln-danger, #d14343);
+}
+
 .menu-item-label {
   flex: 1;
   white-space: nowrap;

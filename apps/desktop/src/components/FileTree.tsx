@@ -49,6 +49,21 @@ export function FileTree({
     return () => window.removeEventListener('click', closeMenu);
   }, []);
 
+  const handleMenuItemClick = async (id: string, action?: () => void) => {
+    try {
+      if (action) {
+        action();
+        return;
+      }
+
+      if (!contextMenu) return;
+
+      await commandRegistry.executeCommand(id, contextMenu.context);
+    } catch (err) {
+      console.error('Failed to run context menu action', err);
+    }
+  };
+
   const tree = useMemo(() => {
     const root: DisplayNode[] = [];
 
@@ -197,10 +212,7 @@ export function FileTree({
           model={contextMenu.model}
           position={contextMenu.position}
           onClose={() => setContextMenu(null)}
-          onAction={(id) => {
-              commandRegistry.executeCommand(id, contextMenu.context);
-              setContextMenu(null);
-          }}
+          onItemClick={handleMenuItemClick}
         />
       )}
     </>
