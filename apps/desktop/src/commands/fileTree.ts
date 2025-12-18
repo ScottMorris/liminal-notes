@@ -190,9 +190,6 @@ const deleteCommand: Command<FileContext> = {
   group: 'File',
   icon: 'trash',
   run: (ctx) => {
-    // Confirm before deleting to avoid accidental removals from keyboard or menu
-    const shouldDelete = window.confirm(`Are you sure you want to delete ${ctx.path}?`);
-    if (!shouldDelete) return;
     ctx.operations.delete(ctx.path);
   },
 };
