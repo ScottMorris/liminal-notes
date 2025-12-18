@@ -143,7 +143,7 @@ export function FileTree({
       startRename: (path) => {
         if (onStartRename) onStartRename(path);
       },
-      deleteFile: async (path) => {
+      deleteFileAndCleanup: async (path) => {
         if (onDelete) await onDelete(path);
       },
       createNote: (name) => {},

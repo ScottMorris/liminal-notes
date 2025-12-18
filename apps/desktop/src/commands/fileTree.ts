@@ -192,7 +192,7 @@ const deleteCommand: Command<FileContext> = {
   run: async (ctx) => {
     const shouldDelete = window.confirm(`Are you sure you want to delete ${ctx.path}?`);
     if (!shouldDelete) return;
-    await ctx.operations.deleteFile(ctx.path);
+    await ctx.operations.deleteFileAndCleanup(ctx.path);
   },
 };
 
