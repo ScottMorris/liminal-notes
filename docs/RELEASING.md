@@ -32,7 +32,7 @@ This document describes the process for creating a new release of the desktop ap
     - Go to the "Actions" tab in the GitHub repository.
     - Select the `publish-desktop` workflow.
     - Watch the build progress. It currently targets:
-        - Linux x64 (Ubuntu 22.04)
+        - Linux x64 (Ubuntu 24.04)
         - Linux ARM64 (Ubuntu 24.04)
 
 5.  **Review Draft Release**

@@ -32,6 +32,7 @@ We should consider adding a printing feature for notes.
 - **Investigate automating version bumps and git tagging.**
   - Consider tools like `changesets` or `standard-version` to manage changelogs and automatic version bumping based on commit messages.
   - Explore building a release management TUI (e.g., using Ink) to simplify the interactive process of selecting versions and triggering builds.
+  - Investigate using AI to generate release notes from commit messages or PR descriptions.
 - Investigate setting up cross-compilation for Windows/macOS from Linux, or configuring GitHub Actions for multi-platform builds.
 - Current Linux builds produce `.deb` and `.AppImage`.
 
