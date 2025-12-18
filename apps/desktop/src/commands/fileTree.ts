@@ -190,13 +190,9 @@ const deleteCommand: Command<FileContext> = {
   group: 'File',
   icon: 'trash',
   run: (ctx) => {
-    // Delete usually requires confirmation.
-    // ctx.operations.delete(ctx.path);
-    // If we want a confirmation dialog, we can do it here using tauri dialog plugin or custom UI.
-    // For now, let's assume the context operation handles the UI (confirmation) or we do it here.
-    // Let's delegate to context operation to keep UI logic (modals) out of here if possible,
-    // BUT commands often trigger modals.
-    // If I use `window.confirm` or Tauri dialog:
+    // Confirm before deleting to avoid accidental removals from keyboard or menu
+    const shouldDelete = window.confirm(`Are you sure you want to delete ${ctx.path}?`);
+    if (!shouldDelete) return;
     ctx.operations.delete(ctx.path);
   },
 };
