@@ -6,6 +6,7 @@ import { commandRegistry } from "../commands/CommandRegistry";
 import type { MenuModel, MenuPosition } from "./Editor/ContextMenu/types";
 import type { FileContext } from "../commands/types";
 import { useTabs } from "../contexts/TabsContext";
+import { FolderIcon, FolderOpenIcon, DocumentTextIcon, PhotoIcon, CodeBracketIcon } from "./Icons";
 
 interface FileTreeProps {
   files: FileEntry[];
@@ -151,7 +152,7 @@ export function FileTree({
         const name = path.split('/').pop() || 'Untitled';
         openTab({
           id: path,
-          title: name,
+          title: name.replace(/\.md$/, ''),
           path: path,
           isDirty: false,
           isPreview: false,
@@ -252,6 +253,23 @@ interface TreeNodeProps {
   onSelect: (node: DisplayNode) => void;
 }
 
+function getExtension(filename: string): string {
+    const parts = filename.split('.');
+    if (parts.length > 1) {
+        return parts.pop() || '';
+    }
+    return '';
+}
+
+function stripExtension(filename: string): string {
+    const parts = filename.split('.');
+    if (parts.length > 1) {
+        parts.pop();
+        return parts.join('.');
+    }
+    return filename;
+}
+
 function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCancel, onContextMenu, onSelect }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const isEditing = editingPath === node.path;
@@ -267,15 +285,34 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
     }
   };
 
+  const extension = getExtension(node.name).toLowerCase();
+  const isMd = extension === 'md' || extension === 'markdown' || extension === 'txt';
+  const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+  const isCode = ['js', 'ts', 'tsx', 'jsx', 'json', 'css', 'html', 'py', 'rs', 'go', 'java', 'c', 'cpp'].includes(extension);
+
+  let IconComponent = DocumentTextIcon;
+  if (node.isDir) {
+    IconComponent = expanded ? FolderOpenIcon : FolderIcon;
+  } else if (isImage) {
+    IconComponent = PhotoIcon;
+  } else if (isCode) {
+    IconComponent = CodeBracketIcon;
+  }
+
   if (isEditing || isTemp) {
       return (
           <div className="tree-node">
               <NodeInput
-                initialValue={isEditing ? node.name : ""}
+                initialValue={isEditing ? stripExtension(node.name) : ""}
                 isDir={node.isDir}
+                originalExtension={isEditing ? getExtension(node.name) : undefined}
                 onSubmit={(val) => {
                     if (isTemp && onCreate) onCreate(val);
-                    else if (isEditing && onRename) onRename(node.path, val);
+                    else if (isEditing && onRename) {
+                        const originalExt = getExtension(node.name);
+                        const newName = originalExt ? `${val}.${originalExt}` : val;
+                        onRename(node.path, newName);
+                    }
                 }}
                 onCancel={() => onCancel && onCancel()}
               />
@@ -289,10 +326,27 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
         className={`node-label ${node.isDir ? "folder" : "file"}`}
         onClick={handleClick}
         onContextMenu={(e) => onContextMenu(e, node)}
-        style={{ cursor: "pointer", userSelect: "none" }}
+        style={{ cursor: "pointer", userSelect: "none", display: 'flex', alignItems: 'center' }}
       >
-        <span style={{ marginRight: "5px" }}>{node.isDir ? (expanded ? "📂" : "📁") : "📄"}</span>
-        {node.name}
+        <span style={{ marginRight: "6px", display: 'flex', color: 'var(--ln-muted)' }}>
+          <IconComponent size={16} />
+        </span>
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {stripExtension(node.name)}
+        </span>
+        {!node.isDir && !isMd && extension && (
+            <span style={{
+                fontSize: '0.7em',
+                color: 'var(--ln-muted)',
+                marginLeft: '8px',
+                border: '1px solid var(--ln-border)',
+                borderRadius: '3px',
+                padding: '0 3px',
+                opacity: 0.7
+            }}>
+                {extension.toUpperCase()}
+            </span>
+        )}
       </div>
       {node.isDir && expanded && node.children && (
         <div className="node-children" style={{ paddingLeft: "20px" }}>
@@ -315,7 +369,7 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
   );
 }
 
-function NodeInput({ initialValue, isDir, onSubmit, onCancel }: { initialValue: string, isDir: boolean, onSubmit: (val: string) => void, onCancel: () => void }) {
+function NodeInput({ initialValue, isDir, originalExtension, onSubmit, onCancel }: { initialValue: string, isDir: boolean, originalExtension?: string, onSubmit: (val: string) => void, onCancel: () => void }) {
     const [val, setVal] = useState(initialValue);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -337,9 +391,13 @@ function NodeInput({ initialValue, isDir, onSubmit, onCancel }: { initialValue: 
         }
     };
 
+    let IconComponent = isDir ? FolderIcon : DocumentTextIcon;
+
     return (
-        <div className="node-label" onClick={(e) => e.stopPropagation()} style={{ cursor: 'default' }}>
-            <span style={{ marginRight: "5px" }}>{isDir ? "📂" : "📄"}</span>
+        <div className="node-label" onClick={(e) => e.stopPropagation()} style={{ cursor: 'default', display: 'flex', alignItems: 'center' }}>
+            <span style={{ marginRight: "6px", display: 'flex', color: 'var(--ln-muted)' }}>
+                <IconComponent size={16} />
+            </span>
             <input
                 ref={inputRef}
                 type="text"
@@ -357,7 +415,9 @@ function NodeInput({ initialValue, isDir, onSubmit, onCancel }: { initialValue: 
                     outline: 'none',
                     padding: '2px 4px',
                     borderRadius: '2px',
-                    width: '100%'
+                    width: '100%',
+                    background: 'var(--ln-bg)',
+                    color: 'var(--ln-fg)'
                 }}
             />
         </div>
