@@ -147,6 +147,19 @@ export const getSections = (
                         id: 'font-size',
                         label: 'Font size',
                         controls: [{ kind: 'slider', key: 'appearance.fontSize', min: 10, max: 30, step: 1 }]
+                    },
+                    {
+                        id: 'time-format',
+                        label: 'Time Format',
+                        controls: [{
+                            kind: 'select',
+                            key: 'appearance.timeFormat',
+                            options: [
+                                { value: 'system', label: 'System Default' },
+                                { value: '12h', label: '12-hour' },
+                                { value: '24h', label: '24-hour' }
+                            ]
+                        }]
                     }
                 ]
             }

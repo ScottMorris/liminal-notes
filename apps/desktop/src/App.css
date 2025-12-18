@@ -125,6 +125,12 @@ button {
   cursor: pointer;
 }
 
+button:focus-visible {
+  outline: 2px solid var(--ln-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -758,6 +764,10 @@ button:disabled {
   height: 0;
 }
 
+.toggle-switch input:focus-visible + .slider {
+  box-shadow: 0 0 0 2px var(--ln-accent), 0 0 0 4px rgba(0, 0, 0, 0.35);
+}
+
 .slider {
   position: absolute;
   cursor: pointer;
@@ -788,6 +798,43 @@ input:checked + .slider {
 
 input:checked + .slider:before {
   transform: translateX(20px);
+}
+
+/* Form Styles */
+.form-input, .form-select, .form-textarea {
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+  border: 1px solid var(--ln-border);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--ln-accent);
+}
+
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+}
+
+.form-select option {
+  background-color: var(--ln-bg);
+  color: var(--ln-fg);
+}
+
+.select-dropdown select:focus-visible {
+  outline: 2px solid var(--ln-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+  border-color: var(--ln-accent);
 }
 
 /* Notifications */

@@ -93,3 +93,11 @@ Currently, unsaved tabs are stored in `localStorage` which means:
 ## Known Issues
 
 - **Window Buttons on Linux/GTK:** Window buttons (Minimize, Maximize, Close) are not clickable on initial launch when using `visible: false` in Tauri configuration. They become clickable after resizing the window. This is likely related to the interaction between the window state plugin's restoration logic and GTK window visibility.
+
+## Reminders & Notifications
+
+- **Quiet Hours Settings UI:** Implement a UI in the Settings modal to configure quiet hours (start/end times). Currently logic exists in planner but configuration is manual/JSON only.
+- **Command Palette Entry Point:** Add a "Remind me..." command to the command palette (once implemented) or context menu.
+- **Native Notification Actions:** Investigate supporting native desktop notification buttons (Snooze, Done) to avoid opening the app for quick actions.
+- **Deep Linking:** Implement `liminal://` protocol support to allow external notifications/apps to open specific notes properly. Reference: https://v2.tauri.app/plugin/deep-linking/
+- **Custom Controls:** Replace native date/time pickers with custom styled components for consistent behavior and theming.

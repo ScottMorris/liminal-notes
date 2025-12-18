@@ -60,7 +60,7 @@ export const SelectDropdown: React.FC<{ def: SettingControlDef }> = ({ def }) =>
     };
 
     return (
-        <div className="select-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
+        <div className="select-wrapper select-dropdown" style={{ position: 'relative', display: 'inline-block' }}>
             <select
                 value={current}
                 onChange={(e) => setValue(e.target.value)}
