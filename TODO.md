@@ -26,6 +26,8 @@ We should consider adding a printing feature for notes.
 
 ## Release & Packaging
 
+- **Research Code Signing and Notarization requirements for Windows and macOS distribution.**
+- **Investigate automating version bumps and git tagging.**
 - Investigate setting up cross-compilation for Windows/macOS from Linux, or configuring GitHub Actions for multi-platform builds.
 - Current Linux builds produce `.deb` and `.AppImage`.
 

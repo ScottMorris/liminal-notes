@@ -1,0 +1,76 @@
+name: publish-desktop
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "desktop-v*"
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            args: ""
+            pkg_mgr: apt-get
+          - platform: ubuntu-24.04-arm
+            args: ""
+            pkg_mgr: apt-get
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+           workspaces: |
+             apps/desktop/src-tauri -> target
+
+      - name: Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          # Install dependencies based on platform version
+          if [ "${{ matrix.platform }}" = "ubuntu-24.04-arm" ]; then
+             sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          else
+             sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          fi
+
+      - name: Install JS deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build + attach to draft GitHub Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: Liminal Notes ${{ github.ref_name }}
+          releaseBody: See assets below to download and install.
+          releaseDraft: true
+          prerelease: false
+          uploadUpdaterJson: false
+          args: ${{ matrix.args }}
