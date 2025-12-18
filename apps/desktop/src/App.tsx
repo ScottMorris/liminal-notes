@@ -300,6 +300,14 @@ function AppContent() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable) {
+          return;
+        }
+      }
+
       // Search / Quick Open
       if (matchShortcut(e, 'global.search')) {
         e.preventDefault();
@@ -323,10 +331,16 @@ function AppContent() {
         e.preventDefault();
         window.dispatchEvent(new Event('liminal:save'));
       }
+
+      // Delete current file
+      if (e.key === 'Delete' && selectedFile) {
+        e.preventDefault();
+        handleFileDelete(selectedFile);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleStartCreate, selectedFile]);
+  }, [handleStartCreate, selectedFile, handleFileDelete]);
 
   // Listen for view change events
   useEffect(() => {

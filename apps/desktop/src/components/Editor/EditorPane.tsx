@@ -22,7 +22,11 @@ import { EditorContext } from '../../commands/types';
 import { EditorView } from '@codemirror/view';
 import { EditableTitle } from './EditableTitle';
 
-export function EditorPane() {
+interface EditorPaneProps {
+  onRefreshFiles?: () => Promise<void>;
+}
+
+export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   const {
     openTabs,
     activeTabId,
@@ -383,6 +387,9 @@ export function EditorPane() {
 
       try {
           await renameItem(oldPath, newPath);
+          if (onRefreshFiles) {
+            await onRefreshFiles();
+          }
 
           // Re-open tab with new ID
           const newTab = {
