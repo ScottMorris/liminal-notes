@@ -275,6 +275,10 @@ Plugins can:
 #### 4.7.1 File Explorer
 
 - Tree or flat list of `FileItem`s scoped to current vault.
+- **Visuals**:
+  - File extensions are hidden in the name display.
+  - Icons distinguish folders (open/closed), images, code, and markdown notes.
+  - Non-markdown files display a small badge with their extension (e.g., `PNG`).
 - Supports favourites, pinned notes, hidden folders.
 - Composition: thin wrapper over the OS filesystem watcher.
 
