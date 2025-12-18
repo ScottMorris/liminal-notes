@@ -1,15 +1,15 @@
-import type { Command } from './types';
+import type { Command, EditorContext } from './types';
 import { commandRegistry } from './CommandRegistry';
 
-const saveCommand: Command = {
+const saveCommand: Command<EditorContext> = {
   id: 'editor.file.save',
   label: 'Save',
   context: 'Global',
   group: 'File',
   icon: 'save',
   shortcut: 'Ctrl+S',
-  run: async (ctx, view) => {
-    const content = view.state.doc.toString();
+  run: async (ctx) => {
+    const content = ctx.view.state.doc.toString();
     try {
       await ctx.operations.saveNote(content);
       ctx.operations.notify('Note saved', 'success');

@@ -201,6 +201,28 @@ pub fn rename_item(app: AppHandle, old_path: String, new_path: String) -> Result
     fs::rename(full_old_path, full_new_path).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub fn delete_item(app: AppHandle, path: String) -> Result<(), String> {
+    let config = get_vault_config(app.clone()).ok_or("No vault configured".to_string())?;
+    let root = Path::new(&config.root_path);
+
+    if !root.exists() {
+        return Err("Vault root does not exist".to_string());
+    }
+
+    let full_path = resolve_safe_path(root, &path)?;
+
+    if !full_path.exists() {
+        return Err("Item does not exist".to_string());
+    }
+
+    if full_path.is_dir() {
+        fs::remove_dir_all(full_path).map_err(|e| e.to_string())
+    } else {
+        fs::remove_file(full_path).map_err(|e| e.to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

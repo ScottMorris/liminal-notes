@@ -90,6 +90,15 @@ Currently, unsaved tabs are stored in `localStorage` which means:
   - Select Line
   - Duplicate Line
 
+## File Explorer & Context Menu
+
+- **Split View:** "Open to the right" support (requires window management architecture changes).
+- **Multi-window:** "Open in new window" support (requires state sync across windows).
+- **Bookmarks:** File bookmarking system.
+- **Merging:** "Merge entire file with..." feature.
+- **Version History:** Git-based or local history support.
+- **Deep Links:** Support for `liminal://` protocol links to open specific notes/files.
+
 ## Known Issues
 
 - **Window Buttons on Linux/GTK:** Window buttons (Minimize, Maximize, Close) are not clickable on initial launch when using `visible: false` in Tauri configuration. They become clickable after resizing the window. This is likely related to the interaction between the window state plugin's restoration logic and GTK window visibility.

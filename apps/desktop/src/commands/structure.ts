@@ -1,4 +1,4 @@
-import type { Command } from './types';
+import type { Command, EditorContext } from './types';
 import { commandRegistry } from './CommandRegistry';
 import { EditorView } from '@codemirror/view';
 
@@ -125,7 +125,7 @@ function toBody(view: EditorView) {
 }
 
 // Structure: Paragraph submenu parent
-const paragraphCommand: Command = {
+const paragraphCommand: Command<EditorContext> = {
   id: 'editor.structure.paragraph',
   label: 'Paragraph',
   context: 'Editor',
@@ -140,7 +140,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       icon: 'list',
-      run: (ctx, view) => toggleList(view, '-'),
+      run: (ctx) => toggleList(ctx.view, '-'),
     },
     // Numbered list
     {
@@ -149,7 +149,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       icon: 'list-ordered',
-      run: (ctx, view) => toggleList(view, '1.'),
+      run: (ctx) => toggleList(ctx.view, '1.'),
     },
     // Task list
     {
@@ -158,7 +158,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       icon: 'list-task',
-      run: (ctx, view) => toggleList(view, '- [ ]'),
+      run: (ctx) => toggleList(ctx.view, '- [ ]'),
     },
     // Heading 1
     {
@@ -167,7 +167,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+1',
-      run: (ctx, view) => toHeading(view, 1),
+      run: (ctx) => toHeading(ctx.view, 1),
     },
     // Heading 2
     {
@@ -176,7 +176,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+2',
-      run: (ctx, view) => toHeading(view, 2),
+      run: (ctx) => toHeading(ctx.view, 2),
     },
     // Heading 3
     {
@@ -185,7 +185,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+3',
-      run: (ctx, view) => toHeading(view, 3),
+      run: (ctx) => toHeading(ctx.view, 3),
     },
     // Heading 4
     {
@@ -194,7 +194,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+4',
-      run: (ctx, view) => toHeading(view, 4),
+      run: (ctx) => toHeading(ctx.view, 4),
     },
     // Heading 5
     {
@@ -203,7 +203,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+5',
-      run: (ctx, view) => toHeading(view, 5),
+      run: (ctx) => toHeading(ctx.view, 5),
     },
     // Heading 6
     {
@@ -212,7 +212,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       shortcut: 'Ctrl+6',
-      run: (ctx, view) => toHeading(view, 6),
+      run: (ctx) => toHeading(ctx.view, 6),
     },
     // Body (remove formatting)
     {
@@ -222,7 +222,7 @@ const paragraphCommand: Command = {
       group: 'Structure',
       shortcut: 'Ctrl+0',
       icon: 'clear',
-      run: (ctx, view) => toBody(view),
+      run: (ctx) => toBody(ctx.view),
     },
     // Quote
     {
@@ -231,7 +231,7 @@ const paragraphCommand: Command = {
       context: 'Editor',
       group: 'Structure',
       icon: 'quote',
-      run: (ctx, view) => toggleQuote(view),
+      run: (ctx) => toggleQuote(ctx.view),
     },
   ],
 };

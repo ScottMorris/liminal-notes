@@ -1,53 +1,43 @@
-import type { EditorContext, CommandRegistry, Command } from '../../../commands/types';
+import type { EditorContext, FileContext, CommandRegistry, Command, CommandContextValue } from '../../../commands/types';
 import type { MenuModel, MenuItem, MenuSection } from './types';
 
 /**
  * Build context menu model from commands
  */
 export function buildContextMenu(
-  context: EditorContext,
+  context: CommandContextValue,
   registry: CommandRegistry
 ): MenuModel {
+  if ('editorMode' in context) {
+      return buildEditorContextMenu(context as EditorContext, registry);
+  } else {
+      return buildFileContextMenu(context as FileContext, registry);
+  }
+}
+
+function buildEditorContextMenu(context: EditorContext, registry: CommandRegistry): MenuModel {
   // Get all available commands in current context
   const commands = registry.getCommands(context);
-
-  // Group commands into sections
   const sections: MenuSection[] = [];
 
-  // Helper to check if a command is a submenu parent
-  // We identify them by ID or specific property.
-  // For this implementation, we will look for specific IDs that we know are parents.
   const parentIds = ['editor.format.group', 'editor.structure.paragraph', 'editor.insert.group'];
 
-  // 1. Links section (Top level)
+  // 1. Links
   const linkCommands = commands.filter(cmd => cmd.group === 'Links');
   if (linkCommands.length > 0) {
-    sections.push({
-      items: linkCommands.map(commandToMenuItem),
-    });
+    sections.push({ items: linkCommands.map(commandToMenuItem) });
   }
 
-  // 2. Format / Paragraph / Insert (The Submenus)
-  // We strictly want ONLY the parent commands here, not the loose children.
-  // The children are registered in the registry (for keybindings), but in the menu they appear nested.
-
-  // We can filter by ID since we know them.
+  // 2. Submenus
   const submenuParents = commands.filter(cmd => parentIds.includes(cmd.id));
-
-  // Sort them: Format, Paragraph, Insert
   const sortOrder = ['editor.format.group', 'editor.structure.paragraph', 'editor.insert.group'];
   submenuParents.sort((a, b) => sortOrder.indexOf(a.id) - sortOrder.indexOf(b.id));
 
   if (submenuParents.length > 0) {
-    sections.push({
-      items: submenuParents.map(commandToMenuItem),
-    });
+    sections.push({ items: submenuParents.map(commandToMenuItem) });
   }
 
-  // 3. Edit section (Cut/Copy/Paste - remaining commands)
-  // Exclude everything we've already handled (Links, Submenu Parents, and Submenu Children)
-
-  // To identify Submenu Children, we can collect all children IDs from the known parents.
+  // 3. Edit (Cut/Copy/Paste)
   const childrenIds = new Set<string>();
   submenuParents.forEach(parent => {
     parent.children?.forEach(child => childrenIds.add(child.id));
@@ -60,12 +50,48 @@ export function buildContextMenu(
   );
 
   if (editCommands.length > 0) {
-    sections.push({
-      items: editCommands.map(commandToMenuItem),
-    });
+    sections.push({ items: editCommands.map(commandToMenuItem) });
   }
 
   return { sections };
+}
+
+function buildFileContextMenu(context: FileContext, registry: CommandRegistry): MenuModel {
+    const commands = registry.getCommands(context);
+    const sections: MenuSection[] = [];
+
+    // Order:
+    // 1. Open / Navigation (New Tab, Right, Window)
+    // 2. File Ops (Duplicate, Move, Bookmark, Merge)
+    // 3. Copy (URL, Path)
+    // 4. System (Open in default app, Show in explorer)
+    // 5. Destructive (Rename, Delete)
+
+    // Group 1: Open/Nav
+    // We only have 'Open in new tab' for now.
+    // Let's filter by specific IDs or attributes.
+    // 'fileTree.openInNewTab'
+    const openCommands = commands.filter(c => ['fileTree.openInNewTab'].includes(c.id));
+    if (openCommands.length > 0) sections.push({ items: openCommands.map(commandToMenuItem) });
+
+    // Group 2: File Ops
+    // 'fileTree.duplicate'
+    const opsCommands = commands.filter(c => ['fileTree.duplicate'].includes(c.id));
+    if (opsCommands.length > 0) sections.push({ items: opsCommands.map(commandToMenuItem) });
+
+    // Group 3: Copy
+    const copyCommands = commands.filter(c => ['fileTree.copyPath', 'fileTree.copyRelativePath'].includes(c.id));
+    if (copyCommands.length > 0) sections.push({ items: copyCommands.map(commandToMenuItem) });
+
+    // Group 4: System
+    const sysCommands = commands.filter(c => ['fileTree.openInDefaultApp', 'fileTree.showInExplorer'].includes(c.id));
+    if (sysCommands.length > 0) sections.push({ items: sysCommands.map(commandToMenuItem) });
+
+    // Group 5: Destructive
+    const destCommands = commands.filter(c => ['fileTree.rename', 'fileTree.delete'].includes(c.id));
+    if (destCommands.length > 0) sections.push({ items: destCommands.map(commandToMenuItem) });
+
+    return { sections };
 }
 
 /**

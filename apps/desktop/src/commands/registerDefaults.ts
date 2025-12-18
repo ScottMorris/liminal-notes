@@ -3,6 +3,7 @@ import { registerLinkCommands } from './links';
 import { registerFileCommands } from './file';
 import { registerStructureCommands } from './structure';
 import { registerGlobalCommands } from './global';
+import { registerFileTreeCommands } from './fileTree';
 
 /**
  * Register all built-in commands
@@ -14,4 +15,5 @@ export function registerAllCommands() {
   registerLinkCommands();
   registerFileCommands();
   registerStructureCommands();
+  registerFileTreeCommands();
 }

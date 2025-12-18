@@ -65,6 +65,7 @@ pub fn run() {
             vault::read_note_command,
             vault::write_note_command,
             vault::rename_item,
+            vault::delete_item,
             settings::get_settings,
             settings::set_setting
         ])

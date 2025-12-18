@@ -1,4 +1,4 @@
-import type { Command } from './types';
+import type { Command, EditorContext } from './types';
 import { commandRegistry } from './CommandRegistry';
 import { EditorView } from '@codemirror/view';
 import { writeText, readText } from '@tauri-apps/plugin-clipboard-manager';
@@ -102,7 +102,7 @@ function wrapSelection(view: EditorView, before: string, after: string = before)
 }
 
 // Parent Command: Format
-const formatCommand: Command = {
+const formatCommand: Command<EditorContext> = {
   id: 'editor.format.group',
   label: 'Format',
   context: 'Editor',
@@ -117,7 +117,7 @@ const formatCommand: Command = {
       group: 'Format',
       icon: 'bold',
       shortcut: 'Ctrl+B',
-      run: (ctx, view) => wrapSelection(view, '**'),
+      run: (ctx) => wrapSelection(ctx.view, '**'),
     },
     {
       id: 'editor.format.italic',
@@ -126,7 +126,7 @@ const formatCommand: Command = {
       group: 'Format',
       icon: 'italic',
       shortcut: 'Ctrl+I',
-      run: (ctx, view) => wrapSelection(view, '_'),
+      run: (ctx) => wrapSelection(ctx.view, '_'),
     },
     {
       id: 'editor.format.strikethrough',
@@ -134,7 +134,7 @@ const formatCommand: Command = {
       context: 'Editor',
       group: 'Format',
       icon: 'strike',
-      run: (ctx, view) => wrapSelection(view, '~~'),
+      run: (ctx) => wrapSelection(ctx.view, '~~'),
     },
     {
       id: 'editor.format.highlight',
@@ -142,7 +142,7 @@ const formatCommand: Command = {
       context: 'Editor',
       group: 'Format',
       icon: 'highlight',
-      run: (ctx, view) => wrapSelection(view, '=='),
+      run: (ctx) => wrapSelection(ctx.view, '=='),
     },
     {
       id: 'editor.format.code',
@@ -151,7 +151,7 @@ const formatCommand: Command = {
       group: 'Format',
       icon: 'code',
       shortcut: 'Ctrl+E',
-      run: (ctx, view) => wrapSelection(view, '`'),
+      run: (ctx) => wrapSelection(ctx.view, '`'),
     },
     {
       id: 'editor.format.clear',
@@ -159,12 +159,12 @@ const formatCommand: Command = {
       context: 'Editor',
       group: 'Format',
       icon: 'clear',
-      run: (ctx, view) => {
-        const { from, to } = view.state.selection.main;
-        let text = view.state.sliceDoc(from, to);
+      run: (ctx) => {
+        const { from, to } = ctx.view.state.selection.main;
+        let text = ctx.view.state.sliceDoc(from, to);
         // Very basic stripping of common markers
         text = text.replace(/[*~=`_]/g, '');
-        view.dispatch({
+        ctx.view.dispatch({
           changes: { from, to, insert: text },
         });
       },
@@ -173,7 +173,7 @@ const formatCommand: Command = {
 };
 
 // Parent Command: Insert
-const insertCommand: Command = {
+const insertCommand: Command<EditorContext> = {
   id: 'editor.insert.group',
   label: 'Insert',
   context: 'Editor',
@@ -187,14 +187,14 @@ const insertCommand: Command = {
       context: 'Editor',
       group: 'Insert',
       icon: 'table',
-      run: (ctx, view) => {
-        const { to } = view.state.selection.main;
+      run: (ctx) => {
+        const { to } = ctx.view.state.selection.main;
         const table =
 `| Header 1 | Header 2 |
 | :--- | :--- |
 | Cell 1 | Cell 2 |
 `;
-        view.dispatch({
+        ctx.view.dispatch({
           changes: { from: to, insert: '\n' + table },
         });
       },
@@ -205,9 +205,9 @@ const insertCommand: Command = {
       context: 'Editor',
       group: 'Insert',
       icon: 'callout',
-      run: (ctx, view) => {
-        const { to } = view.state.selection.main;
-        view.dispatch({
+      run: (ctx) => {
+        const { to } = ctx.view.state.selection.main;
+        ctx.view.dispatch({
           changes: { from: to, insert: '\n> [!info] Title\n> Content\n' },
         });
       },
@@ -218,9 +218,9 @@ const insertCommand: Command = {
       context: 'Editor',
       group: 'Insert',
       icon: 'hr',
-      run: (ctx, view) => {
-        const { to } = view.state.selection.main;
-        view.dispatch({
+      run: (ctx) => {
+        const { to } = ctx.view.state.selection.main;
+        ctx.view.dispatch({
           changes: { from: to, insert: '\n---\n' },
         });
       },
@@ -231,9 +231,9 @@ const insertCommand: Command = {
       context: 'Editor',
       group: 'Insert',
       icon: 'code',
-      run: (ctx, view) => {
-        const { to } = view.state.selection.main;
-        view.dispatch({
+      run: (ctx) => {
+        const { to } = ctx.view.state.selection.main;
+        ctx.view.dispatch({
           changes: { from: to, insert: '\n```\n\n```\n' },
           selection: { anchor: to + 5 },
         });
@@ -245,9 +245,9 @@ const insertCommand: Command = {
       context: 'Editor',
       group: 'Insert',
       icon: 'math',
-      run: (ctx, view) => {
-        const { to } = view.state.selection.main;
-        view.dispatch({
+      run: (ctx) => {
+        const { to } = ctx.view.state.selection.main;
+        ctx.view.dispatch({
           changes: { from: to, insert: '\n$$\n\n$$\n' },
           selection: { anchor: to + 4 },
         });
@@ -257,7 +257,7 @@ const insertCommand: Command = {
 };
 
 // Edit: Cut
-const cutCommand: Command = {
+const cutCommand: Command<EditorContext> = {
   id: 'editor.edit.cut',
   label: 'Cut',
   context: 'Editor',
@@ -265,9 +265,9 @@ const cutCommand: Command = {
   icon: 'cut',
   shortcut: 'Ctrl+X',
   when: (ctx) => !ctx.selection.empty,
-  run: async (ctx, view) => {
+  run: async (ctx) => {
     await writeText(ctx.selection.text);
-    view.dispatch({
+    ctx.view.dispatch({
       changes: {
         from: ctx.selection.from,
         to: ctx.selection.to,
@@ -277,7 +277,7 @@ const cutCommand: Command = {
 };
 
 // Edit: Copy
-const copyCommand: Command = {
+const copyCommand: Command<EditorContext> = {
   id: 'editor.edit.copy',
   label: 'Copy',
   context: 'Editor',
@@ -291,17 +291,17 @@ const copyCommand: Command = {
 };
 
 // Edit: Paste
-const pasteCommand: Command = {
+const pasteCommand: Command<EditorContext> = {
   id: 'editor.edit.paste',
   label: 'Paste',
   context: 'Editor',
   group: 'Edit',
   icon: 'paste',
   shortcut: 'Ctrl+V',
-  run: async (ctx, view) => {
+  run: async (ctx) => {
     const text = await readText();
     if (text) {
-      view.dispatch({
+      ctx.view.dispatch({
         changes: {
           from: ctx.selection.from,
           to: ctx.selection.to,
@@ -313,17 +313,17 @@ const pasteCommand: Command = {
 };
 
 // Edit: Paste as plain text
-const pastePlainCommand: Command = {
+const pastePlainCommand: Command<EditorContext> = {
   id: 'editor.edit.pastePlain',
   label: 'Paste as plain text',
   context: 'Editor',
   group: 'Edit',
   icon: 'paste-plain',
   shortcut: 'Ctrl+Shift+V',
-  run: async (ctx, view) => {
+  run: async (ctx) => {
     const text = await readText();
     if (text) {
-      view.dispatch({
+      ctx.view.dispatch({
         changes: {
           from: ctx.selection.from,
           to: ctx.selection.to,
@@ -335,15 +335,15 @@ const pastePlainCommand: Command = {
 };
 
 // Edit: Select all
-const selectAllCommand: Command = {
+const selectAllCommand: Command<EditorContext> = {
   id: 'editor.edit.selectAll',
   label: 'Select all',
   context: 'Editor',
   group: 'Edit',
   icon: 'selection', // Might need an icon in mapper if not present, but it's optional
   shortcut: 'Ctrl+A',
-  run: (ctx, view) => {
-    view.dispatch({
+  run: (ctx) => {
+    ctx.view.dispatch({
       selection: { anchor: 0, head: ctx.documentLength },
     });
   },
