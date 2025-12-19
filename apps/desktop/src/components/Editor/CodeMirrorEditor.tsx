@@ -118,7 +118,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
           key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-').toLowerCase(),
           run: (view: EditorView) => {
             const context = getEditorContext(view);
-            commandRegistry.executeCommand(cmd.id, context, view);
+            commandRegistry.executeCommand(cmd.id, context);
             return true;
           }
         }));
@@ -355,7 +355,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       if (!viewRef.current) return;
       try {
         const context = getEditorContext(viewRef.current);
-        await commandRegistry.executeCommand(commandId, context, viewRef.current);
+        await commandRegistry.executeCommand(commandId, context);
         viewRef.current.focus();
       } catch (e) {
         console.error("Failed to execute command from menu:", e);

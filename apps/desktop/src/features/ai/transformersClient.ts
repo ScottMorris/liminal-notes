@@ -1,41 +1,96 @@
-import {
-  pipeline,
-  type SummarizationPipeline,
-  type ZeroShotClassificationPipeline,
-  type FeatureExtractionPipeline
-} from '@huggingface/transformers';
-
-// Global cache for pipelines
-let summarisationPipeline: SummarizationPipeline | null = null;
-let classificationPipeline: ZeroShotClassificationPipeline | null = null;
-let embeddingPipeline: FeatureExtractionPipeline | null = null;
-
-// Models
-const SUMMARISATION_MODEL = 'Xenova/distilbart-cnn-6-6';
-const CLASSIFICATION_MODEL = 'Xenova/mobilebert-uncased-mnli';
-const EMBEDDING_MODEL = 'Xenova/all-MiniLM-L6-v2';
-
-export async function getSummarisationPipeline(): Promise<SummarizationPipeline> {
-  if (!summarisationPipeline) {
-    console.log(`[ai] Loading summarisation model: ${SUMMARISATION_MODEL}`);
-    // Cast via unknown to handle complex union return type
-    summarisationPipeline = (await pipeline('summarization', SUMMARISATION_MODEL)) as unknown as SummarizationPipeline;
-  }
-  return summarisationPipeline;
+export interface AiProgress {
+  task: string;
+  data: any; // e.g. { status: string, progress: number }
 }
 
-export async function getClassificationPipeline(): Promise<ZeroShotClassificationPipeline> {
-  if (!classificationPipeline) {
-    console.log(`[ai] Loading classification model: ${CLASSIFICATION_MODEL}`);
-    classificationPipeline = (await pipeline('zero-shot-classification', CLASSIFICATION_MODEL)) as unknown as ZeroShotClassificationPipeline;
-  }
-  return classificationPipeline;
+export type ProgressListener = (progress: AiProgress) => void;
+
+interface PendingRequest {
+  resolve: (value: any) => void;
+  reject: (reason?: any) => void;
+  onProgress?: ProgressListener;
 }
 
-export async function getEmbeddingPipeline(): Promise<FeatureExtractionPipeline> {
-  if (!embeddingPipeline) {
-    console.log(`[ai] Loading embedding model: ${EMBEDDING_MODEL}`);
-    embeddingPipeline = (await pipeline('feature-extraction', EMBEDDING_MODEL)) as unknown as FeatureExtractionPipeline;
+let worker: Worker | null = null;
+const pendingRequests = new Map<string, PendingRequest>();
+
+function getWorker(): Worker {
+  if (!worker) {
+    worker = new Worker(new URL('./ai.worker.ts', import.meta.url), {
+      type: 'module',
+    });
+
+    worker.onmessage = (event) => {
+      const { type, id, result, error, task, data } = event.data;
+      const request = pendingRequests.get(id);
+
+      if (!request) return;
+
+      if (type === 'result') {
+        request.resolve(result);
+        pendingRequests.delete(id);
+      } else if (type === 'error') {
+        request.reject(new Error(error));
+        pendingRequests.delete(id);
+      } else if (type === 'progress') {
+        request.onProgress?.({ task, data });
+      }
+    };
+
+    worker.onerror = (err) => {
+      console.error('AI Worker error:', err);
+    };
   }
-  return embeddingPipeline;
+  return worker;
+}
+
+function sendRequest<T>(
+  type: string,
+  payload: any,
+  onProgress?: ProgressListener
+): Promise<T> {
+  const id = crypto.randomUUID();
+  const worker = getWorker();
+
+  return new Promise((resolve, reject) => {
+    pendingRequests.set(id, { resolve, reject, onProgress });
+    worker.postMessage({ type, id, ...payload });
+  });
+}
+
+export async function summarise(
+  text: string,
+  options?: any,
+  onProgress?: ProgressListener
+): Promise<any> {
+  return sendRequest('summarise', { text, options }, onProgress);
+}
+
+export async function classify(
+  text: string,
+  labels: string[],
+  multi_label: boolean,
+  onProgress?: ProgressListener
+): Promise<any> {
+  return sendRequest('classify', { text, labels, multi_label }, onProgress);
+}
+
+export async function findRelated(
+  currentContent: string,
+  candidates: Array<{ path: string; title: string; content: string }>,
+  onProgress?: ProgressListener
+): Promise<any> {
+  return sendRequest('related', { currentContent, candidates }, onProgress);
+}
+
+export function terminate() {
+  if (worker) {
+    worker.terminate();
+    worker = null;
+    // Reject all pending requests
+    for (const [id, req] of pendingRequests) {
+      req.reject(new Error('Worker terminated'));
+    }
+    pendingRequests.clear();
+  }
 }

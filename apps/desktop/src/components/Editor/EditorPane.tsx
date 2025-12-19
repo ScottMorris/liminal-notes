@@ -349,7 +349,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
     try {
         const view = editorRef.current.view;
         const context = getEditorContext(view);
-        await commandRegistry.executeCommand('editor.file.save', context, view);
+        await commandRegistry.executeCommand('editor.file.save', context);
     } catch (err) {
         notify("Failed to save: " + String(err), 'error');
     } finally {

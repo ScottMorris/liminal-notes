@@ -156,6 +156,10 @@ export function FileTree({
           path: path,
           isDirty: false,
           isPreview: false,
+        mode: 'source',
+        isLoading: false,
+        isUnsaved: false,
+        editorState: '',
         });
       }
     }
