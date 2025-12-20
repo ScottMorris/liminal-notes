@@ -14,6 +14,7 @@ pub struct VaultConfig {
 pub struct FileEntry {
     pub path: String, // relative to vault root
     pub is_dir: bool,
+    pub mtime: Option<u64>,
 }
 
 // Helper to check if entry is hidden
@@ -111,16 +112,24 @@ pub fn list_markdown_files(app: AppHandle) -> Result<Vec<FileEntry>, String> {
 
         let is_dir = entry.file_type().is_dir();
 
+        let mtime = entry.metadata()
+             .ok()
+             .and_then(|m| m.modified().ok())
+             .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+             .map(|d| d.as_millis() as u64);
+
         if is_dir {
             entries.push(FileEntry {
                 path: relative_path,
                 is_dir: true,
+                mtime: None,
             });
         } else if let Some(ext) = path.extension() {
             if ext == "md" {
                 entries.push(FileEntry {
                     path: relative_path,
                     is_dir: false,
+                    mtime,
                 });
             }
         }

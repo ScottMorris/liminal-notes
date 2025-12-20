@@ -6,6 +6,7 @@ export interface VaultConfig {
 export interface FileEntry {
   path: string;
   is_dir: boolean;
+  mtime?: number;
 }
 
 export interface FileNode {

@@ -4,6 +4,7 @@ import App from "./App";
 import { ThemeProvider } from "./theme";
 import { LinkIndexProvider } from "./components/LinkIndexContext";
 import { SearchIndexProvider } from "./components/SearchIndexContext";
+import { TagsProvider } from "./contexts/TagsContext";
 import { PluginHostProvider } from "./plugins/PluginHostProvider";
 import { NotificationProvider } from "./components/NotificationContext";
 import { registerAllCommands } from "./commands/registerDefaults";
@@ -17,9 +18,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <NotificationProvider>
         <LinkIndexProvider>
           <SearchIndexProvider>
-            <PluginHostProvider>
-              <App />
-            </PluginHostProvider>
+            <TagsProvider>
+              <PluginHostProvider>
+                <App />
+              </PluginHostProvider>
+            </TagsProvider>
           </SearchIndexProvider>
         </LinkIndexProvider>
       </NotificationProvider>

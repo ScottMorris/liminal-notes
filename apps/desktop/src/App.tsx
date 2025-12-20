@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import "./App.css";
 import { VaultPicker } from "./components/VaultPicker";
 import { FileTree } from "./components/FileTree";
+import { TagBrowser } from "./components/TagBrowser/TagBrowser";
 import { useTheme, ThemeId } from "./theme";
 import { SearchModal } from "./components/SearchModal";
 import { GraphView } from "./components/GraphView";
@@ -68,6 +69,7 @@ function AppContent() {
 
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<'files' | 'tags'>('files');
 
   // Sync settings
   useEffect(() => {
@@ -394,20 +396,56 @@ function AppContent() {
             </button>
           </div>
         </div>
+        <div className="sidebar-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--ln-border)' }}>
+             <button
+                onClick={() => setSidebarTab('files')}
+                style={{
+                    flex: 1,
+                    padding: '8px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    borderBottom: sidebarTab === 'files' ? '2px solid var(--ln-accent)' : '2px solid transparent',
+                    color: sidebarTab === 'files' ? 'var(--ln-fg)' : 'var(--ln-muted)',
+                    fontWeight: sidebarTab === 'files' ? 'bold' : 'normal'
+                }}
+             >
+                Files
+             </button>
+             <button
+                onClick={() => setSidebarTab('tags')}
+                style={{
+                    flex: 1,
+                    padding: '8px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    borderBottom: sidebarTab === 'tags' ? '2px solid var(--ln-accent)' : '2px solid transparent',
+                    color: sidebarTab === 'tags' ? 'var(--ln-fg)' : 'var(--ln-muted)',
+                    fontWeight: sidebarTab === 'tags' ? 'bold' : 'normal'
+                }}
+             >
+                Tags
+             </button>
+        </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
-            <FileTree
-                files={files}
-                onFileSelect={(path, isDoubleClick) => handleFileSelect(path, isDoubleClick)}
-                editingPath={editingPath}
-                isCreating={isCreating} // We aren't using this for now via button, but prop required
-                onRename={handleRenameCommit}
-                onCreate={handleCreateCommit}
-                onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
-                onCancel={handleCreateCancel}
-                onStartRename={(path) => setEditingPath(path)}
-                onDelete={handleFileDelete}
-                onRefresh={refreshFiles}
-            />
+            {sidebarTab === 'files' ? (
+                <FileTree
+                    files={files}
+                    onFileSelect={(path, isDoubleClick) => handleFileSelect(path, isDoubleClick)}
+                    editingPath={editingPath}
+                    isCreating={isCreating} // We aren't using this for now via button, but prop required
+                    onRename={handleRenameCommit}
+                    onCreate={handleCreateCommit}
+                    onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
+                    onCancel={handleCreateCancel}
+                    onStartRename={(path) => setEditingPath(path)}
+                    onDelete={handleFileDelete}
+                    onRefresh={refreshFiles}
+                />
+            ) : (
+                <TagBrowser onFileSelect={(path) => handleFileSelect(path, false)} />
+            )}
         </div>
         <div className="sidebar-footer">
             <button className="reset-btn" onClick={() => setIsSettingsOpen(true)} title="Settings">

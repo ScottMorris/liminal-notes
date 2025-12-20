@@ -13,7 +13,10 @@ import { TabBar } from './TabBar';
 import { CodeMirrorEditor, EditorHandle } from './CodeMirrorEditor';
 import { SparklesIcon, EyeIcon, EyeSlashIcon, BellIcon } from '../Icons';
 import { AiSidebar } from '../../features/ai/AiSidebar';
-import { updateFrontmatter } from '../../utils/frontmatter';
+import { updateFrontmatter, parseFrontmatter } from '../../utils/frontmatter';
+import { deriveTagsFromPath, normalizeTagId } from '../../utils/tags';
+import { NoteTags } from './Tags/NoteTags';
+import { AddTagPopover } from './Tags/AddTagPopover';
 import { ReminderModal } from '../../features/reminders/components/ReminderModal';
 import { BacklinksPanel } from '../BacklinksPanel';
 import { buildEditorContext } from '../../commands/contextBuilder';
@@ -58,6 +61,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   });
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+  const [isAddTagOpen, setIsAddTagOpen] = useState(false);
 
   // Track which tab the current 'content' belongs to to prevent data bleed
   const [loadedTabId, setLoadedTabId] = useState<string | null>(null);
@@ -74,6 +78,26 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
         (r.status === 'scheduled' || r.status === 'snoozed')
     ).length;
   }, [reminders, activeTab]);
+
+  const displayedTags = useMemo(() => {
+    if (!activeTab) return [];
+
+    // Parse from CURRENT content
+    const { data } = parseFrontmatter(content);
+    let fmTags: string[] = [];
+    if (Array.isArray(data.tags)) fmTags = data.tags.map(String);
+    else if (typeof data.tags === 'string') fmTags = [data.tags];
+
+    // Normalize
+    const normalizedFmTags = fmTags.map(normalizeTagId);
+
+    // Derived (if path exists)
+    const derived = activeTab.path ? deriveTagsFromPath(activeTab.path) : [];
+
+    // Merge
+    const set = new Set([...normalizedFmTags, ...derived]);
+    return Array.from(set).sort();
+  }, [content, activeTab?.path]);
 
   useEffect(() => {
     localStorage.setItem('liminal-notes.showPreview', String(showPreview));
@@ -94,6 +118,44 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
       isUnsaved: activeTab.isUnsaved,
       operations: {
         saveNote: async (text: string) => {
+            // Opportunistic folder tag materialization
+            if (activeTab.path) {
+                const derived = deriveTagsFromPath(activeTab.path);
+                if (derived.length > 0) {
+                    text = updateFrontmatter(text, (data) => {
+                        let currentTags = data.tags || [];
+                        if (typeof currentTags === 'string') currentTags = [currentTags];
+                        // Normalize existing
+                        currentTags = currentTags.map((t: any) => normalizeTagId(String(t)));
+
+                        let changed = false;
+                        derived.forEach(dt => {
+                            if (!currentTags.includes(dt)) {
+                                currentTags.push(dt);
+                                changed = true;
+                                if (!data.liminal) data.liminal = {};
+                                if (!data.liminal.tagMeta) data.liminal.tagMeta = {};
+                                // Only set if not present (preserve human override if we had one? No, derived is folder)
+                                // But if it was 'human' before, we shouldn't overwrite it to 'folder' just because it matches path?
+                                // Spec says: "If a folder segment derives the tag `dance`, and the user also manually adds `dance`, it is the same tag."
+                                // "Record auto-added tags in provenance as `source: folder`."
+                                // If it already exists, checking provenance might be complex.
+                                // For MVP, if we auto-add it, we set provenance folder.
+                                // If it was already there, we leave it alone.
+                                if (!data.liminal.tagMeta[dt]) {
+                                     data.liminal.tagMeta[dt] = { source: 'folder' };
+                                }
+                            }
+                        });
+
+                        if (changed) {
+                            currentTags.sort();
+                            data.tags = currentTags;
+                        }
+                    });
+                }
+            }
+
             if (activeTab.isUnsaved) {
                 // Handle unsaved file
                 // Use existing path (which should be "Untitled X.md" from creation time now)
@@ -361,6 +423,44 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
       editorRef.current?.insertAtCursor(text);
   };
 
+  const handleRemoveTag = (tagId: string) => {
+      const derived = activeTab?.path ? deriveTagsFromPath(activeTab.path) : [];
+      if (derived.includes(tagId)) {
+          notify("Cannot remove folder-derived tag.", "error");
+          return;
+      }
+
+      handleUpdateFrontmatter((data) => {
+          let currentTags = data.tags || [];
+          if (typeof currentTags === 'string') currentTags = [currentTags];
+
+          const newTags = currentTags.filter((t: any) => normalizeTagId(String(t)) !== tagId);
+          data.tags = newTags;
+
+          if (data.liminal?.tagMeta?.[tagId]) {
+              delete data.liminal.tagMeta[tagId];
+          }
+      });
+  };
+
+  const handleAddTag = (tagId: string) => {
+       handleUpdateFrontmatter((data) => {
+          let currentTags = data.tags || [];
+          if (typeof currentTags === 'string') currentTags = [currentTags];
+
+          const exists = currentTags.some((t: any) => normalizeTagId(String(t)) === tagId);
+          if (!exists) {
+              currentTags.push(tagId);
+              currentTags.sort();
+              data.tags = currentTags;
+
+              if (!data.liminal) data.liminal = {};
+              if (!data.liminal.tagMeta) data.liminal.tagMeta = {};
+              data.liminal.tagMeta[tagId] = { source: 'human' };
+          }
+      });
+  };
+
   const handleUpdateFrontmatter = (updater: (data: any) => void) => {
     const newContent = updateFrontmatter(content, updater);
     setContent(newContent);
@@ -525,6 +625,22 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                   />
                   {activeTab.isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
                   {activeTab.isUnsaved && <span className="indexing-indicator"> (Unsaved)</span>}
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <NoteTags
+                        tags={displayedTags}
+                        onRemove={handleRemoveTag}
+                        onAddClick={() => setIsAddTagOpen(!isAddTagOpen)}
+                    />
+                    {isAddTagOpen && (
+                        <AddTagPopover
+                            assignedTags={displayedTags}
+                            onAdd={handleAddTag}
+                            onClose={() => setIsAddTagOpen(false)}
+                            noteTitle={activeTab.title}
+                            noteContent={content}
+                        />
+                    )}
+                  </div>
                 </div>
                 <div className="editor-actions">
                   {enabledPlugins.has('ai-assistant') && (
