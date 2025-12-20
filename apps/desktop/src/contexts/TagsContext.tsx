@@ -38,6 +38,17 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
     // Lock to prevent concurrent writes
     const isWritingTags = useRef(false);
 
+    const tagsRef = useRef(tags);
+    const tagIndexRef = useRef(tagIndex);
+
+    useEffect(() => {
+        tagsRef.current = tags;
+    }, [tags]);
+
+    useEffect(() => {
+        tagIndexRef.current = tagIndex;
+    }, [tagIndex]);
+
     const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -170,13 +181,14 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
         let tagsChanged = false;
 
         // Clone current tags to check for new ones
-        const currentTags = { ...tags };
+        const currentTags = { ...tagsRef.current };
+        const currentTagIndex = tagIndexRef.current;
 
         // Process files (could be parallelized)
         await Promise.all(mdFiles.map(async (file) => {
             try {
                 // Performance optimization: check mtime
-                const existingEntry = tagIndex[file.path];
+                const existingEntry = currentTagIndex[file.path];
                 if (existingEntry && existingEntry.mtime && file.mtime && existingEntry.mtime === file.mtime) {
                     newIndex[file.path] = existingEntry;
                     return;
@@ -236,7 +248,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
             setTags(prev => ({...prev, ...discoveredTags}));
         }
 
-    }, [tags, tagIndex]); // Dependency on tags might cause stale closure if not careful, but we load currentTags inside
+    }, []); // Stable callback using refs
 
     const getTagsForNote = useCallback((path: string): TagId[] => {
         if (tagIndex[path]) {
