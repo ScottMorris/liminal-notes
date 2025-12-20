@@ -3,7 +3,8 @@ import {
     env,
     type SummarizationPipeline,
     type ZeroShotClassificationPipeline,
-    type FeatureExtractionPipeline
+    type FeatureExtractionPipeline,
+    type Tensor
 } from '@huggingface/transformers';
 
 // Configure environment if needed (optional, keeping defaults usually works)
@@ -31,8 +32,8 @@ export interface AiProgress {
     data: any; // e.g. { status: string, progress: number }
 }
 
-// Types
-type WorkerMessage =
+// Request Types
+type WorkerRequest =
     | { type: AiTaskType.Summarise; id: string; text: string; options?: any }
     | { type: AiTaskType.Classify; id: string; text: string; labels: string[]; multi_label: boolean }
     | { type: AiTaskType.Related; id: string; currentContent: string; candidates: Array<{ path: string; title: string; content: string }> };
@@ -88,7 +89,7 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
+self.addEventListener('message', async (event: MessageEvent<WorkerRequest>) => {
     const { type, id } = event.data;
 
     try {
@@ -124,8 +125,8 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
 
             const embed = async (text: string) => {
                 if (!text || text.trim().length === 0) return new Float32Array(384);
-                const output = await pipe(text, { pooling: 'mean', normalize: true });
-                // @ts-ignore
+                // Cast output to Tensor to access .data
+                const output = (await pipe(text, { pooling: 'mean', normalize: true })) as unknown as Tensor;
                 return output.data as Float32Array;
             };
 
