@@ -18,6 +18,7 @@ export function AddTagPopover({ assignedTags, onAdd, onClose, noteTitle, noteCon
     const { enabledPlugins } = usePluginHost();
     const [input, setInput] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
 
     // AI State
     const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
@@ -35,6 +36,18 @@ export function AddTagPopover({ assignedTags, onAdd, onClose, noteTitle, noteCon
                 .finally(() => setIsLoadingAi(false));
         }
     }, [enabledPlugins, noteTitle, noteContent]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+                onClose();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [onClose]);
 
     const filteredTags = useMemo(() => {
         const query = normalizeTagId(input);
@@ -70,19 +83,24 @@ export function AddTagPopover({ assignedTags, onAdd, onClose, noteTitle, noteCon
     };
 
     return (
-        <div className="popover add-tag-popover" style={{
-            position: 'absolute',
-            zIndex: 100,
-            background: 'var(--ln-menu-bg)',
-            border: '1px solid var(--ln-border)',
-            borderRadius: '6px',
-            padding: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-            width: '250px',
-            top: '100%',
-            left: '0',
-            color: 'var(--ln-fg)'
-        }} onClick={(e) => e.stopPropagation()}>
+        <div
+            ref={popoverRef}
+            className="popover add-tag-popover"
+            style={{
+                position: 'absolute',
+                zIndex: 100,
+                background: 'var(--ln-menu-bg)',
+                border: '1px solid var(--ln-border)',
+                borderRadius: '6px',
+                padding: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                width: '250px',
+                top: '100%',
+                left: '0',
+                color: 'var(--ln-fg)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+        >
             <input
                 ref={inputRef}
                 type="text"
