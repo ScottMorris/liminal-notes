@@ -1,7 +1,7 @@
 import type { Command, FileContext } from './types';
 import { commandRegistry } from './CommandRegistry';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
-import * as opener from '@tauri-apps/plugin-opener';
+import { openPath, revealItemInDir } from '@tauri-apps/plugin-opener';
 import { readNote, writeNote, getVaultConfig } from '../ipc';
 import { confirm } from '@tauri-apps/plugin-dialog';
 
@@ -78,10 +78,10 @@ const copyPathCommand: Command<FileContext> = {
         // but forward slash is usually fine or we can let backend handle it.
         // For clipboard, OS specific separator is better.
         // Assuming Linux/Mac for now given the environment, but let's try to be generic.
-        const sep = config.rootPath.includes('\\') ? '\\' : '/';
+        const sep = config.root_path.includes('\\') ? '\\' : '/';
         // Normalize ctx.path (which is forward slash from backend usually)
-        const relative = ctx.path.replaceAll('/', sep);
-        const fullPath = `${config.rootPath}${sep}${relative}`;
+        const relative = ctx.path.replace(/\//g, sep);
+        const fullPath = `${config.root_path}${sep}${relative}`;
         await writeText(fullPath);
         ctx.operations.notify('Path copied to clipboard', 'success');
       } else {
@@ -120,9 +120,9 @@ const showInExplorerCommand: Command<FileContext> = {
     try {
       const config = await getVaultConfig();
       if (config) {
-        const sep = config.rootPath.includes('\\') ? '\\' : '/';
-        const relative = ctx.path.replaceAll('/', sep);
-        const fullPath = `${config.rootPath}${sep}${relative}`;
+        const sep = config.root_path.includes('\\') ? '\\' : '/';
+        const relative = ctx.path.replace(/\//g, sep);
+        const fullPath = `${config.root_path}${sep}${relative}`;
 
         // If it's a file, we might want to reveal it.
         // tauri-plugin-opener `reveal`? It has `revealItem` in v2?
@@ -130,15 +130,13 @@ const showInExplorerCommand: Command<FileContext> = {
         // `revealItem` was added recently. If not available, `open` on parent dir.
         // Let's check imports.
 
-        // Try revealItem if it exists (need to cast or check)
-        // @ts-ignore
-        if (opener.revealItem) {
-           // @ts-ignore
-           await opener.revealItem(fullPath);
-        } else {
+        // Reveal item
+        try {
+           await revealItemInDir(fullPath);
+        } catch {
            // Fallback: open parent directory
            const parentDir = fullPath.substring(0, fullPath.lastIndexOf(sep));
-           await opener.open(parentDir);
+           await openPath(parentDir);
         }
       }
     } catch (e) {
@@ -159,10 +157,10 @@ const openInDefaultAppCommand: Command<FileContext> = {
      try {
       const config = await getVaultConfig();
       if (config) {
-        const sep = config.rootPath.includes('\\') ? '\\' : '/';
-        const relative = ctx.path.replaceAll('/', sep);
-        const fullPath = `${config.rootPath}${sep}${relative}`;
-        await opener.open(fullPath);
+        const sep = config.root_path.includes('\\') ? '\\' : '/';
+        const relative = ctx.path.replace(/\//g, sep);
+        const fullPath = `${config.root_path}${sep}${relative}`;
+        await openPath(fullPath);
       }
     } catch (e) {
       console.error(e);

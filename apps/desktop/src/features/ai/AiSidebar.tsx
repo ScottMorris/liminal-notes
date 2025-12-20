@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { NoteSnapshot } from '../../plugins/types';
 import {
   summariseCurrentNote,
@@ -13,6 +13,8 @@ import {
 } from './aiController';
 import { useSearchIndex } from '../../components/SearchIndexContext';
 import { AiState } from '../../types/tabs';
+import { AiProgress, terminate } from './transformersClient';
+import { ask } from '@tauri-apps/plugin-dialog';
 import './AiSidebar.css';
 
 interface AiSidebarProps {
@@ -27,6 +29,7 @@ interface AiSidebarProps {
 
 export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, onClose, onInsertAtCursor, onUpdateFrontmatter }: AiSidebarProps) {
   const { search } = useSearchIndex();
+  const [progress, setProgress] = useState<string | null>(null);
 
   const result = aiState?.result || null;
   const isLoading = aiState?.isLoading || false;
@@ -40,24 +43,44 @@ export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, o
       });
   };
 
-  const handleAction = async (actionName: string, actionFn: (note: NoteSnapshot) => Promise<AiResult>) => {
+  const handleProgress = (p: AiProgress) => {
+    if (p.task === 'loading-model') {
+       if (p.data && typeof p.data.progress === 'number') {
+           setProgress(`Loading model... ${p.data.progress.toFixed(1)}%`);
+       } else {
+           setProgress(`Loading model... ${p.data.status || ''}`);
+       }
+    } else if (p.task === 'embedding') {
+       setProgress(p.data.status);
+    }
+  };
+
+  const handleAction = async (actionName: string, actionFn: (note: NoteSnapshot, onProgress?: (p: AiProgress) => void) => Promise<AiResult>) => {
     if (!currentNote) return;
     updateState({ isLoading: true, error: null });
+    setProgress('Starting...');
     try {
-      const res = await actionFn(currentNote);
+      const res = await actionFn(currentNote, handleProgress);
       updateState({ result: res, isLoading: false });
     } catch (err) {
+      // If terminated, we might catch an error, or just ignore it
+      if ((err as Error).message === 'Worker terminated') {
+          return;
+      }
       console.error(`Error performing ${actionName}:`, err);
       updateState({
           error: `Failed to ${actionName}. ${(err as Error).message || ''}`,
           isLoading: false
       });
+    } finally {
+        setProgress(null);
     }
   };
 
   const handleFindRelated = async () => {
     if (!currentNote) return;
     updateState({ isLoading: true, error: null });
+    setProgress('Indexing...');
     try {
         const candidates = search('e').map(entry => ({
             path: entry.path,
@@ -65,12 +88,29 @@ export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, o
             content: entry.content
         }));
 
-        const res = await findRelatedNotes(currentNote, candidates);
+        const res = await findRelatedNotes(currentNote, candidates, handleProgress);
         updateState({ result: res, isLoading: false });
     } catch (err) {
+      if ((err as Error).message === 'Worker terminated') return;
       console.error('Error finding related notes:', err);
       updateState({ error: 'Failed to find related notes.', isLoading: false });
+    } finally {
+        setProgress(null);
     }
+  };
+
+  const handleClose = async () => {
+      if (isLoading) {
+          const confirmed = await ask('AI operation is in progress. Are you sure you want to cancel and close?', {
+              title: 'Cancel AI Task?',
+              kind: 'warning'
+          });
+          if (!confirmed) return;
+
+          terminate();
+          updateState({ isLoading: false }); // Reset state
+      }
+      onClose();
   };
 
   const renderResult = () => {
@@ -168,7 +208,7 @@ export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, o
       <div className="ai-sidebar">
         <div className="ai-header">
           <h3>AI Assistant</h3>
-          <button className="close-btn" onClick={onClose} title="Close">×</button>
+          <button className="close-btn" onClick={handleClose} title="Close">×</button>
         </div>
         <div className="ai-content empty">
           <p>Open a note to use AI features.</p>
@@ -181,7 +221,7 @@ export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, o
     <div className="ai-sidebar">
       <div className="ai-header">
         <h3>AI Assistant</h3>
-        <button className="close-btn" onClick={onClose} title="Close">×</button>
+        <button className="close-btn" onClick={handleClose} title="Close">×</button>
       </div>
 
       <div className="ai-content">
@@ -217,7 +257,11 @@ export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, o
           </div>
 
           <div className="ai-output-area">
-             {isLoading ? <div className="ai-loading">Thinking... (This may take a moment to load models)</div> : renderResult()}
+             {isLoading ? (
+                 <div className="ai-loading">
+                     <p>{progress || 'Thinking...'}</p>
+                 </div>
+             ) : renderResult()}
              {error && <div className="ai-error">{error}</div>}
           </div>
       </div>

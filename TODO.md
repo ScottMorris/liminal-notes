@@ -89,6 +89,8 @@ Currently, unsaved tabs are stored in `localStorage` which means:
   - **Tab Size:** specific config via [`tabSize`](https://codemirror.net/docs/ref/#state.EditorState^tabSize).
 - **AI Features:**
   - **Thought Summarizer:** Highlight text and have AI summarize and insert it.
+  - **Model Management:** Add settings UI to configure/manage downloaded AI models (view size, delete, etc).
+  - **Embedding Optimization:** Implement caching (via local vector DB or file) for embedding generation to avoid re-calculating for unchanged notes.
 - **Advanced Editing Commands:** Expose native CodeMirror commands in the Command Registry/Palette:
   - Undo / Redo
   - Move Line Up / Down
