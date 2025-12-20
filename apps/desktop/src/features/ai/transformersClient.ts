@@ -1,8 +1,7 @@
-export interface AiProgress {
-  task: string;
-  data: any; // e.g. { status: string, progress: number }
-}
+import { AiProgress, AiTaskType } from './ai.worker';
 
+// Re-export specific types if needed by consumers, but generally they import from here
+export type { AiProgress };
 export type ProgressListener = (progress: AiProgress) => void;
 
 interface PendingRequest {
@@ -63,7 +62,7 @@ export async function summarise(
   options?: any,
   onProgress?: ProgressListener
 ): Promise<any> {
-  return sendRequest('summarise', { text, options }, onProgress);
+  return sendRequest(AiTaskType.Summarise, { text, options }, onProgress);
 }
 
 export async function classify(
@@ -72,7 +71,7 @@ export async function classify(
   multi_label: boolean,
   onProgress?: ProgressListener
 ): Promise<any> {
-  return sendRequest('classify', { text, labels, multi_label }, onProgress);
+  return sendRequest(AiTaskType.Classify, { text, labels, multi_label }, onProgress);
 }
 
 export async function findRelated(
@@ -80,7 +79,7 @@ export async function findRelated(
   candidates: Array<{ path: string; title: string; content: string }>,
   onProgress?: ProgressListener
 ): Promise<any> {
-  return sendRequest('related', { currentContent, candidates }, onProgress);
+  return sendRequest(AiTaskType.Related, { currentContent, candidates }, onProgress);
 }
 
 export function terminate() {

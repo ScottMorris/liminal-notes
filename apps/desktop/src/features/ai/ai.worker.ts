@@ -20,11 +20,22 @@ let summarisationPipeline: SummarizationPipeline | null = null;
 let classificationPipeline: ZeroShotClassificationPipeline | null = null;
 let embeddingPipeline: FeatureExtractionPipeline | null = null;
 
+export enum AiTaskType {
+    Summarise = 'summarise',
+    Classify = 'classify',
+    Related = 'related'
+}
+
+export interface AiProgress {
+    task: string;
+    data: any; // e.g. { status: string, progress: number }
+}
+
 // Types
 type WorkerMessage =
-    | { type: 'summarise'; id: string; text: string; options?: any }
-    | { type: 'classify'; id: string; text: string; labels: string[]; multi_label: boolean }
-    | { type: 'related'; id: string; currentContent: string; candidates: Array<{ path: string; title: string; content: string }> };
+    | { type: AiTaskType.Summarise; id: string; text: string; options?: any }
+    | { type: AiTaskType.Classify; id: string; text: string; labels: string[]; multi_label: boolean }
+    | { type: AiTaskType.Related; id: string; currentContent: string; candidates: Array<{ path: string; title: string; content: string }> };
 
 type ProgressCallback = (data: any) => void;
 
@@ -81,7 +92,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
     const { type, id } = event.data;
 
     try {
-        if (type === 'summarise') {
+        if (type === AiTaskType.Summarise) {
             const { text, options } = event.data;
             const pipe = await getSummarisationPipe((data) => sendProgress(id, 'loading-model', data));
 
@@ -96,7 +107,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
             // SummarizationOutput[]
             self.postMessage({ type: 'result', id, result });
         }
-        else if (type === 'classify') {
+        else if (type === AiTaskType.Classify) {
             const { text, labels, multi_label } = event.data;
             const pipe = await getClassificationPipe((data) => sendProgress(id, 'loading-model', data));
 
@@ -107,7 +118,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
 
             self.postMessage({ type: 'result', id, result });
         }
-        else if (type === 'related') {
+        else if (type === AiTaskType.Related) {
             const { currentContent, candidates } = event.data;
             const pipe = await getEmbeddingPipe((data) => sendProgress(id, 'loading-model', data));
 
