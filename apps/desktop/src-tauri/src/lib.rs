@@ -9,16 +9,14 @@ fn get_linux_accent_color() -> String {
     // Returns 'blue', 'purple', 'orange', etc.
     let output = Command::new("gsettings")
         .args(["get", "org.gnome.desktop.interface", "accent-color"])
-        .output()
-        .unwrap_or_else(|_| std::process::Output {
-            status: std::process::ExitStatus::from_raw(0),
-            stdout: b"default".to_vec(),
-            stderr: vec![]
-        });
+        .output();
 
-    String::from_utf8_lossy(&output.stdout)
-        .trim()
-        .replace("'", "") // Remove quotes from output
+    match output {
+        Ok(o) => String::from_utf8_lossy(&o.stdout)
+            .trim()
+            .replace("'", ""),
+        Err(_) => "default".to_string(),
+    }
 }
 
 #[cfg(target_os = "linux")]
