@@ -91,36 +91,36 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
 ### 5.1. Vault Management
 | Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Select Vault** (Folder Picker) | Implemented | `VaultPicker.tsx`, `vault.rs::get_vault_config` | High | **Mobile impact (label):** Desktop-only by design<br>**Desktop dependency:** Tauri `dialog` plugin (native desktop dialogs).<br>**Recommended approach for mobile:** Use `react-native-document-picker` or standard OS file picker abstraction.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 5.1) - Define an abstract `VaultPickerService` interface. | - |
-| **Persist Vault Choice** | Implemented | `vault.rs::set_vault_config` | High | **Mobile impact (label):** Parity gap (non-blocking)<br>**Desktop dependency:** `fs::write` to app config dir (desktop path conventions).<br>**Recommended approach for mobile:** Use `AsyncStorage` or `MMKV` on mobile.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 5) - Document platform-specific config storage locations. | - |
-| **Path Safety** (No `..` traversal) | Implemented | `vault.rs::resolve_safe_path` | High | **Mobile impact (label):** Shared-core candidate<br>**Desktop dependency:** `std::path::Path` (though standard Rust, file system access patterns differ).<br>**Recommended approach for mobile:** Move `resolve_safe_path` logic to a shared Rust crate (`vault-core`) compiled for both targets.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 4) - Move `resolve_safe_path` logic to `vault-core` crate description. | - |
+| **Select Vault** (Folder Picker) | Implemented | **Key files:** `VaultPicker.tsx`, `vault.rs`<br>**UI entry:** `VaultPicker.tsx` (Route)<br>**Core:** `vault.rs::get_vault_config` | High | **Mobile impact (label):** Desktop-only by design<br>**Desktop dependency:** Tauri `dialog` plugin (native desktop dialogs).<br>**Recommended approach for mobile:** Use `react-native-document-picker` or standard OS file picker abstraction.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 5.1) - Define an abstract `VaultPickerService` interface. | - |
+| **Persist Vault Choice** | Implemented | **Key files:** `vault.rs`<br>**Core:** `vault.rs::set_vault_config` | High | **Mobile impact (label):** Parity gap (non-blocking)<br>**Desktop dependency:** `fs::write` to app config dir (desktop path conventions).<br>**Recommended approach for mobile:** Use `AsyncStorage` or `MMKV` on mobile.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 5) - Document platform-specific config storage locations. | - |
+| **Path Safety** (No `..` traversal) | Implemented | **Key files:** `vault.rs`<br>**Core:** `vault.rs::resolve_safe_path` | High | **Mobile impact (label):** Shared-core candidate<br>**Desktop dependency:** `std::path::Path` (though standard Rust, file system access patterns differ).<br>**Recommended approach for mobile:** Move `resolve_safe_path` logic to a shared Rust crate (`vault-core`) compiled for both targets.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 4) - Move `resolve_safe_path` logic to `vault-core` crate description. | - |
 
 ### 5.2. File System & Navigation
 | Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **List Files** (Recursive) | Implemented | `vault.rs::list_markdown_files` | High | **Mobile impact (label):** Shared-core candidate<br>**Desktop dependency:** `walkdir` crate (OS filesystem access).<br>**Recommended approach for mobile:** Abstract file listing behind a `VaultRepository` interface in shared core.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 4.2) - Move listing logic to `vault-core` crate description. | - |
-| **File Tree UI** | Implemented | `FileTree.tsx` | High | **Mobile impact (label):** Blocks mobile MVP<br>**Desktop dependency:** DOM-based tree (`<ul>`/`<li>`).<br>**Recommended approach for mobile:** Reimplement using `FlatList` or `SectionList` in React Native.<br>**Suggested spec update:** None (UI is expected to differ). | - |
+| **List Files** (Recursive) | Implemented | **Key files:** `vault.rs`<br>**Core:** `vault.rs::list_markdown_files` | High | **Mobile impact (label):** Shared-core candidate<br>**Desktop dependency:** `walkdir` crate (OS filesystem access).<br>**Recommended approach for mobile:** Abstract file listing behind a `VaultRepository` interface in shared core.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 4.2) - Move listing logic to `vault-core` crate description. | - |
+| **File Tree UI** | Implemented | **Key files:** `FileTree.tsx`<br>**UI entry:** `FileTree.tsx` (Sidebar) | High | **Mobile impact (label):** Blocks mobile MVP<br>**Desktop dependency:** DOM-based tree (`<ul>`/`<li>`).<br>**Recommended approach for mobile:** Reimplement using `FlatList` or `SectionList` in React Native.<br>**Suggested spec update:** None (UI is expected to differ). | - |
 
 ### 5.3. Editor & Preview
 | Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Markdown Editing** | Divergent | `CodeMirrorEditor.tsx` | High | **Mobile impact (label):** Blocks mobile MVP<br>**Desktop dependency:** DOM, `codemirror`.<br>**Recommended approach for mobile:** Use a WebView wrapper (e.g., `react-native-webview` loading a local HTML/CM6 bundle) or a native editor like `react-native-markdown-display`.<br>**Suggested spec update:** `MVP_APP.md` (Section 4) - Explicitly acknowledge CodeMirror dependency or specify WebView for mobile editor. | Update `MVP_APP.md` to explicitly acknowledge CodeMirror dependency or specify WebView for mobile editor. |
-| **Wikilink Syntax** | Implemented | `wikiLinkParser.ts`, `decorations.ts` | High | **Mobile impact (label):** Shared-core candidate<br>**Desktop dependency:** None (Pure JS).<br>**Recommended approach for mobile:** Extract parsing logic to `packages/markdown-utils` shared package.<br>**Suggested spec update:** `MVP_APP.md` (Section 3) - Extract parsing logic to `packages/markdown-utils` (if created). | - |
-| **Read/Write Pipeline** | Implemented | `ipc.ts` -> `vault.rs` | High | **Mobile impact (label):** Desktop-only by design<br>**Desktop dependency:** `ipc.ts` imports `@tauri-apps/api`.<br>**Recommended approach for mobile:** Abstract data access behind a `VaultRepository` interface.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 5) - Abstract data access behind a `VaultRepository` interface. | - |
+| **Markdown Editing** | Divergent | **Key files:** `CodeMirrorEditor.tsx`<br>**UI entry:** `CodeMirrorEditor.tsx` (Main View) | High | **Mobile impact (label):** Blocks mobile MVP<br>**Desktop dependency:** DOM, `codemirror`.<br>**Recommended approach for mobile:** Use a WebView wrapper (e.g., `react-native-webview` loading a local HTML/CM6 bundle) or a native editor like `react-native-markdown-display`.<br>**Suggested spec update:** `MVP_APP.md` (Section 4) - Explicitly acknowledge CodeMirror dependency or specify WebView for mobile editor.<br>**Likely owner:** `apps/desktop/src/components/Editor/` | Update `MVP_APP.md` to explicitly acknowledge CodeMirror dependency or specify WebView for mobile editor. |
+| **Wikilink Syntax** | Implemented | **Key files:** `wikiLinkParser.ts`, `decorations.ts`<br>**Core:** `wikiLinkParser.ts` (Regex) | High | **Mobile impact (label):** Shared-core candidate<br>**Desktop dependency:** None (Pure JS).<br>**Recommended approach for mobile:** Extract parsing logic to `packages/markdown-utils` shared package.<br>**Suggested spec update:** `MVP_APP.md` (Section 3) - Extract parsing logic to `packages/markdown-utils` (if created). | - |
+| **Read/Write Pipeline** | Implemented | **Key files:** `ipc.ts`, `vault.rs`<br>**Core:** `vault.rs` (Rust), `ipc.ts` (TS Bridge) | High | **Mobile impact (label):** Desktop-only by design<br>**Desktop dependency:** `ipc.ts` imports `@tauri-apps/api`.<br>**Recommended approach for mobile:** Abstract data access behind a `VaultRepository` interface.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 5) - Abstract data access behind a `VaultRepository` interface. | - |
 
 ### 5.4. Search & Indexing
 | Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **In-Memory Search** | Implemented | `SearchIndexContext.tsx` | High | **Mobile impact (label):** Parity gap (non-blocking)<br>**Desktop dependency:** React Context (Performance trap).<br>**Recommended approach for mobile:** Move to SQLite or shared Rust core for performance.<br>**Suggested spec update:** None. | - |
-| **Index Construction** | Divergent | `SearchIndexContext.tsx` | High | **Mobile impact (label):** Blocks mobile MVP<br>**Desktop dependency:** `fs::read_to_string` loop (acceptable on desktop).<br>**Recommended approach for mobile:** Implement persistent index (SQLite/JSON) in shared core.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 4.4) - Mandate persistent index (e.g. SQLite) for Mobile/Future. | Update `ARCHITECTURE.md` to mandate persistent index (e.g. SQLite) for Mobile/Future. |
-| **Scoring** | Implemented | `SearchIndexContext.tsx` | High | **Mobile impact (label):** Unclear<br>**Desktop dependency:** None.<br>**Recommended approach for mobile:** Re-evaluate when moving to Rust core.<br>**Suggested spec update:** None. | - |
+| **In-Memory Search** | Implemented | **Key files:** `SearchIndexContext.tsx`<br>**Core:** `SearchIndexContext.tsx` | High | **Mobile impact (label):** Parity gap (non-blocking)<br>**Desktop dependency:** React Context (Performance trap).<br>**Recommended approach for mobile:** Move to SQLite or shared Rust core for performance.<br>**Suggested spec update:** None. | - |
+| **Index Construction** | Divergent | **Key files:** `SearchIndexContext.tsx`<br>**Core:** `SearchIndexContext.tsx` (Reads all files) | High | **Mobile impact (label):** Blocks mobile MVP<br>**Desktop dependency:** `fs::read_to_string` loop (acceptable on desktop).<br>**Recommended approach for mobile:** Implement persistent index (SQLite/JSON) in shared core.<br>**Suggested spec update:** `ARCHITECTURE.md` (Section 4.4) - Mandate persistent index (e.g. SQLite) for Mobile/Future.<br>**Likely owner:** `apps/desktop/src/components/SearchIndexContext.tsx` -> `packages/search-core` | Update `ARCHITECTURE.md` to mandate persistent index (e.g. SQLite) for Mobile/Future. |
+| **Scoring** | Implemented | **Key files:** `SearchIndexContext.tsx`<br>**Core:** `SearchIndexContext.tsx` | High | **Mobile impact (label):** Unclear<br>**Desktop dependency:** None.<br>**Recommended approach for mobile:** Re-evaluate when moving to Rust core.<br>**Suggested spec update:** None. | - |
 
 ### 5.5. Plugin System
 | Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Manifest.json** | Missing | `apps/desktop/src/plugins/` | High | **Mobile impact (label):** Desktop-only by design (current impl)<br>**Desktop dependency:** Dynamic Loading.<br>**Recommended approach for mobile:** Mobile plugins likely need to be bundled at build time. Note: manifest metadata itself is portable.<br>**Suggested spec update:** `PLUGIN_API.md` (Section 2) - Distinguish "Core/Internal Plugins" from "Public Plugins". | Update `PLUGIN_API.md` to distinguish "Core/Internal Plugins" from "Public Plugins". |
-| **Sandboxed Runtime** | Missing | `PluginHostProvider.tsx` | High | **Mobile impact (label):** Unclear<br>**Desktop dependency:** JS eval/VM.<br>**Recommended approach for mobile:** Research iOS/Android constraints on dynamic code.<br>**Suggested spec update:** `PLUGIN_API.md` (Section 2) - Flag Plugin System as "Desktop First". | Flag Plugin System as "Desktop First" in specs. |
-| **Permissions** | Missing | `PluginHostProvider.tsx` | High | **Mobile impact (label):** Unclear<br>**Desktop dependency:** None.<br>**Recommended approach for mobile:** Implement alongside Sandbox.<br>**Suggested spec update:** None. | - |
+| **Manifest.json** | Missing | **Key files:** `apps/desktop/src/plugins/`<br>**Core:** `registry.ts` (Manual TS list) | High | **Mobile impact (label):** Desktop-only by design (current impl)<br>**Desktop dependency:** Dynamic Loading.<br>**Recommended approach for mobile:** Mobile plugins likely need to be bundled at build time. Note: manifest metadata itself is portable.<br>**Suggested spec update:** `PLUGIN_API.md` (Section 2) - Distinguish "Core/Internal Plugins" from "Public Plugins".<br>**Likely owner:** `apps/desktop/src/plugins/` | Update `PLUGIN_API.md` to distinguish "Core/Internal Plugins" from "Public Plugins". |
+| **Sandboxed Runtime** | Missing | **Key files:** `PluginHostProvider.tsx`<br>**Core:** `PluginHostProvider.tsx` (React Context) | High | **Mobile impact (label):** Unclear<br>**Desktop dependency:** JS eval/VM.<br>**Recommended approach for mobile:** Research iOS/Android constraints on dynamic code.<br>**Suggested spec update:** `PLUGIN_API.md` (Section 2) - Flag Plugin System as "Desktop First".<br>**Likely owner:** `apps/desktop/src/plugins/` | Flag Plugin System as "Desktop First" in specs. |
+| **Permissions** | Missing | **Key files:** `PluginHostProvider.tsx`<br>**Core:** `PluginHostProvider.tsx` | High | **Mobile impact (label):** Unclear<br>**Desktop dependency:** None.<br>**Recommended approach for mobile:** Implement alongside Sandbox.<br>**Suggested spec update:** None.<br>**Likely owner:** `apps/desktop/src/plugins/` | - |
 
 ---
 
@@ -131,18 +131,21 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
     *   **Desktop dependency:** Dynamic code loading (`eval`, `new Function`, or Worker blobs).
     *   **Recommended approach for mobile:** Limit mobile plugins to "bundled" core plugins or use a very restricted DSL.
     *   **Suggested spec update:** `PLUGIN_API.md` (Section 2) - Add "Mobile Constraints" section detailing no dynamic code loading.
+    *   **Likely owner:** `apps/desktop/src/plugins/`
 
 2.  **Persistent Search Index** (`ARCHITECTURE.md`)
     *   **Mobile impact (label):** Blocks mobile MVP
     *   **Desktop dependency:** High CPU/Memory usage acceptable on desktop but not mobile.
     *   **Recommended approach for mobile:** Move indexing to a shared Rust core using SQLite or a persistent file format.
     *   **Suggested spec update:** `MVP_APP.md` (Section 5.4) or `ARCHITECTURE.md` - Explicitly require a persistent index format.
+    *   **Likely owner:** `packages/search-core` (Proposed)
 
 3.  **Reading View** (`MVP_APP.md`)
     *   **Mobile impact (label):** Parity gap (non-blocking)
     *   **Desktop dependency:** None.
     *   **Recommended approach for mobile:** Implement a read-only view using `react-native-markdown-display`.
     *   **Suggested spec update:** `MVP_APP.md` (Section 2) - Clarify if "Live Preview" (CodeMirror) replaces the need for a separate "Reading View".
+    *   **Likely owner:** `apps/desktop/src/components/Editor/`
 
 ---
 
@@ -153,18 +156,21 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
     *   **Desktop dependency:** React Context.
     *   **Recommended approach for mobile:** Audit internal plugins for DOM usage.
     *   **Suggested spec update:** `PLUGIN_API.md` - Rename to `PUBLIC_PLUGIN_API.md` and document the existence of an "Internal Plugin Architecture".
+    *   **Likely owner:** `apps/desktop/src/plugins/`
 
 2.  **Indexing Location**
     *   **Mobile impact (label):** Shared-core candidate
     *   **Desktop dependency:** React State/Context.
     *   **Recommended approach for mobile:** Prioritize `search-core` (Rust or TS) extraction.
     *   **Suggested spec update:** `ARCHITECTURE.md` (Section 4.4) - Update to reflect that MVP Indexing is Frontend-based, with Rust migration as a "Future" goal.
+    *   **Likely owner:** `packages/search-core` (Proposed)
 
 3.  **Settings Storage**
     *   **Mobile impact (label):** Parity gap (non-blocking)
     *   **Desktop dependency:** `tauri-plugin-store`.
     *   **Recommended approach for mobile:** Use a platform-agnostic settings store (e.g. JSON file in vault).
     *   **Suggested spec update:** `SETTINGS_UI.md` (Section 4) - Clarify "Global vs Vault" settings hierarchy.
+    *   **Likely owner:** `apps/desktop/src-tauri/src/settings.rs`
 
 ---
 
@@ -209,3 +215,53 @@ This checklist represents the documentation updates required to align specs with
     - *Reason*: Parity Gap (Per-vault settings missing).
 - [ ] **`docs/COMMAND_SYSTEM.md` (New)**: Document `CommandRegistry.ts`.
     - *Reason*: Undocumented Implementation (Critical infra).
+
+---
+
+## Appendix A: File map by subsystem
+
+This appendix groups key implementation files by domain to aid navigation.
+
+### Vault selection + filesystem access
+*   `apps/desktop/src-tauri/src/vault.rs` (Tauri commands, Path safety)
+*   `apps/desktop/src/components/VaultPicker.tsx` (UI Dialog)
+*   `apps/desktop/src/ipc.ts` (Frontend wrappers)
+
+### Note read/write pipeline
+*   `apps/desktop/src-tauri/src/vault.rs` (`read_note_command`, `write_note_command`)
+*   `apps/desktop/src/components/Editor/CodeMirrorEditor.tsx` (`onSave`)
+*   `apps/desktop/src/ipc.ts`
+
+### Editor
+*   `apps/desktop/src/components/Editor/CodeMirrorEditor.tsx` (Main Component)
+*   `apps/desktop/src/components/Editor/editorTheme.ts`
+*   `apps/desktop/src/components/Editor/decorations.ts`
+
+### Search/indexing
+*   `apps/desktop/src/components/SearchIndexContext.tsx` (In-memory Indexer & Search)
+*   `apps/desktop/src/components/SearchModal.tsx` (UI)
+
+### Links/backlinks/graph
+*   `apps/desktop/src/components/LinkIndexContext.tsx` (Link Parser & Store)
+*   `apps/desktop/src/utils/wikiLinkParser.ts` (Regex Logic)
+*   `apps/desktop/src/components/GraphView.tsx` (Visualization)
+
+### Settings
+*   `apps/desktop/src-tauri/src/settings.rs` (Persistence via `tauri-plugin-store`)
+*   `apps/desktop/src/components/Settings/SettingsModal.tsx` (UI Shell)
+*   `apps/desktop/src/components/Settings/schemas.ts` (UI Definitions)
+
+### Plugins
+*   `apps/desktop/src/plugins/PluginHostProvider.tsx` (Runtime)
+*   `apps/desktop/src/plugins/registry.ts` (Built-in Plugin List)
+*   `apps/desktop/src/plugins/builtin/` (Plugin implementations)
+
+### Reminders/notifications
+*   `packages/reminders-core/` (Shared Logic)
+*   `apps/desktop/src/features/reminders/` (Desktop Adapter)
+*   `apps/desktop/src/components/NotificationContext.tsx` (Toasts)
+
+### Spellcheck
+*   `apps/desktop/src/features/spellcheck/spellcheckCore.ts` (Worker Interface)
+*   `apps/desktop/src/features/spellcheck/worker/` (nspell logic)
+*   `apps/desktop/src/components/Editor/spellcheck/` (CM6 Extension)
