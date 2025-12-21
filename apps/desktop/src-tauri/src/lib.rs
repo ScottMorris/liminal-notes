@@ -3,31 +3,20 @@ use tauri::Manager;
 mod vault;
 mod settings;
 
-#[cfg(target_os = "linux")]
 #[tauri::command]
 fn get_linux_accent_colour() -> String {
-    use adw::prelude::*;
-    use adw::StyleManager;
+    use std::process::Command;
 
-    // Initialize libadwaita (if not already done in main)
-    let _ = adw::init();
+    let output = Command::new("gsettings")
+        .args(["get", "org.gnome.desktop.interface", "accent-color"])
+        .output();
 
-    let manager = StyleManager::default();
-    let color = manager.accent_color(); // Requires Libadwaita 1.6+
-    let rgba = color.to_rgba();
-
-    // Convert to Hex String
-    format!("#{:02x}{:02x}{:02x}",
-        (rgba.red() * 255.0) as u8,
-        (rgba.green() * 255.0) as u8,
-        (rgba.blue() * 255.0) as u8
-    )
-}
-
-#[cfg(not(target_os = "linux"))]
-#[tauri::command]
-fn get_linux_accent_colour() -> String {
-    "#e81123".to_string() // Default fallback
+    match output {
+        Ok(o) => String::from_utf8_lossy(&o.stdout)
+            .trim()
+            .replace("'", ""),
+        Err(_) => "default".to_string(),
+    }
 }
 
 #[cfg(target_os = "linux")]

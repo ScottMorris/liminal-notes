@@ -4,6 +4,19 @@ import { getLinuxAccentColour } from '../ipc';
 import { Theme, ThemeId } from './types';
 import { themes } from './themes';
 
+const GNOME_ACCENTS: Record<string, string> = {
+    'blue': '#3584e4',
+    'teal': '#2190a4',
+    'green': '#3a944a',
+    'yellow': '#f5c211',
+    'orange': '#ff7800',
+    'red': '#e01b24',
+    'pink': '#d56199',
+    'purple': '#9141ac',
+    'slate': '#5e5c64',
+    'default': '#3584e4'
+};
+
 interface ThemeContextType {
   themeId: ThemeId;
   setThemeId: (id: ThemeId) => void;
@@ -45,7 +58,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
       const fetchAccent = async () => {
           try {
-              const hex = await getLinuxAccentColour();
+              const name = await getLinuxAccentColour();
+              const hex = GNOME_ACCENTS[name] || GNOME_ACCENTS['default'];
               setSystemAccent(hex);
           } catch (e) {
               console.warn("Failed to get system accent", e);
