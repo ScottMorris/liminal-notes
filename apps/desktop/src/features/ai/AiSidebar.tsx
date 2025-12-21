@@ -12,6 +12,7 @@ import {
   AiRelatedNotesResult
 } from './aiController';
 import { useSearchIndex } from '../../components/SearchIndexContext';
+import { useTags } from '../../contexts/TagsContext';
 import { AiState } from '../../types/tabs';
 import { AiProgress, terminate } from './transformersClient';
 import { ask } from '@tauri-apps/plugin-dialog';
@@ -24,11 +25,12 @@ interface AiSidebarProps {
   onNavigate?: (path: string) => void;
   onClose: () => void;
   onInsertAtCursor: (text: string) => void;
-  onUpdateFrontmatter: (updater: (data: any) => void) => void;
+  onUpdateFrontmatter: (updater: (data: any) => void, shouldSave?: boolean) => void;
 }
 
 export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, onClose, onInsertAtCursor, onUpdateFrontmatter }: AiSidebarProps) {
   const { search } = useSearchIndex();
+  const { tags } = useTags();
   const [progress, setProgress] = useState<string | null>(null);
 
   const result = aiState?.result || null;
@@ -61,6 +63,29 @@ export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, o
     setProgress('Starting...');
     try {
       const res = await actionFn(currentNote, handleProgress);
+
+      if (res.kind === 'tag-suggestions') {
+          // Auto-apply logic
+          onUpdateFrontmatter((data) => {
+              const existingTags = data.tags || [];
+              const tagsArray = Array.isArray(existingTags) ? existingTags : [existingTags];
+              const newTags = [...tagsArray];
+              let updated = false;
+
+              (res as AiTagSuggestionsResult).suggestions.forEach(s => {
+                  const tagDef = tags[s.tag];
+                  if (tagDef?.aiAutoApprove && !newTags.includes(s.tag)) {
+                      newTags.push(s.tag);
+                      updated = true;
+                  }
+              });
+
+              if (updated) {
+                  data.tags = newTags;
+              }
+          }, true); // Save immediately
+      }
+
       updateState({ result: res, isLoading: false });
     } catch (err) {
       // If terminated, we might catch an error, or just ignore it
@@ -148,7 +173,7 @@ export function AiSidebar({ currentNote, aiState, onUpdateAiState, onNavigate, o
                           if (!tagsArray.includes(s.tag)) {
                               data.tags = [...tagsArray, s.tag];
                           }
-                      });
+                      }, true);
                   }}>Add</button>
                 </li>
               ))}

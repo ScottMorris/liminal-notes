@@ -1,4 +1,5 @@
 import { useTags } from '../../contexts/TagsContext';
+import { usePluginHost } from '../../../plugins/PluginHostProvider';
 import { useState } from 'react';
 import { Tag } from '../../types/tags';
 import { HashtagIcon, XMarkIcon, PencilSquareIcon } from '../Icons';
@@ -6,6 +7,7 @@ import { confirm } from '@tauri-apps/plugin-dialog';
 
 export function TagSettings() {
     const { tags, updateTag, deleteTag, removeTagFromAllNotes } = useTags();
+    const { enabledPlugins } = usePluginHost();
     const [filter, setFilter] = useState('');
     const [editingTagId, setEditingTagId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
@@ -74,6 +76,18 @@ export function TagSettings() {
                                 </div>
                             )}
                             <div style={{ fontSize: '0.8em', color: 'var(--ln-muted)' }}>{tag.id}</div>
+                            {enabledPlugins.has('ai-assistant') && (
+                                <div style={{ fontSize: '0.8em', marginTop: '4px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', userSelect: 'none' }} title="Automatically apply this tag if AI suggests it">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!tag.aiAutoApprove}
+                                            onChange={(e) => updateTag({ ...tag, aiAutoApprove: e.target.checked })}
+                                        />
+                                        Auto-approve
+                                    </label>
+                                </div>
+                            )}
                         </div>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                              <input

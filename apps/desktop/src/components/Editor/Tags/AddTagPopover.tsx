@@ -31,11 +31,20 @@ export function AddTagPopover({ assignedTags, onAdd, onClose, noteTitle, noteCon
         if (enabledPlugins.has('ai-assistant')) {
             setIsLoadingAi(true);
             suggestTags(noteTitle, noteContent)
-                .then(setAiSuggestions)
+                .then(suggestions => {
+                    setAiSuggestions(suggestions);
+                    // Auto-apply
+                    suggestions.forEach(tagId => {
+                        const tagDef = tags[tagId];
+                        if (tagDef?.aiAutoApprove && !assignedTags.includes(tagId)) {
+                            onAdd(tagId);
+                        }
+                    });
+                })
                 .catch(err => console.error("AI Tag Suggestion failed", err))
                 .finally(() => setIsLoadingAi(false));
         }
-    }, [enabledPlugins, noteTitle, noteContent]);
+    }, [enabledPlugins, noteTitle, noteContent, tags, assignedTags]); // Added tags, assignedTags dependencies
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
