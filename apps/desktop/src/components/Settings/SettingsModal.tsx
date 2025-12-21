@@ -18,7 +18,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
 
     const sections = useMemo(() => getSections(availableThemes, appVersion), [availableThemes, appVersion]);
 
-    const tagSection = { id: 'tags', title: 'Tag Management', settings: [] };
+    const tagSection = { id: 'tags', title: 'Tag Management', settings: [], groups: [] };
 
     // Group sections for sidebar
     const optionsGroups = [
