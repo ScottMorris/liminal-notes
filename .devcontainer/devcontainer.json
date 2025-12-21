@@ -9,7 +9,7 @@
     "source=${localEnv:HOME}/.Xauthority,target=/home/vscode/.Xauthority,type=bind,consistency=cached"
   ],
   "containerEnv": {
-    "XDG_RUNTIME_DIR": "/run/user/1000",
+    "XDG_RUNTIME_DIR": "/tmp/runtime-1000",
     "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
     "DISPLAY": "${localEnv:DISPLAY}",
     "XAUTHORITY": "/home/vscode/.Xauthority",
@@ -27,5 +27,5 @@
       ]
     }
   },
-  "postCreateCommand": "mkdir -p /run/user/1000 && chmod 700 /run/user/1000 && ln -sf /tmp/host-xdg-runtime/${WAYLAND_DISPLAY:-wayland-0} /run/user/1000/${WAYLAND_DISPLAY:-wayland-0} && pnpm install"
+  "postCreateCommand": "mkdir -p /tmp/runtime-1000 && chmod 700 /tmp/runtime-1000 && ln -sf /tmp/host-xdg-runtime/${WAYLAND_DISPLAY:-wayland-0} /tmp/runtime-1000/${WAYLAND_DISPLAY:-wayland-0} && pnpm install"
 }
