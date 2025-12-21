@@ -15,6 +15,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     pkg-config \
     wl-clipboard \
     xclip \
+    dbus-x11 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20.x

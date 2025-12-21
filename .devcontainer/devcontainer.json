@@ -4,13 +4,16 @@
   "workspaceFolder": "/workspaces/liminal-notes",
   "forwardPorts": [5173, 1420],
   "mounts": [
-    "source=${localEnv:XDG_RUNTIME_DIR},target=/tmp/xdg-runtime,type=bind",
-    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
+    "source=${localEnv:XDG_RUNTIME_DIR},target=/tmp/host-xdg-runtime,type=bind,readonly",
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+    "source=${localEnv:HOME}/.Xauthority,target=/home/vscode/.Xauthority,type=bind,consistency=cached"
   ],
   "containerEnv": {
-    "XDG_RUNTIME_DIR": "/tmp/xdg-runtime",
+    "XDG_RUNTIME_DIR": "/run/user/1000",
     "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
-    "DISPLAY": "${localEnv:DISPLAY}"
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "XAUTHORITY": "/home/vscode/.Xauthority",
+    "XDG_SESSION_TYPE": "${localEnv:XDG_SESSION_TYPE}"
   },
   "customizations": {
     "vscode": {
@@ -24,5 +27,5 @@
       ]
     }
   },
-  "postCreateCommand": "pnpm install"
+  "postCreateCommand": "mkdir -p /run/user/1000 && chmod 700 /run/user/1000 && ln -sf /tmp/host-xdg-runtime/${WAYLAND_DISPLAY:-wayland-0} /run/user/1000/${WAYLAND_DISPLAY:-wayland-0} && pnpm install"
 }
