@@ -13,6 +13,8 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     librsvg2-dev \
     libwebkit2gtk-4.1-dev \
     pkg-config \
+    wl-clipboard \
+    xclip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20.x

@@ -3,6 +3,15 @@
   "dockerFile": "Dockerfile",
   "workspaceFolder": "/workspaces/liminal-notes",
   "forwardPorts": [5173, 1420],
+  "mounts": [
+    "source=${localEnv:XDG_RUNTIME_DIR},target=/tmp/xdg-runtime,type=bind",
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
+  ],
+  "containerEnv": {
+    "XDG_RUNTIME_DIR": "/tmp/xdg-runtime",
+    "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
