@@ -18,6 +18,10 @@
   padding-left: 10px;
 }
 
+.title-bar.is-linux {
+    padding-left: 10px;
+}
+
 .title-bar.is-win {
     padding-left: 10px;
 }
@@ -39,6 +43,7 @@
 
 .window-controls-placeholder {
     width: 70px; /* Approximate width of Mac controls to balance center title */
+    min-width: 70px; /* For Linux */
     flex-shrink: 0;
 }
 

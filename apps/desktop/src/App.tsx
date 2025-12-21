@@ -353,13 +353,23 @@ function AppContent() {
   }, []);
 
   if (isVaultLoading) {
-    return <div className="container center">Loading...</div>;
+    return (
+      <div className="container">
+        <TitleBar />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (!vaultConfig) {
     return (
-      <div className="container center">
-        <VaultPicker onVaultConfigured={handleVaultConfigured} />
+      <div className="container">
+        <TitleBar />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <VaultPicker onVaultConfigured={handleVaultConfigured} />
+        </div>
       </div>
     );
   }

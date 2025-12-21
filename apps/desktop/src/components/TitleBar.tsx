@@ -4,11 +4,17 @@ import { WindowMinimizeIcon, WindowMaximizeIcon, WindowCloseIcon } from './Icons
 import './TitleBar.css';
 
 export const TitleBar: React.FC = () => {
-    const [isMac, setIsMac] = useState(false);
+    const [platform, setPlatform] = useState<'mac' | 'linux' | 'win'>('win');
 
     useEffect(() => {
-        // Simple heuristic for macOS
-        setIsMac(navigator.userAgent.includes('Mac'));
+        const ua = navigator.userAgent;
+        if (ua.includes('Mac')) {
+            setPlatform('mac');
+        } else if (ua.includes('Linux')) {
+            setPlatform('linux');
+        } else {
+            setPlatform('win');
+        }
     }, []);
 
     const appWindow = getCurrentWindow();
@@ -42,16 +48,28 @@ export const TitleBar: React.FC = () => {
     );
 
     return (
-        <div className={`title-bar ${isMac ? 'is-mac' : 'is-win'}`} data-tauri-drag-region>
-            {isMac ? (
+        <div className={`title-bar is-${platform}`}>
+            {platform === 'mac' && (
                 <>
                     <MacControls />
                     <div className="title-drag-region" data-tauri-drag-region />
                     <div className="app-title" data-tauri-drag-region>Liminal Notes</div>
                     <div className="title-drag-region" data-tauri-drag-region />
-                    <div className="window-controls-placeholder" /> {/* Balance for center alignment */}
+                    <div className="window-controls-placeholder" />
                 </>
-            ) : (
+            )}
+
+            {platform === 'linux' && (
+                <>
+                     <div className="window-controls-placeholder" /> {/* Balance for center alignment (approx width of controls) */}
+                     <div className="title-drag-region" data-tauri-drag-region />
+                     <div className="app-title" data-tauri-drag-region>Liminal Notes</div>
+                     <div className="title-drag-region" data-tauri-drag-region />
+                     <WinControls />
+                </>
+            )}
+
+            {platform === 'win' && (
                 <>
                      <div className="app-title left" data-tauri-drag-region>Liminal Notes</div>
                      <div className="title-drag-region" data-tauri-drag-region />
