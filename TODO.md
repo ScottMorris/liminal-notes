@@ -124,3 +124,8 @@ Currently, unsaved tabs are stored in `localStorage` which means:
 - **Native Notification Actions:** Investigate supporting native desktop notification buttons (Snooze, Done) to avoid opening the app for quick actions.
 - **Deep Linking:** Implement `liminal://` protocol support to allow external notifications/apps to open specific notes properly. Reference: https://v2.tauri.app/plugin/deep-linking/
 - **Custom Controls:** Replace native date/time pickers with custom styled components for consistent behavior and theming.
+
+## Platform Integration
+
+- **Linux Accent Color (Pro Mode):** The "Pro Mode" accent color detection using `libadwaita` crate features (`v1_6`) requires system libraries (`libadwaita-1 >= 1.6`) which are not available in Ubuntu 24.04 (Noble). Currently, we use a `gsettings` CLI fallback.
+  - **Task:** Upgrade the dev container and CI environment to a newer base image (e.g., Ubuntu 24.10+) once stable/available, or install updated libraries, to enable the `libadwaita` crate dependency for robust, native accent color detection.
