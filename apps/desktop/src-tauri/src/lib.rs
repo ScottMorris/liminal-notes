@@ -1,22 +1,33 @@
 use tauri::Manager;
-use std::process::Command;
 
 mod vault;
 mod settings;
 
+#[cfg(target_os = "linux")]
 #[tauri::command]
-fn get_linux_accent_color() -> String {
-    // Returns 'blue', 'purple', 'orange', etc.
-    let output = Command::new("gsettings")
-        .args(["get", "org.gnome.desktop.interface", "accent-color"])
-        .output();
+fn get_linux_accent_colour() -> String {
+    use adw::prelude::*;
+    use adw::StyleManager;
 
-    match output {
-        Ok(o) => String::from_utf8_lossy(&o.stdout)
-            .trim()
-            .replace("'", ""),
-        Err(_) => "default".to_string(),
-    }
+    // Initialize libadwaita (if not already done in main)
+    let _ = adw::init();
+
+    let manager = StyleManager::default();
+    let color = manager.accent_color(); // Requires Libadwaita 1.6+
+    let rgba = color.to_rgba();
+
+    // Convert to Hex String
+    format!("#{:02x}{:02x}{:02x}",
+        (rgba.red() * 255.0) as u8,
+        (rgba.green() * 255.0) as u8,
+        (rgba.blue() * 255.0) as u8
+    )
+}
+
+#[cfg(not(target_os = "linux"))]
+#[tauri::command]
+fn get_linux_accent_colour() -> String {
+    "#e81123".to_string() // Default fallback
 }
 
 #[cfg(target_os = "linux")]
@@ -92,7 +103,7 @@ pub fn run() {
             vault::delete_item,
             settings::get_settings,
             settings::set_setting,
-            get_linux_accent_color
+            get_linux_accent_colour
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -147,7 +147,7 @@
 }
 
 .control-button.linux-close:hover {
-    background-color: #e81123;
+    background-color: var(--ln-system-accent, #e81123);
     color: white; /* Optional: Red for close on Linux too, or just grey */
 }
 /* Note: Standard Adwaita often keeps Close button neutral until hover, but Red is common cross-platform cue. */

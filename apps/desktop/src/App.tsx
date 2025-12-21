@@ -72,6 +72,15 @@ function AppContent() {
   const [isCreating, setIsCreating] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'files' | 'tags'>('files');
 
+  const useNativeDecorations = (settings['appearance.useNativeDecorations'] as boolean) ?? false;
+
+  // Sync native decorations
+  useEffect(() => {
+      import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+          getCurrentWindow().setDecorations(useNativeDecorations);
+      });
+  }, [useNativeDecorations]);
+
   // Sync settings
   useEffect(() => {
     if (settings['appearance.theme']) {
@@ -355,7 +364,7 @@ function AppContent() {
   if (isVaultLoading) {
     return (
       <div className="container">
-        <TitleBar />
+        {!useNativeDecorations && <TitleBar />}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           Loading...
         </div>
@@ -366,7 +375,7 @@ function AppContent() {
   if (!vaultConfig) {
     return (
       <div className="container">
-        <TitleBar />
+        {!useNativeDecorations && <TitleBar />}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <VaultPicker onVaultConfigured={handleVaultConfigured} />
         </div>
@@ -376,7 +385,7 @@ function AppContent() {
 
   return (
     <div className="container">
-      <TitleBar />
+      {!useNativeDecorations && <TitleBar />}
       <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-header">

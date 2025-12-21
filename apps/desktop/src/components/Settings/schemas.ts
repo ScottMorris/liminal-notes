@@ -150,6 +150,12 @@ export const getSections = (
                         controls: [{ kind: 'boolean', key: 'appearance.useSystemAccent' }]
                     },
                     {
+                        id: 'native-decorations',
+                        label: 'Use native window decorations',
+                        description: 'Use the system default window borders instead of the custom title bar.',
+                        controls: [{ kind: 'boolean', key: 'appearance.useNativeDecorations' }]
+                    },
+                    {
                         id: 'font-size',
                         label: 'Font size',
                         controls: [{ kind: 'slider', key: 'appearance.fontSize', min: 10, max: 30, step: 1 }]

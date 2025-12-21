@@ -37,6 +37,6 @@ export const setSetting = async (key: string, value: unknown): Promise<void> => 
   return await invoke("set_setting", { key, value });
 };
 
-export const getLinuxAccentColor = async (): Promise<string> => {
-  return await invoke("get_linux_accent_color");
+export const getLinuxAccentColour = async (): Promise<string> => {
+  return await invoke("get_linux_accent_colour");
 };
