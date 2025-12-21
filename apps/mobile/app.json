@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "liminal",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
