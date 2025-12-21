@@ -266,6 +266,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
             addTag,
             deleteTag,
             updateTag,
+            removeTagFromAllNotes,
             getTagsForNote,
             isLoading
         }}>
