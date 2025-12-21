@@ -1,7 +1,25 @@
 use tauri::Manager;
+use std::process::Command;
 
 mod vault;
 mod settings;
+
+#[tauri::command]
+fn get_linux_accent_color() -> String {
+    // Returns 'blue', 'purple', 'orange', etc.
+    let output = Command::new("gsettings")
+        .args(["get", "org.gnome.desktop.interface", "accent-color"])
+        .output()
+        .unwrap_or_else(|_| std::process::Output {
+            status: std::process::ExitStatus::from_raw(0),
+            stdout: b"default".to_vec(),
+            stderr: vec![]
+        });
+
+    String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .replace("'", "") // Remove quotes from output
+}
 
 #[cfg(target_os = "linux")]
 fn configure_linux_env() {
@@ -75,7 +93,8 @@ pub fn run() {
             vault::rename_item,
             vault::delete_item,
             settings::get_settings,
-            settings::set_setting
+            settings::set_setting,
+            get_linux_accent_color
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

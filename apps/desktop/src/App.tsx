@@ -499,11 +499,9 @@ function AppContent() {
 function App() {
     return (
         <TabsProvider>
-          <SettingsProvider>
             <RemindersProvider>
               <AppContent />
             </RemindersProvider>
-          </SettingsProvider>
         </TabsProvider>
     );
 }

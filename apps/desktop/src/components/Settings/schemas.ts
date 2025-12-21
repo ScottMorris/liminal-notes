@@ -144,6 +144,12 @@ export const getSections = (
                         }]
                     },
                     {
+                        id: 'system-accent',
+                        label: 'Use system accent color',
+                        description: 'Sync the accent color with your desktop environment (Linux only).',
+                        controls: [{ kind: 'boolean', key: 'appearance.useSystemAccent' }]
+                    },
+                    {
                         id: 'font-size',
                         label: 'Font size',
                         controls: [{ kind: 'slider', key: 'appearance.fontSize', min: 10, max: 30, step: 1 }]
