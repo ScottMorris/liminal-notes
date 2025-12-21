@@ -74,6 +74,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (systemAccent) {
         // Expose system accent for components (e.g. TitleBar close button)
         root.style.setProperty('--ln-system-accent', systemAccent);
+        // Override close button hover with system accent
+        root.style.setProperty('--ln-control-close-hover', systemAccent);
 
         if (settings['appearance.useSystemAccent']) {
             root.style.setProperty('--ln-accent', systemAccent);
