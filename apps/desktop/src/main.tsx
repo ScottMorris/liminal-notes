@@ -1,6 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { Buffer } from 'buffer';
 import App from "./App";
+
+// Polyfill Buffer for gray-matter in browser environment
+if (typeof window !== 'undefined') {
+    (window as any).Buffer = Buffer;
+}
 import { ThemeProvider } from "./theme";
 import { LinkIndexProvider } from "./components/LinkIndexContext";
 import { SearchIndexProvider } from "./components/SearchIndexContext";
