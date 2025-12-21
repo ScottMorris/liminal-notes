@@ -77,15 +77,16 @@ export function TagSettings() {
                             )}
                             <div style={{ fontSize: '0.8em', color: 'var(--ln-muted)' }}>{tag.id}</div>
                             {enabledPlugins.has('ai-assistant') && (
-                                <div style={{ fontSize: '0.8em', marginTop: '4px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', userSelect: 'none' }} title="Automatically apply this tag if AI suggests it">
+                                <div style={{ fontSize: '0.8em', marginTop: '4px', display: 'flex', alignItems: 'center' }}>
+                                    <label className="toggle-switch" style={{ marginRight: '8px', transform: 'scale(0.7)', transformOrigin: 'left center' }} title="Automatically apply this tag if AI suggests it">
                                         <input
                                             type="checkbox"
                                             checked={!!tag.aiAutoApprove}
                                             onChange={(e) => updateTag({ ...tag, aiAutoApprove: e.target.checked })}
                                         />
-                                        Auto-approve
+                                        <span className="slider"></span>
                                     </label>
+                                    <span>Auto-approve</span>
                                 </div>
                             )}
                         </div>

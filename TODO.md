@@ -91,6 +91,11 @@ Currently, unsaved tabs are stored in `localStorage` which means:
   - **Thought Summarizer:** Highlight text and have AI summarize and insert it.
   - **Model Management:** Add settings UI to configure/manage downloaded AI models (view size, delete, etc).
   - **Embedding Optimization:** Implement caching (via local vector DB or file) for embedding generation to avoid re-calculating for unchanged notes.
+  - **Dynamic Tag Generation:** Explore better AI models for open-ended tag generation.
+    - **Xenova/t5-small (quantized)** (~95 MB): Text-to-text generative model (promptable).
+    - **Xenova/flan-t5-small**: Instruction tuned.
+    - **Keyphrase Extraction models** (DistilBERT-based).
+    - Currently using Zero-Shot Classification (fast, restricted candidates).
 - **Advanced Editing Commands:** Expose native CodeMirror commands in the Command Registry/Palette:
   - Undo / Redo
   - Move Line Up / Down
