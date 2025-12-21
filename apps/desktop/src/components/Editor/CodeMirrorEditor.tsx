@@ -58,6 +58,25 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       position: MenuPosition;
     } | null>(null);
 
+    // Calculate frontmatter offset for line numbers
+    const getFrontmatterOffset = (text: string): number => {
+        if (!text.startsWith('---\n')) return 0;
+        const endFenceIndex = text.indexOf('\n---', 4);
+        if (endFenceIndex === -1) return 0;
+
+        let lines = 1;
+        for (let i = 0; i < endFenceIndex; i++) {
+            if (text[i] === '\n') lines++;
+        }
+        return lines + 1;
+    };
+
+    const [frontmatterOffset, setFrontmatterOffset] = useState(() => getFrontmatterOffset(value));
+
+    useEffect(() => {
+        setFrontmatterOffset(getFrontmatterOffset(value));
+    }, [value]);
+
     // Keep refs up to date
     useEffect(() => {
         onSaveRef.current = onSave;
@@ -211,12 +230,17 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         if (viewRef.current) {
             viewRef.current.dispatch({
                 effects: [
-                    lineNumbersCompartment.reconfigure(showLineNumbers ? lineNumbers() : []),
+                    lineNumbersCompartment.reconfigure(showLineNumbers ? lineNumbers({
+                        formatNumber: (n) => {
+                            if (n <= frontmatterOffset) return "";
+                            return (n - frontmatterOffset).toString();
+                        }
+                    }) : []),
                     wordWrapCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : [])
                 ]
             });
         }
-    }, [showLineNumbers, wordWrap]);
+    }, [showLineNumbers, wordWrap, frontmatterOffset]);
 
     // Handle incoming value changes
     useEffect(() => {
