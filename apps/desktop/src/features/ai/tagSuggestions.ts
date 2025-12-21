@@ -1,10 +1,18 @@
-// Mock AI Tag Suggestions
-// In the future, this will connect to the AI model or worker.
+import { suggestTagsForCurrentNote } from './aiController';
+import { NoteSnapshot } from '../../plugins/types';
 
-export async function suggestTags(_title: string, _content: string): Promise<string[]> {
-    // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+export async function suggestTags(title: string, content: string): Promise<string[]> {
+    const dummyNote: NoteSnapshot = {
+        path: 'dummy',
+        title,
+        content
+    };
 
-    // Return mock suggestions
-    return ['important', 'review', 'draft', 'ideas'];
+    try {
+        const result = await suggestTagsForCurrentNote(dummyNote);
+        return result.suggestions.map(s => s.tag);
+    } catch (e) {
+        console.error("AI suggestion failed", e);
+        return [];
+    }
 }

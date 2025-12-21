@@ -56,7 +56,7 @@ export function AddTagPopover({ assignedTags, onAdd, onClose, noteTitle, noteCon
         return Object.values(tags)
             .filter(t => !assignedSet.has(t.id))
             .filter(t => t.id.includes(query) || t.displayName.toLowerCase().includes(input.toLowerCase()))
-            .slice(0, 10);
+            .slice(0, 50);
     }, [tags, input, assignedTags]);
 
     const handleKeyDown = async (e: React.KeyboardEvent) => {

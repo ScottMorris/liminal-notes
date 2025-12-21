@@ -625,7 +625,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                   />
                   {activeTab.isDirty && <span className="unsaved-indicator" title="Unsaved changes"> ●</span>}
                   {activeTab.isUnsaved && <span className="indexing-indicator"> (Unsaved)</span>}
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                     <NoteTags
                         tags={displayedTags}
                         onRemove={handleRemoveTag}
