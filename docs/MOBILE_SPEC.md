@@ -272,6 +272,8 @@ The initial route map is defined as follows:
 * `/search` - Global search modal
 * `/settings` - Global settings modal
 
+> **Note:** `react-native-screens` must be pinned to `~4.16.0` to avoid runtime crashes on Android when the New Architecture is enabled (as of Dec 2025). Upgrades should be verified carefully against this constraint.
+
 ### 12.2 Deep Linking
 
 The application uses the `liminal` URL scheme.
