@@ -103,6 +103,9 @@ export interface Command<C = any> {
   // Context where command is active
   context: CommandContext;
 
+  // Additional contexts where command should be active
+  additionalContexts?: CommandContext[];
+
   // Grouping for menus
   group: CommandGroup;
 
