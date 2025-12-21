@@ -51,7 +51,13 @@ export type AiResult =
   | AiRelatedNotesResult;
 
 // Candidate labels
-const CANDIDATE_TAGS = ['project', 'idea', 'reference', 'log', 'task', 'personal', 'work', 'meeting', 'resource'];
+const CANDIDATE_TAGS = [
+    'project', 'idea', 'reference', 'log', 'task', 'personal', 'work', 'meeting', 'resource',
+    'journal', 'research', 'article', 'book', 'video', 'podcast', 'quote', 'snippet',
+    'archive', 'wip', 'draft', 'review', 'important', 'urgent', 'todo', 'done',
+    'bug', 'feature', 'documentation', 'guide', 'tutorial', 'recipe', 'travel', 'finance', 'health',
+    'science', 'technology', 'history', 'philosophy', 'art', 'design', 'coding', 'writing'
+];
 const CANDIDATE_TYPES = ['idea', 'log', 'reference', 'task'];
 
 export async function summariseCurrentNote(
