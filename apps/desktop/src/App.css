@@ -57,7 +57,7 @@ body {
 
 .app-layout {
   display: flex;
-  height: 100%;
+  height: calc(100vh - 32px); /* Subtract title bar height */
   width: 100%;
   overflow: hidden;
 }

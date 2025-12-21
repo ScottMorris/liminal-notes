@@ -7,6 +7,7 @@ import App from "./App";
 if (typeof window !== 'undefined') {
     (window as any).Buffer = Buffer;
 }
+import { SettingsProvider } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./theme";
 import { LinkIndexProvider } from "./components/LinkIndexContext";
 import { SearchIndexProvider } from "./components/SearchIndexContext";
@@ -20,18 +21,20 @@ registerAllCommands();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <NotificationProvider>
-        <LinkIndexProvider>
-          <SearchIndexProvider>
-            <TagsProvider>
-              <PluginHostProvider>
-                <App />
-              </PluginHostProvider>
-            </TagsProvider>
-          </SearchIndexProvider>
-        </LinkIndexProvider>
-      </NotificationProvider>
-    </ThemeProvider>
+    <SettingsProvider>
+      <ThemeProvider>
+        <NotificationProvider>
+          <LinkIndexProvider>
+            <SearchIndexProvider>
+              <TagsProvider>
+                <PluginHostProvider>
+                  <App />
+                </PluginHostProvider>
+              </TagsProvider>
+            </SearchIndexProvider>
+          </LinkIndexProvider>
+        </NotificationProvider>
+      </ThemeProvider>
+    </SettingsProvider>
   </React.StrictMode>,
 );

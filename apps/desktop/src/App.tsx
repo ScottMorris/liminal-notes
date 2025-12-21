@@ -21,6 +21,7 @@ import { useLinkIndex } from "./components/LinkIndexContext";
 import { RemindersProvider } from "./contexts/RemindersContext";
 import { RemindersPanel } from "./features/reminders/RemindersPanel";
 import { ReminderSheet } from "./features/reminders/components/ReminderSheet";
+import { TitleBar } from "./components/TitleBar";
 
 function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
   const cmd = commandRegistry.getCommand(commandId);
@@ -70,6 +71,15 @@ function AppContent() {
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'files' | 'tags'>('files');
+
+  const useNativeDecorations = (settings['appearance.useNativeDecorations'] as boolean) ?? false;
+
+  // Sync native decorations
+  useEffect(() => {
+      import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+          getCurrentWindow().setDecorations(useNativeDecorations);
+      });
+  }, [useNativeDecorations]);
 
   // Sync settings
   useEffect(() => {
@@ -352,19 +362,31 @@ function AppContent() {
   }, []);
 
   if (isVaultLoading) {
-    return <div className="container center">Loading...</div>;
+    return (
+      <div className="container">
+        {!useNativeDecorations && <TitleBar />}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (!vaultConfig) {
     return (
-      <div className="container center">
-        <VaultPicker onVaultConfigured={handleVaultConfigured} />
+      <div className="container">
+        {!useNativeDecorations && <TitleBar />}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <VaultPicker onVaultConfigured={handleVaultConfigured} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="app-layout">
+    <div className="container">
+      {!useNativeDecorations && <TitleBar />}
+      <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
           <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
@@ -479,17 +501,16 @@ function AppContent() {
         <StatusBar />
       </div>
     </div>
+    </div>
   );
 }
 
 function App() {
     return (
         <TabsProvider>
-          <SettingsProvider>
             <RemindersProvider>
               <AppContent />
             </RemindersProvider>
-          </SettingsProvider>
         </TabsProvider>
     );
 }

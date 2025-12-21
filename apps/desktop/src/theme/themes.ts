@@ -13,6 +13,7 @@ export const lightTheme: Theme = {
     '--ln-danger': '#d14343',
     '--ln-sidebar-bg': '#f5f5f5',
     '--ln-sidebar-fg': '#333333',
+    '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#e0e0e0',
 
     // Editor Core
@@ -68,6 +69,7 @@ export const darkTheme: Theme = {
     '--ln-danger': '#ff6b6b',
     '--ln-sidebar-bg': '#252526',
     '--ln-sidebar-fg': '#cccccc',
+    '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#2a2d2e',
 
     // Editor Core
@@ -123,6 +125,7 @@ export const draculaTheme: Theme = {
     '--ln-danger': '#ff5555',
     '--ln-sidebar-bg': '#21222c',
     '--ln-sidebar-fg': '#f8f8f2',
+    '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#44475a',
 
     // Editor Core (Dracula specifics)
@@ -179,6 +182,7 @@ export const claudeLightTheme: Theme = {
     '--ln-danger': 'hsl(4, 65%, 51%)',
     '--ln-sidebar-bg': 'hsl(48, 33.3%, 97.1%)',
     '--ln-sidebar-fg': 'hsl(60, 2.6%, 7.6%)',
+    '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 93%)',
 
     // Editor Core
@@ -235,6 +239,7 @@ export const claudeDarkTheme: Theme = {
     '--ln-danger': 'hsl(4, 72%, 62%)',
     '--ln-sidebar-bg': 'hsl(60, 2.7%, 14.5%)',
     '--ln-sidebar-fg': 'hsl(48, 33.3%, 97.1%)',
+    '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(60, 2.5%, 23%)',
 
     // Editor Core
@@ -291,6 +296,7 @@ export const julesDarkTheme: Theme = {
     '--ln-danger': 'hsl(0, 75%, 64%)',
     '--ln-sidebar-bg': 'hsl(240, 8%, 9%)',
     '--ln-sidebar-fg': 'hsl(240, 67%, 99%)',
+    '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(250, 7%, 16%)',
 
     // Editor Core
@@ -347,6 +353,7 @@ export const chatgptLightTheme: Theme = {
     '--ln-danger': '#d14343',
     '--ln-sidebar-bg': 'hsl(0, 0%, 98%)',
     '--ln-sidebar-fg': 'hsl(0, 0%, 5%)',
+    '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 93%)',
 
     // Editor Core
@@ -403,6 +410,7 @@ export const chatgptDarkTheme: Theme = {
     '--ln-danger': '#ff6b6b',
     '--ln-sidebar-bg': 'hsl(0, 0%, 9%)',
     '--ln-sidebar-fg': 'hsl(0, 0%, 100%)',
+    '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 19%)',
 
     // Editor Core
