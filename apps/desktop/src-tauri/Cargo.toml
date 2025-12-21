@@ -30,4 +30,4 @@ tauri-plugin-notification = "2"
 tauri-plugin-single-instance = { version = "2.3.6", features = ["deep-link"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-libadwaita = { version = "0.7", package = "adw", features = ["v1_6"] }
+adw = { package = "libadwaita", version = "0.7", features = ["v1_6"] }
