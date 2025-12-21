@@ -135,7 +135,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       // Build keymap from command registry
       // Exclude global commands so they bubble up to window listeners
       const registryKeymap = commandRegistry.getAllCommands()
-        .filter(cmd => cmd.shortcut && cmd.context !== 'Global')
+        .filter(cmd => cmd.shortcut && (cmd.context !== 'Global' || cmd.additionalContexts?.includes('Editor')))
         .map(cmd => ({
           key: cmd.shortcut!.replace(/Ctrl|Cmd/g, 'Mod').replace(/\+/g, '-').toLowerCase(),
           run: (view: EditorView) => {
@@ -144,16 +144,6 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
             return true;
           }
         }));
-
-      // Explicitly add global save command binding for the editor
-      registryKeymap.push({
-          key: 'Mod-s',
-          run: (view: EditorView) => {
-              const context = getEditorContext(view);
-              commandRegistry.executeCommand('editor.file.save', context);
-              return true;
-          }
-      });
 
       let startState: EditorState;
       const extensions = [
