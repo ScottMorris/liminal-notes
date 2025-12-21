@@ -7,6 +7,7 @@ import { GFM } from '@lezer/markdown';
 import { closeBrackets } from '@codemirror/autocomplete';
 import { createEditorTheme } from './editorTheme';
 import { markdownDecorations } from './decorations';
+import { frontmatterHider } from './frontmatterHider';
 import { spellcheckExtension } from './spellcheck/spellcheckExtension';
 import { spellcheckCore } from '../../features/spellcheck/spellcheckCore';
 import { useTheme } from '../../theme';
@@ -56,6 +57,25 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       model: MenuModel;
       position: MenuPosition;
     } | null>(null);
+
+    // Calculate frontmatter offset for line numbers
+    const getFrontmatterOffset = (text: string): number => {
+        if (!text.startsWith('---\n')) return 0;
+        const endFenceIndex = text.indexOf('\n---', 4);
+        if (endFenceIndex === -1) return 0;
+
+        let lines = 1;
+        for (let i = 0; i < endFenceIndex; i++) {
+            if (text[i] === '\n') lines++;
+        }
+        return lines + 1;
+    };
+
+    const [frontmatterOffset, setFrontmatterOffset] = useState(() => getFrontmatterOffset(value));
+
+    useEffect(() => {
+        setFrontmatterOffset(getFrontmatterOffset(value));
+    }, [value]);
 
     // Keep refs up to date
     useEffect(() => {
@@ -132,6 +152,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         closeBrackets(),
         markdown({ extensions: [GFM] }),
         markdownDecorations,
+        frontmatterHider,
         spellcheckExtension,
         createEditorTheme(),
         keymap.of([
@@ -209,12 +230,17 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         if (viewRef.current) {
             viewRef.current.dispatch({
                 effects: [
-                    lineNumbersCompartment.reconfigure(showLineNumbers ? lineNumbers() : []),
+                    lineNumbersCompartment.reconfigure(showLineNumbers ? lineNumbers({
+                        formatNumber: (n) => {
+                            if (n <= frontmatterOffset) return "";
+                            return (n - frontmatterOffset).toString();
+                        }
+                    }) : []),
                     wordWrapCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : [])
                 ]
             });
         }
-    }, [showLineNumbers, wordWrap]);
+    }, [showLineNumbers, wordWrap, frontmatterOffset]);
 
     // Handle incoming value changes
     useEffect(() => {

@@ -4,6 +4,7 @@ import { VaultConfig, FileEntry } from "../types";
 import { useLinkIndex } from "../components/LinkIndexContext";
 import { useSearchIndex } from "../components/SearchIndexContext";
 import { useNotification } from "../components/NotificationContext";
+import { useTags } from "../contexts/TagsContext";
 
 export function useVault() {
   const [vaultConfig, setVaultConfig] = useState<VaultConfig | null>(null);
@@ -12,6 +13,7 @@ export function useVault() {
 
   const { rebuildIndex } = useLinkIndex();
   const { buildIndex: buildSearchIndex } = useSearchIndex();
+  const { refreshIndex: refreshTagIndex } = useTags();
   const { notify } = useNotification();
 
   const refreshFiles = useCallback(async () => {
@@ -20,10 +22,11 @@ export function useVault() {
       setFiles(fileList);
       rebuildIndex(fileList);
       buildSearchIndex(fileList);
+      refreshTagIndex(fileList);
     } catch (err) {
       notify("Failed to list files: " + String(err), 'error');
     }
-  }, [notify, rebuildIndex, buildSearchIndex]);
+  }, [notify, rebuildIndex, buildSearchIndex, refreshTagIndex]);
 
   const loadVault = useCallback(async () => {
     try {

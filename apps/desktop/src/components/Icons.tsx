@@ -55,6 +55,13 @@ export const SparklesIcon: React.FC<IconBaseProps> = (props) => (
   />
 );
 
+export const HashtagIcon: React.FC<IconBaseProps> = (props) => (
+  <Icon
+    {...props}
+    path={<path strokeLinecap="round" strokeLinejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5l-3.9 19.5m-2.1-19.5l-3.9 19.5" />}
+  />
+);
+
 export const DuplicateIcon: React.FC<IconBaseProps> = (props) => (
   <Icon
     {...props}

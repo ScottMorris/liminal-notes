@@ -5,6 +5,7 @@ import { SettingsSection } from './SettingsRenderer';
 import { XMarkIcon } from '../Icons';
 import pkg from '../../../package.json';
 import { RemindersDebugModal } from '../../features/reminders/components/RemindersDebugModal';
+import { TagSettings } from './TagSettings';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -17,14 +18,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
 
     const sections = useMemo(() => getSections(availableThemes, appVersion), [availableThemes, appVersion]);
 
+    const tagSection = { id: 'tags', title: 'Tag Management', settings: [] };
+
     // Group sections for sidebar
-    const optionsGroups = sections.filter(s => ['general', 'vault', 'editor', 'files-links', 'appearance', 'hotkeys'].includes(s.id));
+    const optionsGroups = [
+        ...sections.filter(s => ['general', 'vault', 'editor', 'files-links'].includes(s.id)),
+        tagSection,
+        ...sections.filter(s => ['appearance', 'hotkeys'].includes(s.id))
+    ];
     const pluginsGroups = sections.filter(s => ['core-plugins', 'community-plugins'].includes(s.id));
 
     const [activeSectionId, setActiveSectionId] = useState(optionsGroups[0]?.id || sections[0]?.id);
     const [isDebugOpen, setIsDebugOpen] = useState(false);
 
-    const activeSection = sections.find(s => s.id === activeSectionId);
+    const activeSection = sections.find(s => s.id === activeSectionId) || (activeSectionId === 'tags' ? tagSection : undefined);
 
     const handleAction = (actionId: string) => {
         if (actionId === 'switch-vault') {
@@ -169,7 +176,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
                         <button className="close-btn" onClick={onClose}><XMarkIcon size={24} /></button>
                     </div>
                     <div className="settings-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '20px 40px' }}>
-                        {activeSection && (
+                        {activeSectionId === 'tags' ? (
+                            <TagSettings />
+                        ) : activeSection && (
                             <SettingsSection section={activeSection} onAction={handleAction} />
                         )}
                     </div>

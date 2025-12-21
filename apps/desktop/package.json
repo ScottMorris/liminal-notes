@@ -26,6 +26,7 @@
     "@tauri-apps/plugin-notification": "^2.3.3",
     "@tauri-apps/plugin-opener": "^2",
     "@types/nspell": "^2.1.6",
+    "buffer": "^6.0.3",
     "date-fns": "^4.1.0",
     "dictionary-en-ca": "^3.0.0",
     "gray-matter": "^4.0.3",
