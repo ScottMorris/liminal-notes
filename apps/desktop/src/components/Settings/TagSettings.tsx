@@ -1,5 +1,5 @@
 import { useTags } from '../../contexts/TagsContext';
-import { usePluginHost } from '../../../plugins/PluginHostProvider';
+import { usePluginHost } from '../../plugins/PluginHostProvider';
 import { useState } from 'react';
 import { Tag } from '../../types/tags';
 import { HashtagIcon, XMarkIcon, PencilSquareIcon } from '../Icons';
