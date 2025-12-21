@@ -7,6 +7,7 @@ import { GFM } from '@lezer/markdown';
 import { closeBrackets } from '@codemirror/autocomplete';
 import { createEditorTheme } from './editorTheme';
 import { markdownDecorations } from './decorations';
+import { frontmatterHider } from './frontmatterHider';
 import { spellcheckExtension } from './spellcheck/spellcheckExtension';
 import { spellcheckCore } from '../../features/spellcheck/spellcheckCore';
 import { useTheme } from '../../theme';
@@ -132,6 +133,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         closeBrackets(),
         markdown({ extensions: [GFM] }),
         markdownDecorations,
+        frontmatterHider,
         spellcheckExtension,
         createEditorTheme(),
         keymap.of([
