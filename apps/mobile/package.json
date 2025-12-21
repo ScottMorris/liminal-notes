@@ -1,7 +1,7 @@
 {
   "name": "@liminal-notes/mobile",
   "version": "0.1.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -11,9 +11,14 @@
   },
   "dependencies": {
     "expo": "~54.0.30",
+    "expo-constants": "^18.0.12",
+    "expo-linking": "^8.0.11",
+    "expo-router": "^6.0.21",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-screens": "^4.19.0"
   },
   "devDependencies": {
     "@expo/ngrok": "^4.1.3",

@@ -106,12 +106,13 @@ The mobile app is built using:
 
 * React Native (Expo)
 * TypeScript
+* Expo Router (File-based routing)
 
 The architecture is split into three layers:
 
 1. App Layer (React Native)
 
-* Navigation, screens, state management
+* Navigation (Expo Router), screens, state management
 * Vault orchestration
 * Indexing, search, and persistence
 
@@ -257,7 +258,38 @@ Device testing is required later for:
 
 ---
 
-## 12. Documentation & Evolution
+## 12. Routing & Navigation
+
+The mobile application uses **Expo Router** for file-based routing, mirroring web standards.
+
+### 12.1 Route Structure
+
+The initial route map is defined as follows:
+
+* `/vault` - Authenticated vault root (placeholder for vault context)
+* `/vault/explorer` - File explorer
+* `/vault/note/[id]` - Note editor (dynamic route)
+* `/search` - Global search modal
+* `/settings` - Global settings modal
+
+### 12.2 Deep Linking
+
+The application uses the `liminal` URL scheme.
+
+* `liminal://vault` -> `/vault`
+* `liminal://note/<id>` -> `/vault/note/[id]`
+* `liminal://search` -> `/search`
+
+### 12.3 Navigation Helpers
+
+Navigation logic is centralized in `apps/mobile/src/navigation/router.ts` to abstract router implementation details.
+
+* `openNote(id: string)`
+* `openPath(path: string)`
+
+---
+
+## 13. Documentation & Evolution
 
 This spec is expected to evolve.
 
