@@ -440,7 +440,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
           if (data.liminal?.tagMeta?.[tagId]) {
               delete data.liminal.tagMeta[tagId];
           }
-      });
+      }, true);
   };
 
   const handleAddTag = (tagId: string) => {
@@ -458,13 +458,22 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
               if (!data.liminal.tagMeta) data.liminal.tagMeta = {};
               data.liminal.tagMeta[tagId] = { source: 'human' };
           }
-      });
+      }, true);
   };
 
-  const handleUpdateFrontmatter = (updater: (data: any) => void) => {
+  const handleUpdateFrontmatter = async (updater: (data: any) => void, shouldSave = false) => {
     const newContent = updateFrontmatter(content, updater);
     setContent(newContent);
-    editorRef.current?.insertAtCursor("");
+
+    if (shouldSave) {
+        if (editorRef.current && editorRef.current.view) {
+             const view = editorRef.current.view;
+             const context = getEditorContext(view);
+             await context.operations.saveNote(newContent);
+        }
+    } else {
+        editorRef.current?.insertAtCursor("");
+    }
   };
 
   const handleRename = async (newName: string) => {
