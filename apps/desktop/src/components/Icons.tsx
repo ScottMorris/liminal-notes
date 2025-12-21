@@ -81,6 +81,21 @@ export const WindowMaximizeIcon: React.FC<IconBaseProps> = (props) => (
     </svg>
 );
 
+export const WindowRestoreIcon: React.FC<IconBaseProps> = (props) => (
+    <svg
+      width={10}
+      height={10}
+      viewBox="0 0 11 11"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1"
+      {...props}
+    >
+        <rect x="2.5" y="2.5" width="8" height="8" />
+        <path d="M2.5 2.5V0.5H10.5V8.5H8.5" />
+    </svg>
+);
+
 export const WindowCloseIcon: React.FC<IconBaseProps> = (props) => (
     <svg
       width={10}

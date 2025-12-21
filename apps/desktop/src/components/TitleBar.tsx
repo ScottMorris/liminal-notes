@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { WindowMinimizeIcon, WindowMaximizeIcon, WindowCloseIcon } from './Icons';
+import { WindowMinimizeIcon, WindowMaximizeIcon, WindowCloseIcon, WindowRestoreIcon } from './Icons';
 import './TitleBar.css';
 
 export const TitleBar: React.FC = () => {
     const [platform, setPlatform] = useState<'mac' | 'linux' | 'win'>('win');
+    const [isMaximized, setIsMaximized] = useState(false);
+    const appWindow = getCurrentWindow();
 
     useEffect(() => {
         const ua = navigator.userAgent;
@@ -15,12 +17,29 @@ export const TitleBar: React.FC = () => {
         } else {
             setPlatform('win');
         }
+
+        const updateState = async () => {
+             try {
+                setIsMaximized(await appWindow.isMaximized());
+             } catch (e) {
+                 console.error("Failed to check maximized state", e);
+             }
+        };
+
+        updateState();
+
+        const unlistenPromise = appWindow.listen('tauri://resize', updateState);
+
+        return () => {
+             unlistenPromise.then(unlisten => unlisten());
+        };
     }, []);
 
-    const appWindow = getCurrentWindow();
-
     const minimize = () => appWindow.minimize();
-    const maximize = () => appWindow.toggleMaximize();
+    const toggleMaximize = async () => {
+        await appWindow.toggleMaximize();
+        setIsMaximized(await appWindow.isMaximized());
+    };
     const close = () => appWindow.close();
 
     // Mac Traffic Lights
@@ -28,20 +47,35 @@ export const TitleBar: React.FC = () => {
         <div className="window-controls mac">
             <button onClick={close} className="control-button mac-close" title="Close" />
             <button onClick={minimize} className="control-button mac-minimize" title="Minimize" />
-            <button onClick={maximize} className="control-button mac-maximize" title="Maximize" />
+            <button onClick={toggleMaximize} className="control-button mac-maximize" title="Maximize" />
         </div>
     );
 
-    // Windows/Linux Controls
+    // Windows Controls
     const WinControls = () => (
         <div className="window-controls win">
             <button onClick={minimize} className="control-button win-minimize" title="Minimize">
                 <WindowMinimizeIcon />
             </button>
-            <button onClick={maximize} className="control-button win-maximize" title="Maximize">
-                <WindowMaximizeIcon />
+            <button onClick={toggleMaximize} className="control-button win-maximize" title={isMaximized ? "Restore" : "Maximize"}>
+                {isMaximized ? <WindowRestoreIcon /> : <WindowMaximizeIcon />}
             </button>
             <button onClick={close} className="control-button win-close" title="Close">
+                <WindowCloseIcon />
+            </button>
+        </div>
+    );
+
+    // Linux Controls (Distinct style)
+    const LinuxControls = () => (
+        <div className="window-controls linux">
+            <button onClick={minimize} className="control-button linux-minimize" title="Minimize">
+                <WindowMinimizeIcon />
+            </button>
+            <button onClick={toggleMaximize} className="control-button linux-maximize" title={isMaximized ? "Restore" : "Maximize"}>
+                 {isMaximized ? <WindowRestoreIcon /> : <WindowMaximizeIcon />}
+            </button>
+            <button onClick={close} className="control-button linux-close" title="Close">
                 <WindowCloseIcon />
             </button>
         </div>
@@ -61,11 +95,11 @@ export const TitleBar: React.FC = () => {
 
             {platform === 'linux' && (
                 <>
-                     <div className="window-controls-placeholder" /> {/* Balance for center alignment (approx width of controls) */}
+                     <div className="window-controls-placeholder" />
                      <div className="title-drag-region" data-tauri-drag-region />
                      <div className="app-title" data-tauri-drag-region>Liminal Notes</div>
                      <div className="title-drag-region" data-tauri-drag-region />
-                     <WinControls />
+                     <LinuxControls />
                 </>
             )}
 

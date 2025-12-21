@@ -117,3 +117,37 @@
   background-color: #e81123;
   color: white;
 }
+
+/* Linux Controls (Adwaita-style) */
+.window-controls.linux {
+    gap: 6px;
+    padding-right: 8px;
+}
+
+.control-button.linux-minimize,
+.control-button.linux-maximize,
+.control-button.linux-close {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--ln-fg);
+  background-color: transparent;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-button.linux-minimize:hover,
+.control-button.linux-maximize:hover,
+.control-button.linux-close:hover {
+  background-color: var(--ln-item-hover-bg);
+  /* Adwaita typically uses a light grey background on hover */
+  background-color: rgba(128, 128, 128, 0.15);
+}
+
+.control-button.linux-close:hover {
+    background-color: #e81123;
+    color: white; /* Optional: Red for close on Linux too, or just grey */
+}
+/* Note: Standard Adwaita often keeps Close button neutral until hover, but Red is common cross-platform cue. */
