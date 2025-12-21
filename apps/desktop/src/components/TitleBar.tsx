@@ -67,7 +67,7 @@ export const TitleBar: React.FC = () => {
     );
 
     // Linux Controls (Distinct style)
-    // TODO: Track native GTK headerbar support for better system integration
+    // TODO: Future enhancement: Track native GTK headerbar support for better system integration
     const LinuxControls = () => (
         <div className="window-controls linux">
             <button onClick={minimize} className="control-button linux-minimize" title="Minimize">
