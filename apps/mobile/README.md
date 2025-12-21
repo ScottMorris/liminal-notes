@@ -47,7 +47,7 @@ Since the Dev Container runs in a virtualized Linux environment, you cannot run 
     ```
 2.  Start Expo with the `--tunnel` flag to bypass network isolation:
     ```bash
-    npx expo start --tunnel
+    pnpm expo start --tunnel
     ```
 3.  Scan the QR code with Expo Go on your phone.
 
