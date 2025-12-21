@@ -21,6 +21,7 @@ import { useLinkIndex } from "./components/LinkIndexContext";
 import { RemindersProvider } from "./contexts/RemindersContext";
 import { RemindersPanel } from "./features/reminders/RemindersPanel";
 import { ReminderSheet } from "./features/reminders/components/ReminderSheet";
+import { TitleBar } from "./components/TitleBar";
 
 function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
   const cmd = commandRegistry.getCommand(commandId);
@@ -364,7 +365,9 @@ function AppContent() {
   }
 
   return (
-    <div className="app-layout">
+    <div className="container">
+      <TitleBar />
+      <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
           <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
@@ -478,6 +481,7 @@ function AppContent() {
         </main>
         <StatusBar />
       </div>
+    </div>
     </div>
   );
 }

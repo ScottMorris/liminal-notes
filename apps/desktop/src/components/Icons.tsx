@@ -55,6 +55,46 @@ export const SparklesIcon: React.FC<IconBaseProps> = (props) => (
   />
 );
 
+export const WindowMinimizeIcon: React.FC<IconBaseProps> = (props) => (
+    <svg
+      width={10}
+      height={10}
+      viewBox="0 0 10.2 1"
+      fill="currentColor"
+      {...props}
+    >
+        <rect width="10.2" height="1" />
+    </svg>
+);
+
+export const WindowMaximizeIcon: React.FC<IconBaseProps> = (props) => (
+    <svg
+      width={10}
+      height={10}
+      viewBox="0 0 10 10"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1"
+      {...props}
+    >
+        <rect x="0.5" y="0.5" width="9" height="9" />
+    </svg>
+);
+
+export const WindowCloseIcon: React.FC<IconBaseProps> = (props) => (
+    <svg
+      width={10}
+      height={10}
+      viewBox="0 0 10 10"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1"
+      {...props}
+    >
+        <path d="M1 1L9 9M9 1L1 9" />
+    </svg>
+);
+
 export const HashtagIcon: React.FC<IconBaseProps> = (props) => (
   <Icon
     {...props}

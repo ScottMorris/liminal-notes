@@ -1,0 +1,114 @@
+/* Title Bar Styles */
+.title-bar {
+  height: 32px;
+  background-color: var(--ln-sidebar-bg); /* Use sidebar background color */
+  border-bottom: 1px solid var(--ln-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  font-size: 0.85rem;
+  color: var(--ln-fg);
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.title-bar.is-mac {
+  padding-left: 10px;
+}
+
+.title-bar.is-win {
+    padding-left: 10px;
+}
+
+.app-title {
+  font-weight: 500;
+  color: var(--ln-fg);
+  flex-shrink: 0;
+}
+
+.app-title.left {
+    margin-right: auto;
+}
+
+.title-drag-region {
+    flex: 1;
+    height: 100%;
+}
+
+.window-controls-placeholder {
+    width: 70px; /* Approximate width of Mac controls to balance center title */
+    flex-shrink: 0;
+}
+
+.window-controls {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.window-controls.mac {
+    gap: 8px;
+}
+
+.window-controls.win {
+    /* Windows controls are usually flush right */
+}
+
+.control-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ln-fg);
+  padding: 0;
+}
+
+/* Mac Traffic Lights */
+.control-button.mac-close,
+.control-button.mac-minimize,
+.control-button.mac-maximize {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  padding: 0;
+  border: none;
+}
+
+.control-button.mac-close {
+  background-color: #ff5f56;
+}
+.control-button.mac-minimize {
+  background-color: #ffbd2e;
+}
+.control-button.mac-maximize {
+  background-color: #27c93f;
+}
+
+.control-button.mac-close:hover { background-color: #e0443e; }
+.control-button.mac-minimize:hover { background-color: #dea123; }
+.control-button.mac-maximize:hover { background-color: #1aab29; }
+
+/* Windows/Linux Controls */
+.control-button.win-minimize,
+.control-button.win-maximize,
+.control-button.win-close {
+  width: 46px;
+  height: 100%;
+  color: var(--ln-fg);
+  opacity: 0.8;
+  border-radius: 0; /* Square buttons */
+}
+
+.control-button.win-minimize:hover,
+.control-button.win-maximize:hover {
+  background-color: var(--ln-item-hover-bg);
+}
+
+.control-button.win-close:hover {
+  background-color: #e81123;
+  color: white;
+}
