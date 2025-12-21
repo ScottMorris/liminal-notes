@@ -17,6 +17,7 @@ function hideFrontmatter(doc: Text) {
   if (doc.lines === 0) return Decoration.none;
 
   const firstLine = doc.line(1);
+  // gray-matter defaults to strict '---' fences, so we match that.
   if (firstLine.text.trim() !== '---') {
       return Decoration.none;
   }

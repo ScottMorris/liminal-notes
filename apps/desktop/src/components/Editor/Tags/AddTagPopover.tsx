@@ -120,12 +120,22 @@ export function AddTagPopover({ assignedTags, onAdd, onClose, noteTitle, noteCon
                         style={{
                             padding: '4px 8px',
                             cursor: 'pointer',
-                            borderRadius: '4px'
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
                         }}
                         className="suggestion-item"
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--ln-hover-bg)'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
+                        <span style={{
+                            display: 'inline-block',
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: tag.color || 'var(--ln-accent)',
+                            marginRight: '8px'
+                        }}></span>
                         {tag.displayName}
                     </div>
                 ))}

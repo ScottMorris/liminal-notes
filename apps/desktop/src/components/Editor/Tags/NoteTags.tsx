@@ -25,7 +25,7 @@ export function NoteTags({ tags, onRemove, onAddClick }: NoteTagsProps) {
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            backgroundColor: color + '20', // Low opacity background
+                            backgroundColor: `color-mix(in srgb, ${color}, transparent 80%)`,
                             border: `1px solid ${color}`,
                             borderRadius: '12px',
                             padding: '1px 6px',
