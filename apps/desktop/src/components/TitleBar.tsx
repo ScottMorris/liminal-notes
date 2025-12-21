@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { WindowMinimizeIcon, WindowMaximizeIcon, WindowCloseIcon, WindowRestoreIcon } from './Icons';
+import { ContextMenu } from './Editor/ContextMenu/ContextMenu';
+import { MenuModel } from './Editor/ContextMenu/types';
 import './TitleBar.css';
 
 export const TitleBar: React.FC = () => {
     const [platform, setPlatform] = useState<'mac' | 'linux' | 'win'>('win');
     const [isMaximized, setIsMaximized] = useState(false);
+    const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+
     const appWindow = getCurrentWindow();
 
     useEffect(() => {
@@ -21,8 +27,9 @@ export const TitleBar: React.FC = () => {
         const updateState = async () => {
              try {
                 setIsMaximized(await appWindow.isMaximized());
+                setIsAlwaysOnTop(await appWindow.isAlwaysOnTop());
              } catch (e) {
-                 console.error("Failed to check maximized state", e);
+                 console.error("Failed to check window state", e);
              }
         };
 
@@ -41,6 +48,71 @@ export const TitleBar: React.FC = () => {
         setIsMaximized(await appWindow.isMaximized());
     };
     const close = () => appWindow.close();
+
+    const handleContextMenu = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        try {
+            setIsMaximized(await appWindow.isMaximized());
+            setIsAlwaysOnTop(await appWindow.isAlwaysOnTop());
+        } catch(e) { console.error(e); }
+
+        setMenuPosition({ x: e.clientX, y: e.clientY });
+        setMenuOpen(true);
+    };
+
+    const handleMenuAction = async (itemId: string) => {
+        switch (itemId) {
+            case 'restore':
+            case 'maximize':
+                toggleMaximize();
+                break;
+            case 'minimize':
+                minimize();
+                break;
+            case 'move':
+                void appWindow.startDragging();
+                break;
+            case 'always-on-top':
+                const newState = !isAlwaysOnTop;
+                await appWindow.setAlwaysOnTop(newState);
+                setIsAlwaysOnTop(newState);
+                break;
+            case 'close':
+                close();
+                break;
+        }
+        setMenuOpen(false);
+    };
+
+    const menuModel: MenuModel = {
+        sections: [
+            {
+                items: [
+                    {
+                        id: isMaximized ? 'restore' : 'maximize',
+                        label: isMaximized ? 'Restore' : 'Maximize',
+                        icon: isMaximized ? 'WindowRestoreIcon' : 'WindowMaximizeIcon'
+                    },
+                    {
+                        id: 'minimize',
+                        label: 'Minimize',
+                        icon: 'WindowMinimizeIcon'
+                    }
+                ]
+            },
+            { items: [{ id: 'move', label: 'Move', icon: 'MoveIcon' }] },
+            {
+                items: [{
+                    id: 'always-on-top',
+                    label: 'Always on Top',
+                    icon: isAlwaysOnTop ? 'CheckIcon' : undefined
+                }]
+            },
+            {
+                items: [{ id: 'close', label: 'Close', icon: 'WindowCloseIcon' }]
+            }
+        ]
+    };
 
     // Mac Traffic Lights
     const MacControls = () => (
@@ -83,7 +155,8 @@ export const TitleBar: React.FC = () => {
     );
 
     return (
-        <div className={`title-bar is-${platform}`}>
+        <>
+        <div className={`title-bar is-${platform}`} onContextMenu={handleContextMenu}>
             {platform === 'mac' && (
                 <>
                     <MacControls />
@@ -112,5 +185,14 @@ export const TitleBar: React.FC = () => {
                 </>
             )}
         </div>
+        {menuOpen && (
+            <ContextMenu
+                model={menuModel}
+                position={menuPosition}
+                onClose={() => setMenuOpen(false)}
+                onItemClick={handleMenuAction}
+            />
+        )}
+        </>
     );
 };

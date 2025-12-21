@@ -1,5 +1,5 @@
 import React from 'react';
-import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon, DictionaryIcon, BanIcon, RefreshIcon, DuplicateIcon, FolderOpenIcon, ClipboardIcon, PlusSquareIcon } from '../../Icons';
+import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon, DictionaryIcon, BanIcon, RefreshIcon, DuplicateIcon, FolderOpenIcon, ClipboardIcon, PlusSquareIcon, WindowRestoreIcon, WindowMaximizeIcon, WindowMinimizeIcon, WindowCloseIcon, CheckIcon, MoveIcon } from '../../Icons';
 
 // Simple SVG paths for common editor actions
 const LinkIcon = () => (
@@ -267,6 +267,14 @@ export function getIconByName(name?: string): React.ReactNode {
     case 'folder-open': return <FolderOpenIcon size={16} />;
     case 'copy-clipboard': return <ClipboardIcon size={16} />;
     case 'plus-square': return <PlusSquareIcon size={16} />;
+
+    // Window Controls
+    case 'WindowRestoreIcon': return <WindowRestoreIcon size={16} />;
+    case 'WindowMaximizeIcon': return <WindowMaximizeIcon size={16} />;
+    case 'WindowMinimizeIcon': return <WindowMinimizeIcon size={16} />;
+    case 'WindowCloseIcon': return <WindowCloseIcon size={16} />;
+    case 'CheckIcon': return <CheckIcon size={16} />;
+    case 'MoveIcon': return <MoveIcon size={16} />;
 
     default: return null;
   }
