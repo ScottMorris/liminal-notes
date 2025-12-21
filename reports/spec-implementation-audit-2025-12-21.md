@@ -17,7 +17,7 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
 2.  **Settings Storage**: `SPEC.md` mentions per-vault settings. Implementation persists global settings via `tauri-plugin-store` (implied by `settings.rs` and `ipc.ts`) and plugin settings in `localStorage` (`PluginHostProvider.tsx`), not `vault.config.json` or `.liminal/` files.
 3.  **Search Indexing**: `ARCHITECTURE.md` describes a background worker listening to file events. Reality is a foreground `Promise.all` read of all files on load.
 4.  **Link Indexing**: `ARCHITECTURE.md` places the Link Index in the Rust Core. Reality places it in a React Context (`LinkIndexContext`), requiring full re-parse on frontend load.
-5.  **Editor Engine**: `MVP_APP.md` suggests "textarea or simple code editor". Implementation uses a sophisticated **CodeMirror 6** setup with custom extensions, which is "better" but creates a huge dependency for the mobile strategy (CodeMirror won't run in React Native).
+5.  **Editor Engine**: `MVP_APP.md` suggests "textarea or simple code editor". Implementation uses a sophisticated **CodeMirror 6** setup with custom extensions, which is "better" but creates a huge dependency for the mobile strategy (CodeMirror is not directly reusable in React Native).
 
 **Top 5 Undocumented Implementations:**
 1.  **Internal Plugin System**: The `PluginHostProvider` and `registry.ts` system is effectively a "Core Plugin" architecture not described in docs (which describe the *public* API).
@@ -28,7 +28,24 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
 
 ---
 
-## 2. Spec Inventory
+## 2. Traceability Index
+
+| Spec Area | Code Entry Points | UI Entry Points | Storage Touchpoints |
+| :--- | :--- | :--- | :--- |
+| **Vault Management** | `vault.rs`, `VaultPicker.tsx` | App Launch, Vault Picker Dialog | `AppConfig/vault.json` |
+| **File System** | `vault.rs`, `FileTree.tsx` | Sidebar File Tree | Disk (User Selected Folder) |
+| **Editor** | `CodeMirrorEditor.tsx`, `ipc.ts` | Main Pane, Tab Bar | `.md` files on disk |
+| **Search** | `SearchIndexContext.tsx`, `SearchModal.tsx` | `Ctrl+Shift+F`, Sidebar Button | In-memory `Map` |
+| **Wikilinks** | `wikiLinkParser.ts`, `LinkIndexContext.tsx` | Editor Typing `[[`, Backlinks Panel | In-memory `Map` |
+| **Plugin Host** | `PluginHostProvider.tsx`, `registry.ts` | Status Bar, Settings Modal | `localStorage` (`liminal-notes.plugins`) |
+| **Settings** | `settings.rs`, `SettingsModal.tsx` | Sidebar Gear Icon | `tauri-plugin-store` (App Data) |
+| **AI Assistant** | `ai.worker.ts`, `AiSidebar.tsx` | Editor Header Button | `localStorage` (Model Cache) |
+| **Reminders** | `packages/reminders-core`, `reminders/` | Sidebar Bell Icon | `.liminal/reminders.json` |
+| **Spellcheck** | `spellcheckCore.ts`, `worker.ts` | Editor Context Menu | `.liminal/spellcheck/` |
+
+---
+
+## 3. Spec Inventory
 
 | Spec Doc | Intended Scope | Key Promised Features | Conflicts |
 | :--- | :--- | :--- | :--- |
@@ -42,7 +59,7 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
 
 ---
 
-## 3. Implementation Inventory
+## 4. Implementation Inventory
 
 ### Desktop UI (`apps/desktop/src`)
 *   **Main Structure**: `App.tsx` handling Layout, `TitleBar`, `StatusBar`.
@@ -67,89 +84,101 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
 
 ---
 
-## 4. Crosswalk: Spec Items ↔ Implementation
+## 5. Crosswalk: Spec Items ↔ Implementation
 
-### 4.1. Vault Management
-| Requirement | Status | Evidence | Notes | Mobile Impact | Suggested Update |
+### 5.1. Vault Management
+| Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Select Vault** (Folder Picker) | Implemented | `VaultPicker.tsx`, `vault.rs::get_vault_config` | Uses Tauri Dialog. | **Desktop Dependency**: Tauri Dialogs don't exist in React Native. | Update `ARCHITECTURE.md` to define an abstract `VaultPickerService` interface. |
-| **Persist Vault Choice** | Implemented | `vault.rs::set_vault_config` | Stored in `AppConfig/vault.json`. | **Parity Gap**: Mobile needs its own storage (AsyncStorage/MMKV) for config. | Document platform-specific config storage in `ARCHITECTURE.md`. |
-| **Path Safety** (No `..` traversal) | Implemented | `vault.rs::resolve_safe_path` | Explicit check for `Component::Normal`. | **Shared-core Candidate**: Logic is generic and crucial for security. | Move `resolve_safe_path` logic to a shared Rust crate (`vault-core`). |
+| **Select Vault** (Folder Picker) | Implemented | `VaultPicker.tsx`, `vault.rs::get_vault_config` | High | **Desktop Dependency**: Tauri Dialogs don't exist in React Native.<br>**Dependency**: Tauri `dialog` plugin.<br>**Approach**: Use `react-native-document-picker` or standard OS file picker abstraction. | Update `ARCHITECTURE.md` (Section 5.1) to define an abstract `VaultPickerService` interface. |
+| **Persist Vault Choice** | Implemented | `vault.rs::set_vault_config` | High | **Parity Gap (non-blocking)**: Mobile needs its own storage for config.<br>**Dependency**: `fs::write` to app config dir.<br>**Approach**: Use `AsyncStorage` or `MMKV` on mobile. | Document platform-specific config storage locations in `ARCHITECTURE.md`. |
+| **Path Safety** (No `..` traversal) | Implemented | `vault.rs::resolve_safe_path` | High | **Shared-core Candidate**: Logic is generic and crucial for security.<br>**Dependency**: `std::path::Path`.<br>**Approach**: Move `resolve_safe_path` logic to a shared Rust crate (`vault-core`) compiled for both targets. | Move `resolve_safe_path` logic to `vault-core` crate description in `ARCHITECTURE.md`. |
 
-### 4.2. File System & Navigation
-| Requirement | Status | Evidence | Notes | Mobile Impact | Suggested Update |
+### 5.2. File System & Navigation
+| Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **List Files** (Recursive) | Implemented | `vault.rs::list_markdown_files` | Uses `walkdir`, filters hidden. | **Shared-core Candidate**: File listing logic should be shared. | Move listing logic to `vault-core` crate. |
-| **File Tree UI** | Implemented | `FileTree.tsx` | Renders recursive tree. | **Blocks Mobile MVP**: DOM-based tree (<ul>/<li>) not usable in RN. | None (UI is expected to differ). |
+| **List Files** (Recursive) | Implemented | `vault.rs::list_markdown_files` | High | **Shared-core Candidate**: File listing logic should be shared.<br>**Dependency**: `walkdir` crate.<br>**Approach**: Abstract file listing behind a `VaultRepository` interface in shared core. | Move listing logic to `vault-core` crate description in `ARCHITECTURE.md`. |
+| **File Tree UI** | Implemented | `FileTree.tsx` | High | **Blocks mobile MVP**: DOM-based tree (`<ul>`/`<li>`) not usable in RN.<br>**Dependency**: HTML/CSS.<br>**Approach**: Reimplement using `FlatList` or `SectionList` in React Native. | None (UI is expected to differ). |
 
-### 4.3. Editor & Preview
-| Requirement | Status | Evidence | Notes | Mobile Impact | Suggested Update |
+### 5.3. Editor & Preview
+| Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Markdown Editing** | Divergent | `CodeMirrorEditor.tsx` | `MVP_APP.md` allowed textarea; implementation is full CM6. | **Blocks Mobile MVP**: CodeMirror does not work in React Native. Requires WebView or replacement. | Update `MVP_APP.md` to explicitly acknowledge CodeMirror dependency or specify WebView for mobile editor. |
-| **Wikilink Syntax** | Implemented | `wikiLinkParser.ts`, `decorations.ts` | Custom regex parser. | **Shared-core Candidate**: Regex logic is JS, reusable if extracted. | Extract parsing logic to `packages/markdown-utils` (if created). |
-| **Read/Write Pipeline** | Implemented | `ipc.ts` -> `vault.rs` | Direct IPC calls. | **Desktop Dependency**: `ipc.ts` imports `@tauri-apps/api`. | Abstract data access behind a `VaultRepository` interface. |
+| **Markdown Editing** | Divergent | `CodeMirrorEditor.tsx` | High | **Blocks mobile MVP**: CodeMirror is not directly reusable in React Native; likely requires a WebView wrapper or an editor replacement.<br>**Dependency**: DOM, `codemirror`.<br>**Approach**: Use a WebView wrapper (e.g., `react-native-webview` loading a local HTML/CM6 bundle) or a native editor like `react-native-markdown-display`. | Update `MVP_APP.md` to explicitly acknowledge CodeMirror dependency or specify WebView for mobile editor. |
+| **Wikilink Syntax** | Implemented | `wikiLinkParser.ts`, `decorations.ts` | High | **Shared-core Candidate**: Regex logic is JS, reusable if extracted.<br>**Dependency**: None (Pure JS).<br>**Approach**: Extract parsing logic to `packages/markdown-utils` shared package. | Extract parsing logic to `packages/markdown-utils` (if created) in `MVP_APP.md`. |
+| **Read/Write Pipeline** | Implemented | `ipc.ts` -> `vault.rs` | High | **Desktop Dependency**: `ipc.ts` imports `@tauri-apps/api`.<br>**Dependency**: Tauri IPC.<br>**Approach**: Abstract data access behind a `VaultRepository` interface. | Abstract data access behind a `VaultRepository` interface in `ARCHITECTURE.md`. |
 
-### 4.4. Search & Indexing
-| Requirement | Status | Evidence | Notes | Mobile Impact | Suggested Update |
+### 5.4. Search & Indexing
+| Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **In-Memory Search** | Implemented | `SearchIndexContext.tsx` | Simple loop over `Map`. | **Parity Gap**: Valid for MVP, but performance trap. | - |
-| **Index Construction** | Divergent | `SearchIndexContext.tsx` | Reads *all* files on load (`readNote`). | **Blocks Mobile MVP**: Reading all files on startup is non-viable for mobile performance. | Update `ARCHITECTURE.md` to mandate persistent index (e.g. SQLite) for Mobile/Future. |
-| **Scoring** | Implemented | `SearchIndexContext.tsx` | Title (+2), Content (+1). | **Unclear**: Naive implementation. | - |
+| **In-Memory Search** | Implemented | `SearchIndexContext.tsx` | High | **Parity Gap (non-blocking)**: Valid for MVP, but performance trap.<br>**Dependency**: React Context.<br>**Approach**: Move to SQLite or shared Rust core for performance. | - |
+| **Index Construction** | Divergent | `SearchIndexContext.tsx` | High | **Blocks mobile MVP**: Reading all files on startup is non-viable for mobile performance.<br>**Dependency**: `fs::read_to_string` loop.<br>**Approach**: Implement persistent index (SQLite/JSON) in shared core. | Update `ARCHITECTURE.md` to mandate persistent index (e.g. SQLite) for Mobile/Future. |
+| **Scoring** | Implemented | `SearchIndexContext.tsx` | High | **Unclear**: Naive implementation.<br>**Dependency**: None.<br>**Approach**: Re-evaluate when moving to Rust core. | - |
 
-### 4.5. Plugin System
-| Requirement | Status | Evidence | Notes | Mobile Impact | Suggested Update |
+### 5.5. Plugin System
+| Requirement | Status | Evidence | Confidence | Mobile Impact (React Native) | Suggested Update |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Manifest.json** | Missing | `apps/desktop/src/plugins/` | Plugins are TS objects in `registry.ts`. | **Desktop-only by design** (current impl). | Update `PLUGIN_API.md` to distinguish "Core/Internal Plugins" from "Public Plugins". |
-| **Sandboxed Runtime** | Missing | `PluginHostProvider.tsx` | Plugins run in main thread context. | **Unclear**: Mobile might not support dynamic plugin loading easily (Store policies). | Flag Plugin System as "Desktop First" in specs. |
-| **Permissions** | Missing | `PluginHostProvider.tsx` | No permission checks implemented. | - | - |
+| **Manifest.json** | Missing | `apps/desktop/src/plugins/` | High | **Desktop-only by design** (current impl).<br>**Dependency**: Dynamic Loading.<br>**Approach**: Mobile plugins likely need to be bundled at build time. | Update `PLUGIN_API.md` to distinguish "Core/Internal Plugins" from "Public Plugins". |
+| **Sandboxed Runtime** | Missing | `PluginHostProvider.tsx` | High | **Unclear**: Mobile might not support dynamic plugin loading easily (Store policies).<br>**Dependency**: JS eval/VM.<br>**Approach**: Research iOS/Android constraints on dynamic code. | Flag Plugin System as "Desktop First" in specs. |
+| **Permissions** | Missing | `PluginHostProvider.tsx` | High | **Unclear**: No permission checks implemented.<br>**Dependency**: None.<br>**Approach**: Implement alongside Sandbox. | - |
 
 ---
 
-## 5. Gaps (Specified but Not Implemented)
+## 6. Gaps (Specified but Not Implemented)
 
 1.  **Sandboxed Plugin Host** (`PLUGIN_API.md`)
     *   **Missing**: The `manifest.json` parsing, `main.js` execution in a separate VM/Worker, and Permission boundaries.
     *   **Mobile Impact**: **Desktop-only by design** (mostly). Mobile stores restrict dynamic code execution. Mobile plugins likely need to be "bundled" or strictly limited.
-    *   **Suggested Spec Update**: Add a section to `PLUGIN_API.md` regarding "Mobile Constraints" (no dynamic code loading on iOS).
+    *   **Desktop Dependency**: Dynamic code loading (`eval`, `new Function`, or Worker blobs).
+    *   **Recommended Approach**: Limit mobile plugins to "bundled" core plugins or use a very restricted DSL.
+    *   **Suggested Spec Update**: `PLUGIN_API.md` (Section 2): Add "Mobile Constraints" section detailing no dynamic code loading.
 
 2.  **Persistent Search Index** (`ARCHITECTURE.md`)
     *   **Missing**: The Architecture doc describes a `FileWatcher` feeding a background `Indexer`. Reality is a "read everything on boot" approach.
-    *   **Mobile Impact**: **Blocks Mobile MVP** (Performance). Mobile cannot afford to read thousands of files on launch.
-    *   **Suggested Spec Update**: Explicitly require a persistent index format (e.g., `index.db` or `search.json`) in `MVP_APP.md` or `ARCHITECTURE.md` to enable mobile parity.
+    *   **Mobile Impact**: **Blocks mobile MVP** (Performance). Mobile cannot afford to read thousands of files on launch.
+    *   **Desktop Dependency**: High CPU/Memory usage acceptable on desktop but not mobile.
+    *   **Recommended Approach**: Move indexing to a shared Rust core using SQLite or a persistent file format.
+    *   **Suggested Spec Update**: `MVP_APP.md` (Section 5.4) or `ARCHITECTURE.md`: Explicitly require a persistent index format.
 
 3.  **Reading View** (`MVP_APP.md`)
     *   **Missing**: A dedicated "Reading Mode" that renders pure HTML (using `react-markdown` or similar) replacing the editor. Current "Preview" exists but `MVP_APP.md` implies a mode switch (Source vs Reading).
-    *   **Mobile Impact**: **Parity Gap**. Mobile users often consume content more than edit.
-    *   **Suggested Spec Update**: Clarify if "Live Preview" (CodeMirror) replaces the need for a separate "Reading View".
+    *   **Mobile Impact**: **Parity Gap (non-blocking)**. Mobile users often consume content more than edit.
+    *   **Desktop Dependency**: None.
+    *   **Recommended Approach**: Implement a read-only view using `react-native-markdown-display`.
+    *   **Suggested Spec Update**: `MVP_APP.md` (Section 2): Clarify if "Live Preview" (CodeMirror) replaces the need for a separate "Reading View".
 
 ---
 
-## 6. Divergences (Implemented Differently)
+## 7. Divergences (Implemented Differently)
 
 1.  **Plugin System Implementation**
     *   **Spec**: `PLUGIN_API.md` describes a public-facing, sandboxed API.
     *   **Code**: `PluginHostProvider.tsx` implements an *internal* plugin system used for "Built-in" features (AI, Word Count).
     *   **Why it matters**: The internal API does not match the public spec. If we open this to developers, we need to rewrite it.
     *   **Mobile Impact**: **Unclear**. If internal plugins are just React components, they might be reusable in RN if they don't use DOM.
-    *   **Suggested Spec Update**: Rename `PLUGIN_API.md` to `PUBLIC_PLUGIN_API.md` and document the existence of an "Internal Plugin Architecture" for core features.
+    *   **Desktop Dependency**: React Context.
+    *   **Recommended Approach**: Audit internal plugins for DOM usage.
+    *   **Suggested Spec Update**: `PLUGIN_API.md`: Rename to `PUBLIC_PLUGIN_API.md` and document the existence of an "Internal Plugin Architecture".
 
 2.  **Indexing Location**
     *   **Spec**: `ARCHITECTURE.md` says "Core Engine (Rust): Indexing/search".
     *   **Code**: Indexing is entirely Frontend (React Context).
     *   **Why it matters**: Rust would be faster and shareable. React is desktop-coupled.
     *   **Mobile Impact**: **Shared-core Candidate**. Moving indexing to Rust (or shared TS core) is essential for React Native reuse.
-    *   **Suggested Spec Update**: Update `ARCHITECTURE.md` to reflect that MVP Indexing is Frontend-based, with Rust migration as a "Future" goal.
+    *   **Desktop Dependency**: React State/Context.
+    *   **Recommended Approach**: Prioritize `search-core` (Rust or TS) extraction.
+    *   **Suggested Spec Update**: `ARCHITECTURE.md` (Section 4.4): Update to reflect that MVP Indexing is Frontend-based, with Rust migration as a "Future" goal.
 
 3.  **Settings Storage**
     *   **Spec**: `SPEC.md` implies vault-scoped settings. `SETTINGS_UI.md` mentions `settings.json` in app config.
     *   **Code**: `settings.rs` uses `tauri-plugin-store` (or similar simple JSON) for global settings. Vault-specific settings are not clearly implemented beyond `vault.config.json` (which only holds name/path).
     *   **Why it matters**: Users expect per-vault themes/plugins (per Spec).
-    *   **Mobile Impact**: **Parity Gap**.
-    *   **Suggested Spec Update**: Clarify "Global vs Vault" settings hierarchy in `SETTINGS_UI.md`.
+    *   **Mobile Impact**: **Parity Gap (non-blocking)**.
+    *   **Desktop Dependency**: `tauri-plugin-store`.
+    *   **Recommended Approach**: Use a platform-agnostic settings store (e.g. JSON file in vault).
+    *   **Suggested Spec Update**: `SETTINGS_UI.md` (Section 4): Clarify "Global vs Vault" settings hierarchy.
 
 ---
 
-## 7. Undocumented Implementations
+## 8. Undocumented Implementations
 
 1.  **AI Worker Architecture**: The `apps/desktop/src/features/ai/ai.worker.ts` is a sophisticated piece of engineering not fully captured in `LOCAL_AI_ASSISTANT_PLUGIN.md`. It handles model loading and inference off-thread.
     *   *Suggestion*: Add `docs/AI_ARCHITECTURE.md` or expand the plugin doc.
@@ -157,14 +186,6 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
     *   *Suggestion*: Update `docs/SPELLCHECK.md` with implementation details (worker-based).
 3.  **Command Registry**: `apps/desktop/src/commands/CommandRegistry.ts` is the central nervous system for actions, effectively a "Command Bus". It is critical infrastructure but not explicitly documented as a spec.
     *   *Suggestion*: Create `docs/COMMAND_SYSTEM.md`.
-
----
-
-## 8. Spec Conflicts / Ambiguities
-
-*   **Plugin API**: `PLUGIN_API.md` (Public) vs `PluginHostProvider.tsx` (Internal). There is no document describing the *internal* plugin API which is what is actually running.
-*   **Graph View**: `SPEC.md` promises Global and Local graph. `MVP_APP.md` says "Graph visualiser" is Out of Scope. Implementation *exists* (`GraphView.tsx`) but is likely MVP-level.
-    *   *Resolution*: Mark Graph as "Experimental/Bonus" in `MVP_APP.md`.
 
 ---
 
@@ -178,15 +199,23 @@ The application successfully implements the "MVP Slice" described in `MVP_APP.md
 
 ---
 
-## 10. Recommended Updates
+## 10. Actionable Docs Punch-list
 
-1.  **Update `MVP_APP.md`**:
-    *   Add "Graph View" to "Stretch Goals" (since it exists).
-    *   Explicitly note that "Indexing" is Frontend-side for MVP.
-2.  **Update `ARCHITECTURE.md`**:
-    *   Add a section "Mobile Strategy" explicitly mentioning the React Native target and the need for Shared Core abstraction (Data Layer vs UI Layer).
-    *   Mark `vault.rs` and `SearchIndexContext` as "Technical Debt" to be refactored into a Shared Core.
-3.  **Refine `PLUGIN_API.md`**:
-    *   Add a disclaimer: "This is the *target* API for future public plugins. Internal core plugins currently use a simplified React-based host."
-4.  **Create `docs/MOBILE_GAP_ANALYSIS.md`**:
-    *   Formalize the findings about CodeMirror, FileSystem, and Indexing performance to guide the mobile team.
+This checklist represents the documentation updates required to align specs with the reality found during this audit.
+
+*   [ ] **`ARCHITECTURE.md` (Section 5.1)**: Define `VaultPickerService` interface.
+    *   *Reason*: Parity Gap (Mobile needs abstract picker).
+*   **`ARCHITECTURE.md` (Section 4.4)**: Document Indexing as currently Frontend-based, Rust is Future.
+    *   *Reason*: Divergence (Code differs from Spec).
+*   **`ARCHITECTURE.md` (New Section)**: Add "Mobile Strategy" section defining `Shared Core` vs `Platform Adapter` layers.
+    *   *Reason*: Strategic alignment for Mobile team.
+*   **`MVP_APP.md` (Section 4)**: Acknowledge `CodeMirror` dependency and Mobile WebView/Replacement strategy.
+    *   *Reason*: Blocker (Editor choice impacts mobile tech stack).
+*   **`PLUGIN_API.md` (Section 2)**: Add "Mobile Constraints" (no dynamic code loading).
+    *   *Reason*: Blocker (Store policies).
+*   **`PLUGIN_API.md` (General)**: Rename to `PUBLIC_PLUGIN_API.md` or clearly label as "Target Public API".
+    *   *Reason*: Divergence (Current internal system is different).
+*   **`SETTINGS_UI.md` (Section 4)**: Clarify Global vs Vault settings storage.
+    *   *Reason*: Parity Gap (Per-vault settings missing).
+*   **`docs/COMMAND_SYSTEM.md` (New)**: Document `CommandRegistry.ts`.
+    *   *Reason*: Undocumented Implementation (Critical infra).
