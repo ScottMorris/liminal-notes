@@ -14,7 +14,7 @@ import {
   onAction,
   Schedule
 } from '@tauri-apps/plugin-notification';
-import { readNote, writeNote } from '../../ipc';
+import { desktopVault } from '../../adapters/DesktopVaultAdapter';
 
 const REMINDERS_FILE = '.liminal/reminders.json';
 
@@ -143,7 +143,8 @@ export class DesktopRemindersAdapter implements RemindersAdapter {
 // Vault I/O Helpers
 export async function loadRemindersFile(): Promise<string | null> {
     try {
-        return await readNote(REMINDERS_FILE);
+        const { content } = await desktopVault.readNote(REMINDERS_FILE);
+        return content;
     } catch (e) {
         // File might not exist
         return null;
@@ -151,5 +152,5 @@ export async function loadRemindersFile(): Promise<string | null> {
 }
 
 export async function saveRemindersFile(content: string): Promise<void> {
-    await writeNote(REMINDERS_FILE, content);
+    await desktopVault.writeNote(REMINDERS_FILE, content);
 }

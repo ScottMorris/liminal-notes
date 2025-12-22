@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { getVaultConfig, listMarkdownFiles, resetVaultConfig } from "../ipc";
+import { getVaultConfig, resetVaultConfig } from "../ipc";
+import { desktopVault } from "../adapters/DesktopVaultAdapter";
 import { VaultConfig, FileEntry } from "../types";
 import { useLinkIndex } from "../components/LinkIndexContext";
 import { useSearchIndex } from "../components/SearchIndexContext";
@@ -18,7 +19,14 @@ export function useVault() {
 
   const refreshFiles = useCallback(async () => {
     try {
-      const fileList = await listMarkdownFiles();
+      const adapterFiles = await desktopVault.listFiles();
+      // Map VaultFileEntry to FileEntry
+      const fileList: FileEntry[] = adapterFiles.map(f => ({
+          path: f.id,
+          is_dir: f.type === 'directory',
+          mtime: f.mtimeMs
+      }));
+
       setFiles(fileList);
       rebuildIndex(fileList);
       buildSearchIndex(fileList);

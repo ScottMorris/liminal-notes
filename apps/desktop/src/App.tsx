@@ -9,7 +9,7 @@ import { GraphView } from "./components/GraphView";
 import { StatusBar } from "./components/StatusBar";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
-import { renameItem, writeNote } from "./ipc";
+import { desktopVault } from "./adapters/DesktopVaultAdapter";
 import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon, BellIcon } from "./components/Icons";
 import { TabsProvider, useTabs } from "./contexts/TabsContext";
 import { EditorPane } from "./components/Editor/EditorPane";
@@ -108,8 +108,8 @@ function AppContent() {
       // Helper to load dictionary from file
       const loadDict = async () => {
           try {
-              const { readNote } = await import('./ipc');
-              const content = await readNote('.liminal/spellcheck/personal-en-CA.txt');
+              const { desktopVault } = await import('./adapters/DesktopVaultAdapter');
+              const { content } = await desktopVault.readNote('.liminal/spellcheck/personal-en-CA.txt');
               const words = content.split('\n').map(w => w.trim()).filter(w => w.length > 0);
               setSpellcheckIgnoredWords(words);
           } catch (e) {
@@ -130,17 +130,17 @@ function AppContent() {
           const detail = (e as CustomEvent).detail;
           if (detail && detail.word) {
              try {
-                const { readNote, writeNote } = await import('./ipc');
+                const { desktopVault } = await import('./adapters/DesktopVaultAdapter');
                 let words: string[] = [];
                 try {
-                    const content = await readNote('.liminal/spellcheck/personal-en-CA.txt');
+                    const { content } = await desktopVault.readNote('.liminal/spellcheck/personal-en-CA.txt');
                     words = content.split('\n').map(w => w.trim()).filter(w => w.length > 0);
                 } catch {}
 
                 if (!words.includes(detail.word)) {
                     words.push(detail.word);
                     words.sort();
-                    await writeNote('.liminal/spellcheck/personal-en-CA.txt', words.join('\n'));
+                    await desktopVault.writeNote('.liminal/spellcheck/personal-en-CA.txt', words.join('\n'));
                     setSpellcheckIgnoredWords(words);
                 }
              } catch (err) {
@@ -192,7 +192,7 @@ function AppContent() {
     }
 
     try {
-        await writeNote(path, '');
+        await desktopVault.writeNote(path, '');
         openTab({
             id: path,
             path: path,
@@ -247,7 +247,7 @@ function AppContent() {
       }
 
       try {
-          await renameItem(oldPath, newPath);
+          await desktopVault.rename(oldPath, newPath);
           await refreshFiles();
 
           const oldTab = openTabs.find(t => t.id === oldPath); // Assuming ID=path

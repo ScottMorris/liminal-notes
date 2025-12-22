@@ -106,11 +106,11 @@ const DictionaryCollection = () => {
         // We need to know where the dictionary is.
         // .liminal/spellcheck/personal-en-CA.txt
         try {
-            const { readNote } = await import('../../ipc');
+            const { desktopVault } = await import('../../adapters/DesktopVaultAdapter');
             // Try to read it.
             // Note: readNote might fail if file doesn't exist.
             try {
-                const content = await readNote('.liminal/spellcheck/personal-en-CA.txt');
+                const { content } = await desktopVault.readNote('.liminal/spellcheck/personal-en-CA.txt');
                 const list = content.split('\n').map(w => w.trim()).filter(w => w.length > 0);
                 setWords(list.sort());
             } catch (e) {
@@ -124,9 +124,9 @@ const DictionaryCollection = () => {
 
     const saveDictionary = async (newWords: string[]) => {
         try {
-            const { writeNote } = await import('../../ipc');
+            const { desktopVault } = await import('../../adapters/DesktopVaultAdapter');
             const content = newWords.join('\n');
-            await writeNote('.liminal/spellcheck/personal-en-CA.txt', content);
+            await desktopVault.writeNote('.liminal/spellcheck/personal-en-CA.txt', content);
             setWords(newWords);
 
             // Also notify spellcheckCore to update runtime

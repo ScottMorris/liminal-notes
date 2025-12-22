@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { readNote } from '../ipc';
+import { desktopVault } from '../adapters/DesktopVaultAdapter';
 import { FileEntry } from '../types';
 
 export interface NoteIndexEntry {
@@ -61,7 +61,7 @@ export const SearchIndexProvider = ({ children }: { children: ReactNode }) => {
     // The Tauri backend handles these concurrent requests using a thread pool.
     await Promise.all(mdFiles.map(async (file) => {
       try {
-        const content = await readNote(file.path);
+        const { content } = await desktopVault.readNote(file.path);
         const title = parseTitle(file.path, content);
         newIndex.set(file.path, { path: file.path, title, content });
       } catch (err) {

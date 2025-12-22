@@ -190,6 +190,7 @@ All vault implementations conform to a common interface:
 * listFiles
 * readNote
 * writeNote
+* rename (optional, but recommended)
 * stat (optional)
 * mkdir (optional)
 
