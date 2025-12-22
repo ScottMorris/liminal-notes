@@ -5,6 +5,7 @@ const saveCommand: Command<EditorContext> = {
   id: 'editor.file.save',
   label: 'Save',
   context: 'Global',
+  additionalContexts: ['Editor'],
   group: 'File',
   icon: 'save',
   shortcut: 'Ctrl+S',
