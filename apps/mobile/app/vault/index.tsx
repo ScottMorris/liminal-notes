@@ -35,6 +35,14 @@ export default function VaultHomeScreen() {
           onPress={() => router.push({ pathname: '/vault/note/[id]', params: { id: '123' } })}
         />
       </View>
+
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Sandbox Verification"
+          onPress={() => router.push('/vault/sandbox')}
+          color="#841584"
+        />
+      </View>
     </ScrollView>
   );
 }
