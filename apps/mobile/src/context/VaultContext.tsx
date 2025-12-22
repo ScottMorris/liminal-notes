@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import kv from '../storage/kv';
+import { STORAGE_KEYS } from '../storage/keys';
 import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
 
 interface VaultConfig {
@@ -17,8 +18,6 @@ interface VaultContextType {
 
 const VaultContext = createContext<VaultContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'liminal_active_vault';
-
 export function VaultProvider({ children }: { children: React.ReactNode }) {
   const [activeVault, setActiveVault] = useState<VaultConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,9 +28,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
 
   const loadConfig = async () => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const config = JSON.parse(stored);
+      const config = await kv.getJSON<VaultConfig>(STORAGE_KEYS.ACTIVE_VAULT);
+      if (config) {
         setActiveVault(config);
       }
     } catch (e) {
@@ -44,9 +42,9 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   const saveConfig = async (config: VaultConfig | null) => {
     try {
       if (config) {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+        await kv.setJSON(STORAGE_KEYS.ACTIVE_VAULT, config);
       } else {
-        await AsyncStorage.removeItem(STORAGE_KEY);
+        await kv.removeItem(STORAGE_KEYS.ACTIVE_VAULT);
       }
     } catch (e) {
       console.error('Failed to save vault config', e);
