@@ -5,7 +5,8 @@
   "main": "./src/main.ts",
   "types": "./src/main.ts",
   "exports": {
-    "./src/*": "./src/*.ts"
+    ".": "./src/main.ts",
+    "./src/types": "./src/types.ts"
   },
   "scripts": {
     "test": "vitest run"

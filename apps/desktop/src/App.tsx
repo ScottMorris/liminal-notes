@@ -110,7 +110,7 @@ function AppContent() {
           try {
               const { desktopVault } = await import('./adapters/DesktopVaultAdapter');
               const { content } = await desktopVault.readNote('.liminal/spellcheck/personal-en-CA.txt');
-              const words = content.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+              const words = content.split('\n').map((w: string) => w.trim()).filter((w: string) => w.length > 0);
               setSpellcheckIgnoredWords(words);
           } catch (e) {
               setSpellcheckIgnoredWords([]);
@@ -134,7 +134,7 @@ function AppContent() {
                 let words: string[] = [];
                 try {
                     const { content } = await desktopVault.readNote('.liminal/spellcheck/personal-en-CA.txt');
-                    words = content.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+                    words = content.split('\n').map((w: string) => w.trim()).filter((w: string) => w.length > 0);
                 } catch {}
 
                 if (!words.includes(detail.word)) {

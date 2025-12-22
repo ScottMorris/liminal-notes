@@ -111,7 +111,7 @@ const DictionaryCollection = () => {
             // Note: readNote might fail if file doesn't exist.
             try {
                 const { content } = await desktopVault.readNote('.liminal/spellcheck/personal-en-CA.txt');
-                const list = content.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+                const list = content.split('\n').map((w: string) => w.trim()).filter((w: string) => w.length > 0);
                 setWords(list.sort());
             } catch (e) {
                 // File likely doesn't exist, start empty

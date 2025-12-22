@@ -247,7 +247,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
                 // Initialize editor state for this tab so we don't re-fetch on switch back
                 const initialState = JSON.stringify({
-                    doc: body,
+                    doc: content,
                     selection: { anchor: 0, head: 0 }
                 });
                 updateTabState(activeTab.id, initialState);
@@ -255,7 +255,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                 notifyNoteOpened({
                     path: activeTab.path,
                     title: activeTab.title,
-                    content: body
+                    content: content
                 });
             } catch (err) {
                 notify("Failed to read note: " + String(err), 'error');

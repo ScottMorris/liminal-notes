@@ -1,13 +1,18 @@
 import type { NoteId } from '@liminal-notes/core-shared/src/types';
 
 /**
+ * The type of a vault entry.
+ */
+export type VaultEntryType = 'file' | 'directory';
+
+/**
  * Represents a file entry in the vault.
  */
 export interface VaultFileEntry {
   /** The vault-relative path (e.g., 'folder/note.md'). */
   id: NoteId;
   /** The type of the entry. */
-  type: 'file' | 'directory';
+  type: VaultEntryType;
   /** The modification time in milliseconds. */
   mtimeMs?: number;
   /** The size of the file in bytes. */
