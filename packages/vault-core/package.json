@@ -6,7 +6,8 @@
   "types": "./src/main.ts",
   "exports": {
     ".": "./src/main.ts",
-    "./src/types": "./src/types.ts"
+    "./src/types": "./src/types.ts",
+    "./src/pathSafety": "./src/pathSafety.ts"
   },
   "scripts": {
     "test": "vitest run"
