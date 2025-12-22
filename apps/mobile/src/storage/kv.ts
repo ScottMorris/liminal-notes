@@ -1,6 +1,7 @@
 import Storage from 'expo-sqlite/kv-store';
+import { KVStore } from './types';
 
-export const kv = {
+export const kv: KVStore = {
   getItem: Storage.getItem,
   setItem: Storage.setItem,
   removeItem: Storage.removeItem,
