@@ -1,11 +1,18 @@
 import type { NoteId } from '@liminal-notes/core-shared/src/types';
 
 /**
+ * The type of a vault entry.
+ */
+export type VaultEntryType = 'file' | 'directory';
+
+/**
  * Represents a file entry in the vault.
  */
 export interface VaultFileEntry {
   /** The vault-relative path (e.g., 'folder/note.md'). */
   id: NoteId;
+  /** The type of the entry. */
+  type: VaultEntryType;
   /** The modification time in milliseconds. */
   mtimeMs?: number;
   /** The size of the file in bytes. */
@@ -98,6 +105,14 @@ export interface VaultAdapter {
    * @returns A promise resolving to the write result.
    */
   writeNote(id: NoteId, content: string, opts?: WriteNoteOptions): Promise<WriteNoteResult>;
+
+  /**
+   * Renames a note or directory.
+   *
+   * @param from - The current path.
+   * @param to - The new path.
+   */
+  rename?(from: NoteId, to: NoteId): Promise<void>;
 
   /**
    * Gets statistics for a file or directory.

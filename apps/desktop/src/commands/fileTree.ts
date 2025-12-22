@@ -2,7 +2,8 @@ import type { Command, FileContext } from './types';
 import { commandRegistry } from './CommandRegistry';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { openPath, revealItemInDir } from '@tauri-apps/plugin-opener';
-import { readNote, writeNote, getVaultConfig } from '../ipc';
+import { getVaultConfig } from '../ipc';
+import { desktopVault } from '../adapters/DesktopVaultAdapter';
 import { confirm } from '@tauri-apps/plugin-dialog';
 
 // Open in new tab
@@ -32,7 +33,7 @@ const duplicateCommand: Command<FileContext> = {
   when: (ctx) => !ctx.isDir,
   run: async (ctx) => {
     try {
-      const content = await readNote(ctx.path);
+      const { content } = await desktopVault.readNote(ctx.path);
       const pathParts = ctx.path.split('/');
       const fileName = pathParts.pop() || '';
       const dirPath = pathParts.join('/');
@@ -49,7 +50,7 @@ const duplicateCommand: Command<FileContext> = {
         newPath = dirPath ? `${dirPath}/${newName}` : newName;
       }
 
-      await writeNote(newPath, content);
+      await desktopVault.writeNote(newPath, content);
       ctx.operations.notify(`Created ${newName}`, 'success');
       await ctx.operations.refreshFiles();
 

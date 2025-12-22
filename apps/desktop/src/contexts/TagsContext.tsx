@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { Tag, TagId, TagIndex, TagCatalogue, TagIndexEntry } from '../types/tags';
-import { readNote, writeNote, listMarkdownFiles } from '../ipc';
+import { listMarkdownFiles } from '../ipc';
+import { desktopVault } from '../adapters/DesktopVaultAdapter';
 import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '../utils/tags';
 import { parseFrontmatter, updateFrontmatter } from '../utils/frontmatter';
 import { FileEntry } from '../types';
@@ -55,7 +56,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
             // Load Catalogue
             let loadedTags: Record<TagId, Tag> = {};
             try {
-                const tagsContent = await readNote(TAGS_FILE);
+                const { content: tagsContent } = await desktopVault.readNote(TAGS_FILE);
                 loadedTags = JSON.parse(tagsContent);
             } catch (e) {
                 // File might not exist
@@ -66,7 +67,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
             // Load Index
             let loadedIndex: TagIndex = {};
             try {
-                const indexContent = await readNote(TAG_INDEX_FILE);
+                const { content: indexContent } = await desktopVault.readNote(TAG_INDEX_FILE);
                 loadedIndex = JSON.parse(indexContent);
             } catch (e) {
                 console.log('No tag-index.json found.');
@@ -88,7 +89,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
         if (isWritingTags.current) return; // Simple lock
         isWritingTags.current = true;
         try {
-            await writeNote(TAGS_FILE, JSON.stringify(newTags, null, 2));
+            await desktopVault.writeNote(TAGS_FILE, JSON.stringify(newTags, null, 2));
             setTags(newTags);
         } catch (e) {
             console.error("Failed to save tags:", e);
@@ -99,7 +100,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
 
     const saveIndex = async (newIndex: TagIndex) => {
         try {
-            await writeNote(TAG_INDEX_FILE, JSON.stringify(newIndex, null, 2));
+            await desktopVault.writeNote(TAG_INDEX_FILE, JSON.stringify(newIndex, null, 2));
             setTagIndex(newIndex);
         } catch (e) {
             console.error("Failed to save tag index:", e);
@@ -144,8 +145,8 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
             if (entry.tags.includes(tagId)) {
                 updates.push((async () => {
                      try {
-                         let content = await readNote(path);
-                         content = updateFrontmatter(content, (data) => {
+                         const { content: originalContent } = await desktopVault.readNote(path);
+                         const content = updateFrontmatter(originalContent, (data) => {
                              let tags = data.tags || [];
                              if (typeof tags === 'string') tags = [tags];
                              tags = tags.filter((t: any) => normalizeTagId(String(t)) !== tagId);
@@ -154,7 +155,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
                                  delete data.liminal.tagMeta[tagId];
                              }
                          });
-                         await writeNote(path, content);
+                         await desktopVault.writeNote(path, content);
                      } catch (e) {
                          console.error(`Failed to remove tag ${tagId} from ${path}`, e);
                      }
@@ -194,7 +195,7 @@ export const TagsProvider = ({ children }: { children: ReactNode }) => {
                     return;
                 }
 
-                const content = await readNote(file.path);
+                const { content } = await desktopVault.readNote(file.path);
                 const { data } = parseFrontmatter(content);
 
                 let fileTags: TagId[] = [];

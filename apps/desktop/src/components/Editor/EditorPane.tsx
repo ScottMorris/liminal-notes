@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { readNote, writeNote, renameItem } from '../../ipc';
+import { desktopVault } from '../../adapters/DesktopVaultAdapter';
 import { useTabs } from '../../contexts/TabsContext';
 import { useSettings } from '../../contexts/SettingsContext';
 import { usePluginHost } from '../../plugins/PluginHostProvider';
@@ -167,7 +167,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                     path = 'Untitled.md';
                 }
 
-                await writeNote(path, text);
+                await desktopVault.writeNote(path, text);
 
                 // Update tab to saved state
                 updateTabPath(activeTab.id, path, false);
@@ -180,7 +180,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
             } else {
                 // Normal save
-                await writeNote(activeTab.path, text);
+                await desktopVault.writeNote(activeTab.path, text);
 
                 updateTabDirty(activeTab.id, false);
 
@@ -242,12 +242,12 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
             setContent('');
 
             try {
-                const body = await readNote(activeTab.path);
-                nextContent = body;
+                const { content } = await desktopVault.readNote(activeTab.path);
+                nextContent = content;
 
                 // Initialize editor state for this tab so we don't re-fetch on switch back
                 const initialState = JSON.stringify({
-                    doc: body,
+                    doc: content,
                     selection: { anchor: 0, head: 0 }
                 });
                 updateTabState(activeTab.id, initialState);
@@ -255,7 +255,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                 notifyNoteOpened({
                     path: activeTab.path,
                     title: activeTab.title,
-                    content: body
+                    content: content
                 });
             } catch (err) {
                 notify("Failed to read note: " + String(err), 'error');
@@ -338,7 +338,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
             if (tab.isUnsaved) {
                 await saveUnsavedTab(tab, contentToSave);
             } else {
-                await writeNote(tab.path, contentToSave);
+                await desktopVault.writeNote(tab.path, contentToSave);
             }
             closeTabContext(tab.id);
             notify("Note saved and closed", 'success');
@@ -392,7 +392,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
          path = sanitizeFilename(title) + '.md';
     }
 
-    await writeNote(path, text);
+    await desktopVault.writeNote(path, text);
 
     updateTabPath(tab.id, path, false);
     updateTabTitle(tab.id, title);
@@ -495,7 +495,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
       if (newPath === oldPath) return;
 
       try {
-          await renameItem(oldPath, newPath);
+          await desktopVault.rename(oldPath, newPath);
           if (onRefreshFiles) {
             await onRefreshFiles();
           }

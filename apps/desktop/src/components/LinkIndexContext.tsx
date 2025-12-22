@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useRef, ReactNode, useCallback } from 'react';
-import { readNote } from '../ipc';
+import { desktopVault } from '../adapters/DesktopVaultAdapter';
 import { FileEntry, Wikilink, LinkIndex, NotePath } from '../types';
 
 interface LinkIndexContextProps {
@@ -84,7 +84,7 @@ export const LinkIndexProvider = ({ children }: { children: ReactNode }) => {
 
     for (const file of mdFiles) {
       try {
-        const content = await readNote(file.path);
+        const { content } = await desktopVault.readNote(file.path);
         const links = parseLinks(file.path, content);
 
         links.forEach(link => {
