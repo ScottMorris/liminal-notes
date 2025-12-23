@@ -4,6 +4,8 @@ import {
   MessageKind,
   CommandType,
   EventType,
+  EditorCommand,
+  EditorEvent,
   InitPayload,
   DocSetPayload,
   RequestStatePayload,
@@ -15,7 +17,6 @@ import {
 
 export type {
   Envelope,
-  MessageKind,
   CommandType,
   EventType,
   InitPayload,
@@ -26,6 +27,12 @@ export type {
   LinkClickedPayload,
   RequestResponsePayload
 };
+
+export {
+  MessageKind,
+  EditorCommand,
+  EditorEvent
+}
 
 export class ProtocolError extends Error {
   constructor(message: string, public details?: unknown) {
@@ -44,7 +51,7 @@ export function createCommand<T extends CommandType>(
   return {
     v: PROTOCOL_VERSION,
     id: generateUUID(),
-    kind: 'cmd',
+    kind: MessageKind.Cmd,
     type,
     payload,
   };
@@ -99,5 +106,5 @@ export function isEvent<T extends EventType>(
   envelope: Envelope<unknown>,
   type: T['type']
 ): envelope is Envelope<T['payload']> {
-  return envelope.kind === 'evt' && envelope.type === type;
+  return envelope.kind === MessageKind.Evt && envelope.type === type;
 }

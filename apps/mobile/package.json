@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "main": "expo-router/entry",
   "scripts": {
+    "build:editor": "pnpm --filter editor-web build",
+    "prestart": "pnpm build:editor",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",

@@ -6,6 +6,7 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@liminal-notes/core-shared": "workspace:*",
     "typescript": "^5.2.2",
     "vite": "^5.0.0",
     "vite-plugin-singlefile": "^2.0.0"

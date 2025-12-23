@@ -1,27 +1,27 @@
-// Import protocol types from core-shared (relative import as per plan)
+// Import protocol types from core-shared
 import {
   PROTOCOL_VERSION,
   Envelope,
-  InitPayload,
-  DocSetPayload,
-  RequestStatePayload,
   CommandType,
-  EventType
-} from '../../../../packages/core-shared/src/mobile/editorProtocol';
+  EventType,
+  MessageKind,
+  EditorCommand,
+  EditorEvent
+} from '@liminal-notes/core-shared/src/mobile/editorProtocol';
 
 // Helper to send messages to RN
 function send(msg: EventType) {
   const envelope: Envelope<any> = {
     v: PROTOCOL_VERSION,
     id: globalThis.crypto?.randomUUID() || Math.random().toString(36).slice(2),
-    kind: 'evt',
+    kind: MessageKind.Evt,
     type: msg.type,
     payload: msg.payload
   };
 
-  // @ts-ignore
+  // @ts-ignore: ReactNativeWebView is injected by the host and not present in standard DOM types
   if (window.ReactNativeWebView) {
-     // @ts-ignore
+     // @ts-ignore: ReactNativeWebView is injected by the host and not present in standard DOM types
     window.ReactNativeWebView.postMessage(JSON.stringify(envelope));
   } else {
     console.warn('ReactNativeWebView not found', envelope);
@@ -32,15 +32,15 @@ function handleCommand(cmd: CommandType) {
   const editorEl = document.getElementById('editor');
 
   switch (cmd.type) {
-    case 'editor/init':
+    case EditorCommand.Init:
       if (editorEl) editorEl.innerText = `Initialized (${cmd.payload.platform})`;
       break;
-    case 'doc/set':
+    case EditorCommand.Set:
       if (editorEl) editorEl.innerText = cmd.payload.text;
       break;
-    case 'request/state':
+    case EditorCommand.RequestState:
       send({
-        type: 'request/response',
+        type: EditorEvent.RequestResponse,
         payload: {
           requestId: cmd.payload.requestId,
           state: {
@@ -67,7 +67,7 @@ document.addEventListener('message', (event: any) => {
 
 // Signal ready
 send({
-  type: 'editor/ready',
+  type: EditorEvent.Ready,
   payload: {
     protocolVersion: PROTOCOL_VERSION,
     capabilities: {

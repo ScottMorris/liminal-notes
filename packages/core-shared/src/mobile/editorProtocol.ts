@@ -2,7 +2,12 @@
 export const PROTOCOL_VERSION = 1;
 
 // Message kinds
-export type MessageKind = 'cmd' | 'evt' | 'ack' | 'err';
+export enum MessageKind {
+  Cmd = 'cmd',
+  Evt = 'evt',
+  Ack = 'ack',
+  Err = 'err'
+}
 
 // Envelope structure
 export interface Envelope<T = unknown> {
@@ -14,6 +19,12 @@ export interface Envelope<T = unknown> {
 }
 
 // -- Commands (RN -> WebView) --
+
+export enum EditorCommand {
+  Init = 'editor/init',
+  Set = 'doc/set',
+  RequestState = 'request/state'
+}
 
 export interface InitPayload {
   platform: 'android' | 'ios';
@@ -42,6 +53,13 @@ export interface RequestStatePayload {
 }
 
 // -- Events (WebView -> RN) --
+
+export enum EditorEvent {
+  Ready = 'editor/ready',
+  Changed = 'doc/changed',
+  LinkClicked = 'link/clicked',
+  RequestResponse = 'request/response'
+}
 
 export interface ReadyPayload {
   protocolVersion: number;
@@ -87,12 +105,12 @@ export interface ErrorPayload {
 
 // Union types for strict typing if needed
 export type CommandType =
-  | { type: 'editor/init'; payload: InitPayload }
-  | { type: 'doc/set'; payload: DocSetPayload }
-  | { type: 'request/state'; payload: RequestStatePayload };
+  | { type: EditorCommand.Init; payload: InitPayload }
+  | { type: EditorCommand.Set; payload: DocSetPayload }
+  | { type: EditorCommand.RequestState; payload: RequestStatePayload };
 
 export type EventType =
-  | { type: 'editor/ready'; payload: ReadyPayload }
-  | { type: 'doc/changed'; payload: DocChangedPayload }
-  | { type: 'link/clicked'; payload: LinkClickedPayload }
-  | { type: 'request/response'; payload: RequestResponsePayload };
+  | { type: EditorEvent.Ready; payload: ReadyPayload }
+  | { type: EditorEvent.Changed; payload: DocChangedPayload }
+  | { type: EditorEvent.LinkClicked; payload: LinkClickedPayload }
+  | { type: EditorEvent.RequestResponse; payload: RequestResponsePayload };

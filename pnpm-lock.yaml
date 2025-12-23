@@ -199,6 +199,9 @@ importers:
 
   apps/mobile/editor-web:
     devDependencies:
+      '@liminal-notes/core-shared':
+        specifier: workspace:*
+        version: link:../../../packages/core-shared
       typescript:
         specifier: ^5.2.2
         version: 5.9.3

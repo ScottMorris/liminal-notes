@@ -5,14 +5,14 @@ import {
   createCommand,
   parseEnvelope,
   isEvent,
-  EventType,
+  EditorEvent,
   CommandType,
-  Envelope
+  MessageKind
 } from '../editor/EditorProtocol';
 
 // Import the built HTML asset
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const editorHtml = require('../../editor-web/dist/editor.html');
+// @ts-ignore: Resolved by Metro via declarations.d.ts or assetExts configuration
+import editorHtml from '../../editor-web/dist/editor.html';
 
 interface EditorViewProps {
   onReady?: () => void;
@@ -41,7 +41,7 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
         })();
       `;
 
-      console.log('[EditorHost] Sending:', envelope.type, envelope.payload);
+      console.log('[EditorHost] Sending:', envelope);
       webViewRef.current?.injectJavaScript(script);
     }
   }));
@@ -52,20 +52,20 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
       console.log('[EditorHost] Received raw:', data);
 
       const envelope = parseEnvelope(data);
-      console.log('[EditorHost] Parsed envelope:', envelope.kind, envelope.type);
+      console.log('[EditorHost] Parsed envelope:', envelope);
 
-      if (envelope.kind === 'evt') {
-        if (isEvent(envelope, 'editor/ready')) {
+      if (envelope.kind === MessageKind.Evt) {
+        if (isEvent(envelope, EditorEvent.Ready)) {
            console.log('[EditorHost] Editor Ready');
            props.onReady?.();
-        } else if (isEvent(envelope, 'doc/changed')) {
+        } else if (isEvent(envelope, EditorEvent.Changed)) {
            props.onDocChanged?.(envelope.payload);
-        } else if (isEvent(envelope, 'link/clicked')) {
+        } else if (isEvent(envelope, EditorEvent.LinkClicked)) {
            props.onLinkClicked?.(envelope.payload);
-        } else if (isEvent(envelope, 'request/response')) {
+        } else if (isEvent(envelope, EditorEvent.RequestResponse)) {
            props.onRequestResponse?.(envelope.payload);
         }
-      } else if (envelope.kind === 'err') {
+      } else if (envelope.kind === MessageKind.Err) {
         console.error('[EditorHost] Guest Error:', envelope.payload);
         props.onError?.(new Error(`Guest error: ${JSON.stringify(envelope.payload)}`));
       }
