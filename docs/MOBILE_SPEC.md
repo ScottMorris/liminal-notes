@@ -219,6 +219,8 @@ Principles:
 
 SQLite is the preferred backing store.
 
+For simple application settings and configuration (such as the active vault selection), the app uses `expo-sqlite/kv-store` wrapped in a centralized `src/storage/kv.ts` adapter. This is used for small preferences only; bulk data (indexes) and content (notes) use proper SQLite tables or the file system respectively.
+
 Index responsibilities:
 
 * Text search
