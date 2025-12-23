@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 // Protocol version
 export const PROTOCOL_VERSION = 1;
 
@@ -38,6 +40,18 @@ export interface InitPayload {
   };
 }
 
+export const InitPayloadSchema = z.object({
+  platform: z.enum(['android', 'ios']),
+  readOnly: z.boolean(),
+  theme: z.object({
+    name: z.string(),
+    vars: z.record(z.string(), z.string())
+  }),
+  featureFlags: z.object({
+    links: z.boolean()
+  })
+});
+
 export interface DocSetPayload {
   docId: string;
   text: string;
@@ -47,10 +61,24 @@ export interface DocSetPayload {
   };
 }
 
+export const DocSetPayloadSchema = z.object({
+  docId: z.string(),
+  text: z.string(),
+  selection: z.object({
+    anchor: z.number(),
+    head: z.number()
+  }).optional()
+});
+
 export interface RequestStatePayload {
   requestId: string;
   include: ('text' | 'selection' | 'scroll')[];
 }
+
+export const RequestStatePayloadSchema = z.object({
+  requestId: z.string(),
+  include: z.array(z.enum(['text', 'selection', 'scroll']))
+});
 
 // -- Events (WebView -> RN) --
 
@@ -69,6 +97,14 @@ export interface ReadyPayload {
   };
 }
 
+export const ReadyPayloadSchema = z.object({
+  protocolVersion: z.number(),
+  capabilities: z.object({
+    links: z.boolean(),
+    selection: z.boolean()
+  })
+});
+
 export interface DocChangedPayload {
   docId: string;
   revision: number;
@@ -79,12 +115,29 @@ export interface DocChangedPayload {
   };
 }
 
+export const DocChangedPayloadSchema = z.object({
+  docId: z.string(),
+  revision: z.number(),
+  change: z.object({
+    from: z.number(),
+    to: z.number(),
+    insertedText: z.string()
+  })
+});
+
 export interface LinkClickedPayload {
   docId: string;
   kind: 'wikilink' | 'url' | 'file';
   href: string;
   text: string;
 }
+
+export const LinkClickedPayloadSchema = z.object({
+  docId: z.string(),
+  kind: z.enum(['wikilink', 'url', 'file']),
+  href: z.string(),
+  text: z.string()
+});
 
 export interface RequestResponsePayload {
   requestId: string;
@@ -95,6 +148,18 @@ export interface RequestResponsePayload {
   };
 }
 
+export const RequestResponsePayloadSchema = z.object({
+  requestId: z.string(),
+  state: z.object({
+    text: z.string().optional(),
+    selection: z.object({
+      anchor: z.number(),
+      head: z.number()
+    }).optional(),
+    scroll: z.number().optional()
+  })
+});
+
 // -- Error --
 
 export interface ErrorPayload {
@@ -102,6 +167,12 @@ export interface ErrorPayload {
   message: string;
   details?: unknown;
 }
+
+export const ErrorPayloadSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  details: z.unknown().optional()
+});
 
 // Union types for strict typing if needed
 export type CommandType =
@@ -114,3 +185,118 @@ export type EventType =
   | { type: EditorEvent.Changed; payload: DocChangedPayload }
   | { type: EditorEvent.LinkClicked; payload: LinkClickedPayload }
   | { type: EditorEvent.RequestResponse; payload: RequestResponsePayload };
+
+// Full Discriminated Schema
+
+const BaseEnvelope = z.object({
+  v: z.literal(PROTOCOL_VERSION),
+  id: z.string().min(1)
+});
+
+const InitCommandEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Cmd),
+  type: z.literal(EditorCommand.Init),
+  payload: InitPayloadSchema
+});
+
+const SetCommandEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Cmd),
+  type: z.literal(EditorCommand.Set),
+  payload: DocSetPayloadSchema
+});
+
+const RequestStateEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Cmd),
+  type: z.literal(EditorCommand.RequestState),
+  payload: RequestStatePayloadSchema
+});
+
+const ReadyEventEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Evt),
+  type: z.literal(EditorEvent.Ready),
+  payload: ReadyPayloadSchema
+});
+
+const ChangedEventEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Evt),
+  type: z.literal(EditorEvent.Changed),
+  payload: DocChangedPayloadSchema
+});
+
+const LinkClickedEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Evt),
+  type: z.literal(EditorEvent.LinkClicked),
+  payload: LinkClickedPayloadSchema
+});
+
+const RequestResponseEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Evt),
+  type: z.literal(EditorEvent.RequestResponse),
+  payload: RequestResponsePayloadSchema
+});
+
+// Error handling
+const ErrorEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Err),
+  type: z.string(),
+  payload: ErrorPayloadSchema
+});
+
+export const AnyMessageSchema = z.discriminatedUnion('type', [
+  InitCommandEnvelope,
+  SetCommandEnvelope,
+  RequestStateEnvelope,
+  ReadyEventEnvelope,
+  ChangedEventEnvelope,
+  LinkClickedEnvelope,
+  RequestResponseEnvelope,
+]);
+
+export type AnyMessage = z.infer<typeof AnyMessageSchema>;
+
+export type ParseResult =
+  | { ok: true; data: AnyMessage }
+  | { ok: false; error: z.ZodError; raw: unknown };
+
+export function parseMessage(input: unknown): ParseResult {
+  let data = input;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch (e) {
+      return {
+        ok: false,
+        error: new z.ZodError([{
+          code: z.ZodIssueCode.custom,
+          path: [],
+          message: 'Invalid JSON'
+        }]),
+        raw: input
+      };
+    }
+  }
+
+  // First check version manually to give a clear error
+  const vCheck = BaseEnvelope.safeParse(data);
+  if (!vCheck.success) {
+    return { ok: false, error: vCheck.error, raw: input };
+  }
+
+  // Now strict check
+  const result = AnyMessageSchema.safeParse(data);
+  if (result.success) {
+    return { ok: true, data: result.data };
+  } else {
+    // Check if it's a valid Error message
+    const errResult = ErrorEnvelope.safeParse(data);
+    if (errResult.success) {
+       return { ok: false, error: result.error, raw: input };
+    }
+
+    return { ok: false, error: result.error, raw: input };
+  }
+}
+
+export function createMessage(msg: AnyMessage): AnyMessage {
+  return AnyMessageSchema.parse(msg);
+}
