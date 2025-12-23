@@ -1,5 +1,6 @@
 packages:
   - apps/*
+  - apps/mobile/editor-web
   - packages/*
 
 nodeLinker: hoisted
