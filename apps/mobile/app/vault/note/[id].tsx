@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
-import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
-import { EditorCommand, DocChangedPayload } from '../../../src/editor/EditorProtocol';
+import { EditorView, EditorViewRef } from '@/components/EditorView';
+import { MobileSandboxVaultAdapter } from '@/adapters/MobileSandboxVaultAdapter';
+import { EditorCommand, DocChangedPayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
 
 // Minimal theme to satisfy protocol (values will override fallbacks if provided)
 const LIGHT_THEME = {
