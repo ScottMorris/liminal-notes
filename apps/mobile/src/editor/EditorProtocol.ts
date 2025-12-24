@@ -101,7 +101,7 @@ export function parseEnvelope(data: string | unknown): AnyMessage {
  * Type guard for specific events.
  */
 export function isEvent<T extends EventType>(
-  envelope: Envelope<unknown>,
+  envelope: AnyMessage | Envelope<unknown>,
   type: T['type']
 ): envelope is Envelope<T['payload']> {
   return envelope.kind === MessageKind.Evt && envelope.type === type;

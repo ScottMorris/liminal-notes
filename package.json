@@ -12,7 +12,10 @@
     "test": "echo \"(tests to be added by tooling)\"",
     "tauri": "pnpm --filter @liminal-notes/desktop tauri",
     "dev:desktop": "pnpm --filter @liminal-notes/desktop tauri dev",
-    "build:desktop": "pnpm --filter @liminal-notes/desktop tauri build"
+    "build:desktop": "pnpm --filter @liminal-notes/desktop tauri build",
+    "build:packages": "pnpm -r --filter \"./packages/**\" run build",
+    "dev:packages": "pnpm -r --filter \"./packages/**\" run dev",
+    "postinstall": "pnpm build:packages"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

@@ -1,7 +1,6 @@
 import { Reminder, TimeTrigger } from './types';
 import { localToUtcIso, utcToLocalIso, nowISO, getLocalTimezone } from './time';
-import { addMinutes, addDays, addWeeks, addMonths, isBefore, parseISO, isAfter } from 'date-fns';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { addDays, addWeeks, addMonths, parseISO, isAfter } from 'date-fns';
 
 export function computeNextFireAt(reminder: Reminder, nowUtcIso: string = nowISO()): string | undefined {
   if (reminder.trigger.type !== 'time') return undefined; // Only time triggers for now
@@ -36,7 +35,7 @@ export function computeNextFireAt(reminder: Reminder, nowUtcIso: string = nowISO
 
   // Safety break
   let iterations = 0;
-  const maxIterations = 1000; // Limit for safety, though for interval/daily it might not be enough if catchup is huge.
+  // Limit for safety, though for interval/daily it might not be enough if catchup is huge.
   // Ideally use math for fixed intervals.
 
   const repeat = trigger.repeat;

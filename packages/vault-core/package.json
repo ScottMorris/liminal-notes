@@ -2,20 +2,26 @@
   "name": "@liminal-notes/vault-core",
   "version": "0.1.0",
   "type": "module",
-  "main": "./src/main.ts",
-  "types": "./src/main.ts",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
   "exports": {
-    ".": "./src/main.ts",
-    "./src/types": "./src/types.ts",
-    "./src/pathSafety": "./src/pathSafety.ts"
+    ".": "./dist/main.js",
+    "./types": "./dist/types.js",
+    "./pathSafety": "./dist/pathSafety.js"
   },
   "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
     "test": "vitest run"
   },
   "dependencies": {
     "@liminal-notes/core-shared": "workspace:*"
   },
   "devDependencies": {
+    "tsup": "^8.3.6",
     "typescript": "^5.8.3",
     "vitest": "^1.3.1"
   }

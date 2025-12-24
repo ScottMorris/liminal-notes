@@ -6,9 +6,9 @@ import {
   WriteNoteResult,
   WriteNoteOptions,
   VaultStat
-} from '@liminal-notes/vault-core/src/types';
-import { NoteId } from '@liminal-notes/core-shared/src/types';
-import { assertSafeNotePath } from '@liminal-notes/vault-core/src/pathSafety';
+} from '@liminal-notes/vault-core/types';
+import { NoteId } from '@liminal-notes/core-shared/types';
+import { assertSafeNotePath } from '@liminal-notes/vault-core/pathSafety';
 import { File, Directory, Paths } from 'expo-file-system';
 
 /**

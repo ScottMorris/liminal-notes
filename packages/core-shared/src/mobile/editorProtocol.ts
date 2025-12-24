@@ -252,7 +252,10 @@ export const AnyMessageSchema = z.discriminatedUnion('type', [
   RequestResponseEnvelope,
 ]);
 
-export type AnyMessage = z.infer<typeof AnyMessageSchema>;
+// Export ErrorEnvelope type
+export type ErrorEnvelope = z.infer<typeof ErrorEnvelope>;
+
+export type AnyMessage = z.infer<typeof AnyMessageSchema> | ErrorEnvelope;
 
 export type ParseResult =
   | { ok: true; data: AnyMessage }
@@ -290,7 +293,7 @@ export function parseMessage(input: unknown): ParseResult {
     // Check if it's a valid Error message
     const errResult = ErrorEnvelope.safeParse(data);
     if (errResult.success) {
-       return { ok: false, error: result.error, raw: input };
+       return { ok: true, data: errResult.data };
     }
 
     return { ok: false, error: result.error, raw: input };
@@ -298,5 +301,9 @@ export function parseMessage(input: unknown): ParseResult {
 }
 
 export function createMessage(msg: AnyMessage): AnyMessage {
-  return AnyMessageSchema.parse(msg);
+    // Check for error type first since it's not in the discriminated union
+    const errResult = ErrorEnvelope.safeParse(msg);
+    if (errResult.success) return errResult.data;
+
+    return AnyMessageSchema.parse(msg);
 }
