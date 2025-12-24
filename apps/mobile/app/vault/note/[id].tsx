@@ -6,7 +6,19 @@ import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVa
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import { themes } from '@liminal-notes/core-shared/theme';
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+enum SaveStatus {
+    Idle = 'idle',
+    Saving = 'saving',
+    Saved = 'saved',
+    Error = 'error'
+}
+
+const SaveStatusColors = {
+    [SaveStatus.Idle]: '#666',
+    [SaveStatus.Saving]: '#f57f17', // Orange
+    [SaveStatus.Saved]: '#2e7d32', // Green
+    [SaveStatus.Error]: '#c62828' // Red
+};
 
 export default function NoteScreen() {
   const { id } = useLocalSearchParams();
@@ -27,7 +39,7 @@ export default function NoteScreen() {
   // Verification State
   const [revision, setRevision] = useState<number>(0);
   const [isDirty, setIsDirty] = useState<boolean>(false);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.Idle);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -89,7 +101,7 @@ export default function NoteScreen() {
     // Reset revision tracking
     setRevision(0);
     setIsDirty(false);
-    setSaveStatus('idle');
+    setSaveStatus(SaveStatus.Idle);
   };
 
   const requestSave = () => {
@@ -104,7 +116,7 @@ export default function NoteScreen() {
     }
 
     if (isMountedRef.current) {
-        setSaveStatus('saving');
+        setSaveStatus(SaveStatus.Saving);
     }
 
     const requestId = Date.now().toString();
@@ -119,8 +131,8 @@ export default function NoteScreen() {
   const handleDocChanged = (payload: DocChangedPayload) => {
       setRevision(payload.revision);
       setIsDirty(true);
-      if (saveStatus !== 'error') {
-        setSaveStatus('idle');
+      if (saveStatus !== SaveStatus.Error) {
+        setSaveStatus(SaveStatus.Idle);
       }
 
       // Reset debounce timer
@@ -150,7 +162,7 @@ export default function NoteScreen() {
           await adapter.writeNote(noteId!, payload.state.text);
 
           if (isMountedRef.current) {
-              setSaveStatus('saved');
+              setSaveStatus(SaveStatus.Saved);
 
               // Only clear isDirty if NO new save is pending.
               // If saveTimerRef.current is set, it means the user typed while this save was in-flight.
@@ -161,7 +173,7 @@ export default function NoteScreen() {
       } catch (e: any) {
           console.error('[NoteScreen] Save failed:', e);
           if (isMountedRef.current) {
-              setSaveStatus('error');
+              setSaveStatus(SaveStatus.Error);
               // Keep isDirty true
           }
       }
@@ -185,20 +197,11 @@ export default function NoteScreen() {
       );
   }
 
-  const getSaveStatusColor = () => {
-      switch (saveStatus) {
-          case 'saving': return '#f57f17'; // Orange
-          case 'saved': return '#2e7d32'; // Green
-          case 'error': return '#c62828'; // Red
-          default: return '#666';
-      }
-  };
-
   const getSaveStatusText = () => {
       switch (saveStatus) {
-          case 'saving': return 'Saving...';
-          case 'saved': return 'Saved';
-          case 'error': return 'Save Failed';
+          case SaveStatus.Saving: return 'Saving...';
+          case SaveStatus.Saved: return 'Saved';
+          case SaveStatus.Error: return 'Save Failed';
           default: return '';
       }
   };
@@ -210,8 +213,8 @@ export default function NoteScreen() {
           <Text style={styles.title} numberOfLines={1}>{noteId}</Text>
           <View style={styles.badges}>
               {/* Save Status */}
-              {saveStatus !== 'idle' && (
-                   <Text style={[styles.badge, { color: getSaveStatusColor(), backgroundColor: 'transparent' }]}>
+              {saveStatus !== SaveStatus.Idle && (
+                   <Text style={[styles.badge, { color: SaveStatusColors[saveStatus], backgroundColor: 'transparent' }]}>
                        {getSaveStatusText()}
                    </Text>
               )}
