@@ -138,6 +138,8 @@ Payload:
 }
 ```
 
+The `theme.vars` object is a key-value map of CSS variables (e.g., `{"--ln-bg": "#fff"}`) which the editor will apply to the document root (`document.documentElement.style`).
+
 ---
 
 ### 7.2 doc/set

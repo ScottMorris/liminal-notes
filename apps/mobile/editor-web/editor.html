@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Liminal Editor</title>
   <style>
-    body { margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-    #editor { height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; color: #888; }
+    body { margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--ln-editor-bg, #ffffff); }
+    #editor { height: 100vh; width: 100vw; }
   </style>
 </head>
 <body>
-  <div id="editor">Editor Loading...</div>
-  <script type="module" src="/src/bridge.ts"></script>
+  <div id="editor"></div>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
