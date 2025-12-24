@@ -47,6 +47,7 @@ We should consider adding a printing feature for notes.
 ## Theming
 
 - Consolidate all themes to use HSL color values for consistency and easier programmatic manipulation.
+- **Shared Theme Definitions:** Refactor `apps/desktop/src/theme/themes.ts` into a shared package (`@liminal-notes/core-shared`) or a similar common location so that theme definitions can be consumed by both the desktop app and the mobile editor web bundle.
 
 ## Editor
 
@@ -54,6 +55,7 @@ We should consider adding a printing feature for notes.
 - Implement undo history reset when switching notes to prevent undoing into a previous note's content state.
 - Refactor legacy `saveUnsavedTab` helper in `EditorPane.tsx`. It is currently kept for confirmClose logic but ideally should be routed through the command registry or a dedicated context to support non-active tabs.
 - **CodeMirror WikiLinks:** Refactor WikiLink parsing to use a custom CodeMirror Markdown language extension instead of manual regex scanning for better performance and robustness.
+- **Shared Editor Decorations:** Refactor desktop editor decorations (e.g., `markdownDecorations`, `frontmatterHider`) into `@liminal-notes/core-shared` or a similar shared location and integrate them into the mobile editor to achieve visual parity.
 
 ## Tab Persistence in Vault
 
