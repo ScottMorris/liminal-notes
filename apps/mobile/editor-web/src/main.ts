@@ -1,5 +1,5 @@
 import { EditorView, lineNumbers, highlightActiveLine } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Annotation } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
 import { history, defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { closeBrackets } from '@codemirror/autocomplete';
@@ -10,45 +10,21 @@ import {
   PROTOCOL_VERSION,
   EditorCommand,
   EditorEvent,
-  parseMessage,
-  createMessage,
   AnyMessage,
   MessageKind,
 } from '@liminal-notes/core-shared/mobile/editorProtocol';
 
 import { createEditorTheme, fallbackThemeVars } from './theme';
-
-// -- Bridge Logic --
-
-function send(msg: any) {
-  // Construct the envelope
-  const envelope: AnyMessage = {
-    v: PROTOCOL_VERSION,
-    id: globalThis.crypto?.randomUUID() || Math.random().toString(36).slice(2),
-    kind: MessageKind.Evt,
-    type: msg.type,
-    payload: msg.payload
-  } as AnyMessage;
-
-  try {
-    const validated = createMessage(envelope);
-    // @ts-ignore: ReactNativeWebView is injected by the host
-    if (window.ReactNativeWebView) {
-      // @ts-ignore
-      window.ReactNativeWebView.postMessage(JSON.stringify(validated));
-    } else {
-      console.warn('[editor-bridge] ReactNativeWebView not found', validated);
-    }
-  } catch (e) {
-    console.error('[editor-bridge] Failed to create valid outbound message', e);
-  }
-}
+import { send, listen } from './bridge';
 
 // -- Editor Initialization --
 
 let editorView: EditorView | null = null;
 let currentDocId: string | null = null;
 let currentRevision = 0;
+
+// Annotation to mark programmatic changes from the host
+const HostTransaction = Annotation.define<boolean>();
 
 // Apply theme vars to document root
 function applyTheme(vars: Record<string, string>) {
@@ -72,6 +48,11 @@ function initEditor(parent: HTMLElement) {
     createEditorTheme(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     EditorView.updateListener.of((update) => {
+      // Ignore transactions marked as coming from the host
+      if (update.transactions.some(tr => tr.annotation(HostTransaction))) {
+        return;
+      }
+
       if (update.docChanged && currentDocId) {
         currentRevision++;
 
@@ -153,10 +134,8 @@ function handleCommand(msg: AnyMessage) {
 
       editorView.dispatch({
         changes: { from: 0, to: editorView.state.doc.length, insert: msg.payload.text },
-        // selection: msg.payload.selection ? { anchor: msg.payload.selection.anchor, head: msg.payload.selection.head } : undefined,
-        // Warning: dispatching selection along with changes needs careful index handling if changes shift things.
-        // Replacing the whole doc is safe though.
-        selection: msg.payload.selection ? { anchor: msg.payload.selection.anchor, head: msg.payload.selection.head } : { anchor: 0 }
+        selection: msg.payload.selection ? { anchor: msg.payload.selection.anchor, head: msg.payload.selection.head } : { anchor: 0 },
+        annotations: HostTransaction.of(true)
       });
       break;
 
@@ -198,14 +177,7 @@ function handleCommand(msg: AnyMessage) {
 
 // -- Event Listeners --
 
-document.addEventListener('message', (event: any) => {
-  const result = parseMessage(event.data);
-  if (result.ok) {
-    handleCommand(result.data);
-  } else {
-    console.error('[editor-bridge] Invalid message', result);
-  }
-});
+listen(handleCommand);
 
 // Main boot
 const editorEl = document.getElementById('editor');
