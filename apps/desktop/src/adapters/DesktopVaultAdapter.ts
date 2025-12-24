@@ -5,8 +5,8 @@ import type {
   ReadNoteResult,
   WriteNoteResult,
   WriteNoteOptions
-} from '@liminal-notes/vault-core/src/types';
-import type { NoteId } from '@liminal-notes/core-shared/src/types';
+} from '@liminal-notes/vault-core/types';
+import type { NoteId } from '@liminal-notes/core-shared/types';
 import {
   readNote,
   writeNote,

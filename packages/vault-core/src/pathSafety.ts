@@ -1,4 +1,4 @@
-import type { NoteId } from '@liminal-notes/core-shared/src/types';
+import type { NoteId } from '@liminal-notes/core-shared/types';
 
 /**
  * Normalizes a note path by replacing backslashes with forward slashes

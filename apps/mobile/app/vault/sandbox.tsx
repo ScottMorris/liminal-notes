@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Button, ScrollView, TextInput } from 'react-native';
 import { useState } from 'react';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
-import type { NoteId } from '@liminal-notes/core-shared/src/types';
+import type { NoteId } from '@liminal-notes/core-shared/types';
 
 export default function SandboxTestScreen() {
   const [logs, setLogs] = useState<string[]>([]);

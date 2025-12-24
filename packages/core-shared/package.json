@@ -1,12 +1,22 @@
 {
   "name": "@liminal-notes/core-shared",
   "version": "0.1.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    "./mobile/editorProtocol": "./src/mobile/editorProtocol.ts",
-    "./src/mobile/editorProtocol": "./src/mobile/editorProtocol.ts",
-    "./src/*": "./src/*.ts"
+    ".": "./dist/index.js",
+    "./types": "./dist/types.js",
+    "./wikilinks": "./dist/wikilinks.js",
+    "./frontmatter": "./dist/frontmatter.js",
+    "./mobile/editorProtocol": "./dist/mobile/editorProtocol.js"
   },
   "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
     "test": "vitest run"
   },
   "dependencies": {
@@ -15,6 +25,7 @@
   },
   "devDependencies": {
     "buffer": "^6.0.3",
+    "tsup": "^8.3.6",
     "typescript": "^5.8.3",
     "vitest": "^1.3.1"
   }

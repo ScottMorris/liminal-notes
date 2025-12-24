@@ -14,6 +14,9 @@ import {
 // @ts-ignore: Resolved by Metro via declarations.d.ts or assetExts configuration
 import editorHtml from '../../editor-web/dist/editor.html';
 
+// Cast for strict type checking until .html declaration is available
+const editorHtmlSource = editorHtml as any;
+
 interface EditorViewProps {
   onReady?: () => void;
   onDocChanged?: (payload: any) => void;
@@ -55,19 +58,23 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
       console.log('[EditorHost] Parsed envelope:', envelope);
 
       if (envelope.kind === MessageKind.Evt) {
-        if (isEvent(envelope, EditorEvent.Ready)) {
+        // Cast to any to bypass union narrowing issues with isEvent predicate
+        const evt = envelope as any;
+        if (isEvent(evt, EditorEvent.Ready)) {
            console.log('[EditorHost] Editor Ready');
            props.onReady?.();
-        } else if (isEvent(envelope, EditorEvent.Changed)) {
-           props.onDocChanged?.(envelope.payload);
-        } else if (isEvent(envelope, EditorEvent.LinkClicked)) {
-           props.onLinkClicked?.(envelope.payload);
-        } else if (isEvent(envelope, EditorEvent.RequestResponse)) {
-           props.onRequestResponse?.(envelope.payload);
+        } else if (isEvent(evt, EditorEvent.Changed)) {
+           props.onDocChanged?.(evt.payload);
+        } else if (isEvent(evt, EditorEvent.LinkClicked)) {
+           props.onLinkClicked?.(evt.payload);
+        } else if (isEvent(evt, EditorEvent.RequestResponse)) {
+           props.onRequestResponse?.(evt.payload);
         }
       } else if (envelope.kind === MessageKind.Err) {
-        console.error('[EditorHost] Guest Error:', envelope.payload);
-        props.onError?.(new Error(`Guest error: ${JSON.stringify(envelope.payload)}`));
+        // Explicitly check for error kind since AnyMessage might not infer it correctly in all contexts
+        const err = envelope as any;
+        console.error('[EditorHost] Guest Error:', err.payload);
+        props.onError?.(new Error(`Guest error: ${JSON.stringify(err.payload)}`));
       }
     } catch (e) {
       console.error('[EditorHost] Protocol Error:', e);
@@ -79,7 +86,7 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
     <View style={styles.container}>
       <WebView
         ref={webViewRef}
-        source={editorHtml}
+        source={editorHtmlSource}
         style={styles.webview}
         onMessage={handleMessage}
         originWhitelist={['*']}

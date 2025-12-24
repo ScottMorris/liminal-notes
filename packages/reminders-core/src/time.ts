@@ -1,4 +1,4 @@
-import { toZonedTime, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { isValid, parseISO } from 'date-fns';
 
 export function nowISO(): string {

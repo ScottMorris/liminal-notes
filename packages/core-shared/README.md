@@ -7,9 +7,9 @@ Shared logic and types for Liminal Notes (Desktop & Mobile).
 This package uses direct imports to avoid barrel files.
 
 ```ts
-import { parseWikilinks } from '@liminal-notes/core-shared/src/wikilinks';
-import { parseFrontmatter } from '@liminal-notes/core-shared/src/frontmatter';
-import type { NoteId } from '@liminal-notes/core-shared/src/types';
+import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
+import { parseFrontmatter } from '@liminal-notes/core-shared/frontmatter';
+import type { NoteId } from '@liminal-notes/core-shared/types';
 ```
 
 ## Requirements

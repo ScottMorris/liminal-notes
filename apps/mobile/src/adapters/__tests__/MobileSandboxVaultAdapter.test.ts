@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NoteId } from '@liminal-notes/core-shared/src/types';
+import { NoteId } from '@liminal-notes/core-shared/types';
 
 // 1. Define mock types for our simulated file system
 type MockFileSystemItem = {
