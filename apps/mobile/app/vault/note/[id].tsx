@@ -1,20 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { EditorView, EditorViewRef } from '@/components/EditorView';
-import { MobileSandboxVaultAdapter } from '@/adapters/MobileSandboxVaultAdapter';
+import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
+import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
 import { EditorCommand, DocChangedPayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
-
-// Minimal theme to satisfy protocol (values will override fallbacks if provided)
-const LIGHT_THEME = {
-  name: 'light',
-  vars: {
-    '--ln-bg': '#ffffff',
-    '--ln-fg': '#333333',
-    '--ln-accent': '#0066cc',
-    // ... add others if needed, for now relying on editor's fallback for the rest
-  }
-};
+import { themes } from '@liminal-notes/core-shared/theme';
 
 export default function NoteScreen() {
   const { id } = useLocalSearchParams();
@@ -63,7 +53,7 @@ export default function NoteScreen() {
     editorRef.current.sendCommand(EditorCommand.Init, {
         platform: Platform.OS === 'ios' ? 'ios' : 'android',
         readOnly: false,
-        theme: LIGHT_THEME,
+        theme: themes.light, // Use shared theme
         featureFlags: {
             links: true
         }

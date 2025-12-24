@@ -12,7 +12,8 @@
     "./types": "./dist/types.js",
     "./wikilinks": "./dist/wikilinks.js",
     "./frontmatter": "./dist/frontmatter.js",
-    "./mobile/editorProtocol": "./dist/mobile/editorProtocol.js"
+    "./mobile/editorProtocol": "./dist/mobile/editorProtocol.js",
+    "./theme": "./dist/theme/index.js"
   },
   "scripts": {
     "build": "tsup",
