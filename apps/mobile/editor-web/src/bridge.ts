@@ -1,48 +1,67 @@
 // Import protocol types from core-shared
 import {
   PROTOCOL_VERSION,
-  Envelope,
-  CommandType,
   EventType,
   MessageKind,
   EditorCommand,
-  EditorEvent
-} from '@liminal-notes/core-shared/src/mobile/editorProtocol';
+  EditorEvent,
+  parseMessage,
+  createMessage,
+  AnyMessage
+} from '@liminal-notes/core-shared/mobile/editorProtocol';
 
 // Helper to send messages to RN
 function send(msg: EventType) {
-  const envelope: Envelope<any> = {
+  // We construct the envelope using the createMessage helper indirectly,
+  // or at least construct a valid object that matches the schema.
+
+  const envelope: AnyMessage = {
     v: PROTOCOL_VERSION,
     id: globalThis.crypto?.randomUUID() || Math.random().toString(36).slice(2),
     kind: MessageKind.Evt,
     type: msg.type,
+    // @ts-ignore - TS discrimination might be tricky here with generic 'msg', but AnyMessage schema will validate at runtime
     payload: msg.payload
-  };
+  } as AnyMessage;
+
+  // Validate before sending
+  try {
+    createMessage(envelope);
+  } catch (e) {
+    console.error('[editor-bridge] Failed to create valid outbound message', e);
+    return;
+  }
 
   // @ts-ignore: ReactNativeWebView is injected by the host and not present in standard DOM types
   if (window.ReactNativeWebView) {
      // @ts-ignore: ReactNativeWebView is injected by the host and not present in standard DOM types
     window.ReactNativeWebView.postMessage(JSON.stringify(envelope));
   } else {
-    console.warn('ReactNativeWebView not found', envelope);
+    console.warn('[editor-bridge] ReactNativeWebView not found', envelope);
   }
 }
 
-function handleCommand(cmd: CommandType) {
+function handleCommand(msg: AnyMessage) {
+  // Narrowing based on kind first
+  if (msg.kind !== MessageKind.Cmd) {
+    // We only handle commands
+    return;
+  }
+
   const editorEl = document.getElementById('editor');
 
-  switch (cmd.type) {
+  switch (msg.type) {
     case EditorCommand.Init:
-      if (editorEl) editorEl.innerText = `Initialized (${cmd.payload.platform})`;
+      if (editorEl) editorEl.innerText = `Initialized (${msg.payload.platform})`;
       break;
     case EditorCommand.Set:
-      if (editorEl) editorEl.innerText = cmd.payload.text;
+      if (editorEl) editorEl.innerText = msg.payload.text;
       break;
     case EditorCommand.RequestState:
       send({
         type: EditorEvent.RequestResponse,
         payload: {
-          requestId: cmd.payload.requestId,
+          requestId: msg.payload.requestId,
           state: {
             text: editorEl?.innerText || ''
           }
@@ -50,18 +69,22 @@ function handleCommand(cmd: CommandType) {
       });
       break;
     default:
-      console.log('Unknown command', cmd);
+      console.warn('[editor-bridge] Unknown or unhandled command', msg);
   }
 }
 
 // Listen for messages from RN
 // We listen on document to match the dispatch event from EditorView
 document.addEventListener('message', (event: any) => {
-  try {
-    const envelope = JSON.parse(event.data);
-    handleCommand(envelope);
-  } catch (e) {
-    console.error('Failed to parse message', e);
+  const result = parseMessage(event.data);
+
+  if (result.ok) {
+    handleCommand(result.data);
+  } else {
+    console.error('[editor-bridge] Invalid message received', {
+      issues: result.error.issues,
+      raw: typeof event.data === 'string' ? event.data.slice(0, 200) : 'object'
+    });
   }
 });
 

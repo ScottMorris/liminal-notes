@@ -12,8 +12,11 @@ import {
   ReadyPayload,
   DocChangedPayload,
   LinkClickedPayload,
-  RequestResponsePayload
-} from '@liminal-notes/core-shared/src/mobile/editorProtocol';
+  RequestResponsePayload,
+  createMessage,
+  parseMessage,
+  AnyMessage
+} from '@liminal-notes/core-shared/mobile/editorProtocol';
 
 export type {
   Envelope,
@@ -25,13 +28,15 @@ export type {
   ReadyPayload,
   DocChangedPayload,
   LinkClickedPayload,
-  RequestResponsePayload
+  RequestResponsePayload,
+  AnyMessage
 };
 
 export {
   MessageKind,
   EditorCommand,
-  EditorEvent
+  EditorEvent,
+  createMessage
 }
 
 export class ProtocolError extends Error {
@@ -43,18 +48,22 @@ export class ProtocolError extends Error {
 
 /**
  * Creates a command envelope to send to the WebView.
+ * Wraps the shared createMessage for specific command typing convenience.
  */
 export function createCommand<T extends CommandType>(
   type: T['type'],
   payload: T['payload']
 ): Envelope<T['payload']> {
-  return {
+  const envelope = {
     v: PROTOCOL_VERSION,
     id: generateUUID(),
     kind: MessageKind.Cmd,
     type,
     payload,
-  };
+  } as AnyMessage; // Cast to AnyMessage to satisfy createMessage check
+
+  // Validate using strict schema
+  return createMessage(envelope) as Envelope<T['payload']>;
 }
 
 function generateUUID() {
@@ -71,32 +80,21 @@ function generateUUID() {
 
 /**
  * Parses and validates an incoming envelope from the WebView.
+ * Uses strict Zod schema validation.
  */
-export function parseEnvelope(data: string | unknown): Envelope<unknown> {
-  let envelope: any;
-  if (typeof data === 'string') {
-    try {
-      envelope = JSON.parse(data);
-    } catch (e) {
-      throw new ProtocolError('Failed to parse message JSON', { data, error: e });
-    }
-  } else {
-    envelope = data;
+export function parseEnvelope(data: string | unknown): AnyMessage {
+  const result = parseMessage(data);
+
+  if (!result.ok) {
+    // Map Zod errors to ProtocolError for backward compatibility/consistent error handling in app
+    throw new ProtocolError('Message validation failed', {
+      data,
+      issues: result.error.issues,
+      raw: result.raw
+    });
   }
 
-  if (typeof envelope !== 'object' || envelope === null) {
-    throw new ProtocolError('Message is not an object', { envelope });
-  }
-
-  if (envelope.v !== PROTOCOL_VERSION) {
-    console.warn(`Protocol version mismatch: expected ${PROTOCOL_VERSION}, got ${envelope.v}`);
-  }
-
-  if (!envelope.id || !envelope.kind || !envelope.type) {
-    throw new ProtocolError('Message missing required fields (id, kind, type)', { envelope });
-  }
-
-  return envelope as Envelope<unknown>;
+  return result.data;
 }
 
 /**
