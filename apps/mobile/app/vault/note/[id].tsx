@@ -3,14 +3,33 @@ import { View, Text, StyleSheet, ActivityIndicator, Platform, SafeAreaView } fro
 import { useLocalSearchParams } from 'expo-router';
 import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
 import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
-import { EditorCommand, DocChangedPayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
+import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import { themes } from '@liminal-notes/core-shared/theme';
+
+enum SaveStatus {
+    Idle = 'idle',
+    Saving = 'saving',
+    Saved = 'saved',
+    Error = 'error'
+}
+
+const SaveStatusColors = {
+    [SaveStatus.Idle]: '#666',
+    [SaveStatus.Saving]: '#f57f17', // Orange
+    [SaveStatus.Saved]: '#2e7d32', // Green
+    [SaveStatus.Error]: '#c62828' // Red
+};
 
 export default function NoteScreen() {
   const { id } = useLocalSearchParams();
   const noteId = Array.isArray(id) ? id[0] : id; // Handle potential array from params
 
   const editorRef = useRef<EditorViewRef>(null);
+
+  // Autosave refs
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastRequestIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef<boolean>(true);
 
   // State
   const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -20,9 +39,22 @@ export default function NoteScreen() {
   // Verification State
   const [revision, setRevision] = useState<number>(0);
   const [isDirty, setIsDirty] = useState<boolean>(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.Idle);
 
   useEffect(() => {
+    isMountedRef.current = true;
     loadNote();
+    return () => {
+      isMountedRef.current = false;
+      // Best-effort flush on unmount:
+      // If a save was pending (timer running), cancel timer and trigger save immediately.
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+        // Attempt to save immediately
+        requestSave();
+      }
+    };
   }, [noteId]);
 
   const loadNote = async () => {
@@ -69,11 +101,82 @@ export default function NoteScreen() {
     // Reset revision tracking
     setRevision(0);
     setIsDirty(false);
+    setSaveStatus(SaveStatus.Idle);
+  };
+
+  const requestSave = () => {
+    // Note: requestSave might be called during unmount (in cleanup).
+    // We check editorRef, but isMounted check is for state updates only.
+    if (!editorRef.current || !noteId) return;
+
+    // Clear any existing timer
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    if (isMountedRef.current) {
+        setSaveStatus(SaveStatus.Saving);
+    }
+
+    const requestId = Date.now().toString();
+    lastRequestIdRef.current = requestId;
+
+    editorRef.current.sendCommand(EditorCommand.RequestState, {
+        requestId,
+        include: ['text']
+    });
   };
 
   const handleDocChanged = (payload: DocChangedPayload) => {
       setRevision(payload.revision);
       setIsDirty(true);
+      if (saveStatus !== SaveStatus.Error) {
+        setSaveStatus(SaveStatus.Idle);
+      }
+
+      // Reset debounce timer
+      if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current);
+      }
+
+      saveTimerRef.current = setTimeout(() => {
+          requestSave();
+      }, 1000);
+  };
+
+  const handleRequestResponse = async (payload: RequestResponsePayload) => {
+      // Validate request ID
+      if (payload.requestId !== lastRequestIdRef.current) {
+          console.log('[NoteScreen] Ignoring stale response', payload.requestId);
+          return;
+      }
+
+      if (!payload.state.text) {
+          console.warn('[NoteScreen] Received empty text in response');
+          return;
+      }
+
+      try {
+          const adapter = new MobileSandboxVaultAdapter();
+          await adapter.writeNote(noteId!, payload.state.text);
+
+          if (isMountedRef.current) {
+              setSaveStatus(SaveStatus.Saved);
+
+              // Only clear isDirty if NO new save is pending.
+              // If saveTimerRef.current is set, it means the user typed while this save was in-flight.
+              if (!saveTimerRef.current) {
+                setIsDirty(false);
+              }
+          }
+      } catch (e: any) {
+          console.error('[NoteScreen] Save failed:', e);
+          if (isMountedRef.current) {
+              setSaveStatus(SaveStatus.Error);
+              // Keep isDirty true
+          }
+      }
   };
 
   if (status === 'loading') {
@@ -94,12 +197,28 @@ export default function NoteScreen() {
       );
   }
 
+  const getSaveStatusText = () => {
+      switch (saveStatus) {
+          case SaveStatus.Saving: return 'Saving...';
+          case SaveStatus.Saved: return 'Saved';
+          case SaveStatus.Error: return 'Save Failed';
+          default: return '';
+      }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header / Debug Bar */}
       <View style={styles.header}>
           <Text style={styles.title} numberOfLines={1}>{noteId}</Text>
           <View style={styles.badges}>
+              {/* Save Status */}
+              {saveStatus !== SaveStatus.Idle && (
+                   <Text style={[styles.badge, { color: SaveStatusColors[saveStatus], backgroundColor: 'transparent' }]}>
+                       {getSaveStatusText()}
+                   </Text>
+              )}
+
               <Text style={styles.badge}>Rev: {revision}</Text>
               {isDirty && <Text style={[styles.badge, styles.dirtyBadge]}>Dirty</Text>}
           </View>
@@ -110,6 +229,7 @@ export default function NoteScreen() {
         ref={editorRef}
         onReady={handleEditorReady}
         onDocChanged={handleDocChanged}
+        onRequestResponse={handleRequestResponse}
         onError={(e) => console.error('Editor Error:', e)}
       />
     </SafeAreaView>
