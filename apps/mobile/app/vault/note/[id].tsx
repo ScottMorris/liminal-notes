@@ -85,7 +85,10 @@ export default function NoteScreen() {
     editorRef.current.sendCommand(EditorCommand.Init, {
         platform: Platform.OS === 'ios' ? 'ios' : 'android',
         readOnly: false,
-        theme: themes.light, // Use shared theme
+        theme: {
+            name: themes.light.name,
+            vars: themes.light.variables
+        },
         featureFlags: {
             links: true
         }
