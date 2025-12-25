@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { getLinuxAccentColour } from '../ipc';
-import { Theme, ThemeId } from './types';
-import { themes } from './themes';
+import { Theme, ThemeId, themes } from './types';
 
 const GNOME_ACCENTS: Record<string, string> = {
     'blue': '#3584e4',
