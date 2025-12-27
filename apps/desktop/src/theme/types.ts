@@ -1,1 +1,1 @@
-export * from '@liminal-notes/core-shared/theme';
+export type { Theme, ThemeId } from '@liminal-notes/core-shared/theme';

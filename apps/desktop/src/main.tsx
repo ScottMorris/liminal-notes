@@ -8,7 +8,7 @@ if (typeof window !== 'undefined') {
     (window as any).Buffer = Buffer;
 }
 import { SettingsProvider } from "./contexts/SettingsContext";
-import { ThemeProvider } from "./theme";
+import { ThemeProvider } from "./theme/ThemeProvider";
 import { LinkIndexProvider } from "./components/LinkIndexContext";
 import { SearchIndexProvider } from "./components/SearchIndexContext";
 import { TagsProvider } from "./contexts/TagsContext";

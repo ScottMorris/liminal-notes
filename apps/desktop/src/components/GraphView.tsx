@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import ForceGraph2D, { ForceGraphMethods, NodeObject } from 'react-force-graph-2d';
 import { useLinkIndex } from './LinkIndexContext';
 import { useSearchIndex } from './SearchIndexContext';
-import { useTheme } from '../theme';
+import { useTheme } from '../theme/ThemeProvider';
 
 interface GraphNode extends NodeObject {
   id: string;

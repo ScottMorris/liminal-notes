@@ -13,8 +13,8 @@
     "tauri": "pnpm --filter @liminal-notes/desktop tauri",
     "dev:desktop": "pnpm --filter @liminal-notes/desktop tauri dev",
     "build:desktop": "pnpm --filter @liminal-notes/desktop tauri build",
-    "build:packages": "pnpm -r --filter \"./packages/**\" run build",
-    "dev:packages": "pnpm -r --filter \"./packages/**\" run dev",
+    "build:packages": "pnpm -r --filter \"./packages/**\" --filter \"./apps/mobile/editor-web\" run build",
+    "dev:packages": "pnpm -r --filter \"./packages/**\" --filter \"./apps/mobile/editor-web\" run dev",
     "postinstall": "pnpm build:packages"
   },
   "devDependencies": {
