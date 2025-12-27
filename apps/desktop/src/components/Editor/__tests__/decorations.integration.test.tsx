@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { CodeMirrorEditor } from '../CodeMirrorEditor';
-import { ThemeProvider } from '../../../theme';
+import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 // Mock getEditorContext since it's required prop
 const mockGetEditorContext = () => ({
