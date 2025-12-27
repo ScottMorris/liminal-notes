@@ -1,5 +1,5 @@
 import { SettingsSectionDef } from './types';
-import { Theme } from '../../theme';
+import { Theme } from '../../theme/types';
 
 export const getSections = (
     availableThemes: Theme[],

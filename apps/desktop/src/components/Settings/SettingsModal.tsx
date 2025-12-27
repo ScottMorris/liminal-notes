@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useTheme } from '../../theme';
+import { useTheme } from '../../theme/ThemeProvider';
 import { getSections } from './schemas';
 import { SettingsSection } from './SettingsRenderer';
 import { XMarkIcon } from '../Icons';

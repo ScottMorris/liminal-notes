@@ -10,7 +10,7 @@ import { markdownDecorations } from './decorations';
 import { frontmatterHider } from './frontmatterHider';
 import { spellcheckExtension } from './spellcheck/spellcheckExtension';
 import { spellcheckCore } from '../../features/spellcheck/spellcheckCore';
-import { useTheme } from '../../theme';
+import { useTheme } from '../../theme/ThemeProvider';
 import { ContextMenu } from './ContextMenu/ContextMenu';
 import { buildContextMenu } from './ContextMenu/menuBuilder';
 import { commandRegistry } from '../../commands/CommandRegistry';
