@@ -11,6 +11,13 @@ export default function VaultLayout() {
         }}
       />
       <Stack.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          headerShown: true
+        }}
+      />
+      <Stack.Screen
         name="explorer"
         options={{
           title: 'Explorer',

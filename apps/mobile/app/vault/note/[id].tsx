@@ -7,6 +7,7 @@ import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@limin
 import { themes } from '@liminal-notes/core-shared/theme';
 import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
+import { recentsStorage } from '../../../src/storage/recents';
 
 enum SaveStatus {
     Idle = 'idle',
@@ -69,6 +70,10 @@ export default function NoteScreen() {
 
     try {
         setStatus('loading');
+
+        // Add to Recents
+        await recentsStorage.add(noteId);
+
         const adapter = new MobileSandboxVaultAdapter();
         await adapter.init(); // Ensure root exists
 

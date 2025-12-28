@@ -9,7 +9,7 @@ export default function VaultPickerScreen() {
   const handleOpenSandbox = async () => {
     try {
       await openSandboxVault();
-      router.replace('/vault/explorer');
+      router.replace('/vault/home');
     } catch (e) {
       console.error('Failed to open sandbox vault', e);
       alert('Failed to open sandbox vault');

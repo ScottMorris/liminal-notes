@@ -1,5 +1,21 @@
 # TODO
 
+## Future Improvements
+
+### Pinning
+- [ ] Support manual reordering of pinned items.
+- [ ] Add pin/unpin affordances inside note and folder views (not only on Home).
+- [ ] Consider visual distinction between pinned notes vs pinned folders.
+
+### Reminders
+- [ ] Integrate `reminders-core` into mobile home “Focused” section.
+- [ ] Define reminder → note navigation behaviour on mobile.
+- [ ] Decide ordering rules when reminders and pinned items coexist.
+
+### Performance & Data
+- [ ] Cache derived folder activity to reduce repeated aggregation work.
+- [ ] Add richer activity signals (e.g., unread, reminder inside folder).
+
 ## Font Management
 
 - Replace build-time font download with a checked-in asset or a more robust font management strategy. The current implementation downloads `Noto Color Emoji` during the `postinstall` phase to avoid committing a large binary (~24MB) to the repository.

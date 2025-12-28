@@ -14,7 +14,7 @@ export default function Index() {
   }
 
   if (activeVault) {
-    return <Redirect href="/vault/explorer" />;
+    return <Redirect href="/vault/home" />;
   }
 
   return <Redirect href="/vault" />;
