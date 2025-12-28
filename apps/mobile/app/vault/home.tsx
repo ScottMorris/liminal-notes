@@ -13,29 +13,54 @@ export default function HomeScreen() {
   const router = useRouter();
   const { pinned, recents, folders, loading, refresh } = useHomeData();
 
-  const handleCreate = async () => {
+  const handleCreateNote = async () => {
     try {
       // Create new note logic
       const id = `Untitled ${Date.now()}.md`;
       const adapter = new MobileSandboxVaultAdapter();
       await adapter.init();
       // Write empty file
-      await adapter.writeNote(id, '');
+      await adapter.writeNote(id, '', { createParents: true });
 
       // Navigate
       router.push(`/vault/note/${id}`);
-
-      // Refresh home to show update if we return immediately?
-      // Actually NoteScreen handles Recents update.
     } catch (e) {
       console.error('Failed to create note', e);
       Alert.alert('Error', 'Failed to create new note');
     }
   };
 
+  const handleCreateFolder = async (folderName: string) => {
+      try {
+          const adapter = new MobileSandboxVaultAdapter();
+          await adapter.init();
+
+          await adapter.mkdir(folderName, { recursive: true });
+          // Navigate to folder
+          router.push({ pathname: '/vault/explorer', params: { folder: folderName } });
+      } catch (e) {
+          console.error('Failed to create folder', e);
+          Alert.alert('Error', 'Failed to create new folder');
+      }
+  };
+
+  const promptForFolder = () => {
+      Alert.prompt(
+          'New Folder',
+          'Enter folder name:',
+          [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Create', onPress: (text: string | undefined) => text && handleCreateFolder(text) }
+          ],
+          'plain-text',
+          'Untitled Folder'
+      );
+  };
+
   const handleCreateOptions = () => {
       Alert.alert('Create New', 'Choose type', [
-          { text: 'Note', onPress: handleCreate },
+          { text: 'Note', onPress: handleCreateNote },
+          { text: 'Folder', onPress: promptForFolder },
           { text: 'Cancel', style: 'cancel' }
       ]);
   };
@@ -74,7 +99,7 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      <FAB onPress={handleCreate} onLongPress={handleCreateOptions} />
+      <FAB onPress={handleCreateNote} onLongPress={handleCreateOptions} />
     </View>
   );
 }
