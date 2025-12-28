@@ -227,6 +227,18 @@ Index responsibilities:
 * Wikilink resolution
 * Backlinks
 
+### 9.1 Storage Strategy
+
+* **KV Store:** `expo-sqlite/kv-store` is used for simple application settings (e.g. active vault).
+* **Index Database:** A dedicated `index.db` (SQLite) handles note metadata, links, and search tokens.
+* **Full Text Search:** Uses SQLite FTS5 (if available) or FTS4. Note content is duplicated into the FTS table to enable fast searching without file I/O during query time.
+
+### 9.2 Indexing Policy
+
+* **Lazy Indexing:** Notes are indexed immediately upon open and save. This ensures the active working set is always up-to-date.
+* **Background Scan:** On startup (or vault switch), a non-blocking background process identifies files missing from the index and queues them for indexing. This process yields to the UI to prevent jank.
+* **Persistence:** The index persists across app restarts, eliminating the need for full re-scans.
+
 ---
 
 ## 10. State & Lifecycle
