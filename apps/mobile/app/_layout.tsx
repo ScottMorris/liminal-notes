@@ -1,14 +1,16 @@
 import { Stack } from 'expo-router';
 import { VaultProvider } from '../src/context/VaultContext';
+import { IndexProvider } from '../src/context/IndexContext';
 
 export default function RootLayout() {
   return (
     <VaultProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
+      <IndexProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
         <Stack.Screen name="index" />
         <Stack.Screen name="vault" />
         <Stack.Screen
@@ -25,7 +27,8 @@ export default function RootLayout() {
             title: 'Settings'
           }}
         />
-      </Stack>
+        </Stack>
+      </IndexProvider>
     </VaultProvider>
   );
 }

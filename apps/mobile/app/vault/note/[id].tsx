@@ -5,6 +5,8 @@ import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
 import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import { themes } from '@liminal-notes/core-shared/theme';
+import { useIndex } from '../../../src/context/IndexContext';
+import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
 
 enum SaveStatus {
     Idle = 'idle',
@@ -24,6 +26,7 @@ export default function NoteScreen() {
   const { id } = useLocalSearchParams();
   const noteId = Array.isArray(id) ? id[0] : id; // Handle potential array from params
 
+  const { searchIndex, linkIndex } = useIndex();
   const editorRef = useRef<EditorViewRef>(null);
 
   // Autosave refs
@@ -71,6 +74,32 @@ export default function NoteScreen() {
 
         const result = await adapter.readNote(noteId);
         setContent(result.content);
+
+        // Lazy Indexing: Upsert on open
+        if (searchIndex) {
+            const indexPromise = searchIndex.upsert({
+                id: noteId,
+                title: noteId.replace(/\.md$/, ''),
+                content: result.content,
+                mtimeMs: Date.now()
+            });
+            if (indexPromise instanceof Promise) {
+                indexPromise.catch((e: any) => console.warn('[NoteScreen] Lazy index failed', e));
+            }
+        }
+
+        if (linkIndex) {
+             const links = parseWikilinks(result.content).map(match => ({
+                 source: noteId,
+                 targetRaw: match.targetRaw,
+                 targetPath: match.targetRaw
+             }));
+             const linkPromise = linkIndex.upsertLinks(noteId, links);
+             if (linkPromise instanceof Promise) {
+                linkPromise.catch((e: any) => console.warn('[NoteScreen] Lazy link index failed', e));
+             }
+        }
+
         setStatus('ready');
     } catch (e: any) {
         setStatus('error');
@@ -163,6 +192,31 @@ export default function NoteScreen() {
       try {
           const adapter = new MobileSandboxVaultAdapter();
           await adapter.writeNote(noteId!, payload.state.text);
+
+          // Incremental Indexing: Upsert on save
+          if (searchIndex) {
+              const indexPromise = searchIndex.upsert({
+                  id: noteId!,
+                  title: noteId!.replace(/\.md$/, ''),
+                  content: payload.state.text,
+                  mtimeMs: Date.now()
+              });
+              if (indexPromise instanceof Promise) {
+                  indexPromise.catch((e: any) => console.warn('[NoteScreen] Index on save failed', e));
+              }
+          }
+
+          if (linkIndex) {
+              const links = parseWikilinks(payload.state.text).map(match => ({
+                  source: noteId!,
+                  targetRaw: match.targetRaw,
+                  targetPath: match.targetRaw
+              }));
+              const linkPromise = linkIndex.upsertLinks(noteId!, links);
+              if (linkPromise instanceof Promise) {
+                 linkPromise.catch((e: any) => console.warn('[NoteScreen] Link index on save failed', e));
+              }
+          }
 
           if (isMountedRef.current) {
               setSaveStatus(SaveStatus.Saved);
