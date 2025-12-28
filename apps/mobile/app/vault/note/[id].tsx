@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
 import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
@@ -81,27 +82,30 @@ export default function NoteScreen() {
         setContent(result.content);
 
         // Lazy Indexing: Upsert on open
+        // Sequential to avoid SQLite transaction locks
         if (searchIndex) {
-            const indexPromise = searchIndex.upsert({
-                id: noteId,
-                title: noteId.replace(/\.md$/, ''),
-                content: result.content,
-                mtimeMs: Date.now()
-            });
-            if (indexPromise instanceof Promise) {
-                indexPromise.catch((e: any) => console.warn('[NoteScreen] Lazy index failed', e));
+            try {
+                await searchIndex.upsert({
+                    id: noteId,
+                    title: noteId.replace(/\.md$/, ''),
+                    content: result.content,
+                    mtimeMs: Date.now()
+                });
+            } catch (e: any) {
+                console.warn('[NoteScreen] Lazy index failed', e);
             }
         }
 
         if (linkIndex) {
-             const links = parseWikilinks(result.content).map(match => ({
-                 source: noteId,
-                 targetRaw: match.targetRaw,
-                 targetPath: match.targetRaw
-             }));
-             const linkPromise = linkIndex.upsertLinks(noteId, links);
-             if (linkPromise instanceof Promise) {
-                linkPromise.catch((e: any) => console.warn('[NoteScreen] Lazy link index failed', e));
+             try {
+                 const links = parseWikilinks(result.content).map(match => ({
+                     source: noteId,
+                     targetRaw: match.targetRaw,
+                     targetPath: match.targetRaw
+                 }));
+                 await linkIndex.upsertLinks(noteId, links);
+             } catch (e: any) {
+                console.warn('[NoteScreen] Lazy link index failed', e);
              }
         }
 
@@ -199,27 +203,30 @@ export default function NoteScreen() {
           await adapter.writeNote(noteId!, payload.state.text);
 
           // Incremental Indexing: Upsert on save
+          // Sequential await to prevent transaction collision
           if (searchIndex) {
-              const indexPromise = searchIndex.upsert({
-                  id: noteId!,
-                  title: noteId!.replace(/\.md$/, ''),
-                  content: payload.state.text,
-                  mtimeMs: Date.now()
-              });
-              if (indexPromise instanceof Promise) {
-                  indexPromise.catch((e: any) => console.warn('[NoteScreen] Index on save failed', e));
+              try {
+                  await searchIndex.upsert({
+                      id: noteId!,
+                      title: noteId!.replace(/\.md$/, ''),
+                      content: payload.state.text,
+                      mtimeMs: Date.now()
+                  });
+              } catch (e: any) {
+                  console.warn('[NoteScreen] Index on save failed', e);
               }
           }
 
           if (linkIndex) {
-              const links = parseWikilinks(payload.state.text).map(match => ({
-                  source: noteId!,
-                  targetRaw: match.targetRaw,
-                  targetPath: match.targetRaw
-              }));
-              const linkPromise = linkIndex.upsertLinks(noteId!, links);
-              if (linkPromise instanceof Promise) {
-                 linkPromise.catch((e: any) => console.warn('[NoteScreen] Link index on save failed', e));
+              try {
+                  const links = parseWikilinks(payload.state.text).map(match => ({
+                      source: noteId!,
+                      targetRaw: match.targetRaw,
+                      targetPath: match.targetRaw
+                  }));
+                  await linkIndex.upsertLinks(noteId!, links);
+              } catch (e: any) {
+                 console.warn('[NoteScreen] Link index on save failed', e);
               }
           }
 

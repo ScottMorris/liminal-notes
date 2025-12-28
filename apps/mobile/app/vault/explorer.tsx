@@ -59,7 +59,10 @@ export default function ExplorerScreen() {
             const parts = relativeToFolder.split('/');
 
             const name = parts[0];
-            const isDir = parts.length > 1;
+            const isExplicitDir = file.type === 'directory';
+
+            // If it's a directory (implicit via parts or explicit via type)
+            const isDir = isExplicitDir || parts.length > 1;
 
             // If it's a directory, we only want one entry for it.
             const entryPath = currentPath ? `${currentPath}/${name}` : name;
@@ -70,6 +73,11 @@ export default function ExplorerScreen() {
                     type: isDir ? 'directory' : 'file',
                     mtimeMs: file.mtimeMs // Use latest mtime for folder?
                 });
+            } else if (isDir && entries.get(name)?.type === 'file') {
+                 // Conflict: explicit folder overwrites file logic if any?
+                 // Actually if we have 'a/b.md' we inferred 'a' is dir.
+                 // If we now see 'a' (explicit dir), we just keep it as dir.
+                 // Nothing to do.
             }
         }
 
