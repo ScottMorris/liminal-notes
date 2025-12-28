@@ -47,6 +47,17 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
              const itemRelativePath = relativePath ? `${relativePath}/${item.name}` : item.name;
 
              if (item instanceof Directory) {
+                 // Push directory entry first
+                 // Note: Directory modification time access might vary, using safe cast
+                 const mtime = (item as any).modificationTime;
+
+                 entries.push({
+                     id: itemRelativePath as NoteId, // Directories use path as ID too
+                     type: 'directory',
+                     mtimeMs: typeof mtime === 'number' ? mtime : undefined,
+                     sizeBytes: 0
+                 });
+
                  traverse(item, itemRelativePath);
              } else if (item instanceof File) {
                  const isMarkdown = item.name.toLowerCase().endsWith('.md');
