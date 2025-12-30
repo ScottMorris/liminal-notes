@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
 import { FABMenu, FABAction } from './FABMenu';
+import { useTheme } from '../context/ThemeContext';
 
 interface FABProps {
   onPress: () => void;
@@ -11,6 +12,7 @@ interface FABProps {
 
 export function FAB({ onPress, onLongPress, actions, style }: FABProps) {
   const [menuVisible, setMenuVisible] = useState(false);
+  const { resolveColor } = useTheme();
 
   const handleLongPress = () => {
     if (actions && actions.length > 0) {
@@ -20,16 +22,23 @@ export function FAB({ onPress, onLongPress, actions, style }: FABProps) {
     }
   };
 
+  const bgColor = resolveColor('--ln-accent');
+  const fgColor = resolveColor('--ln-bg'); // Text color on accent
+
   return (
     <>
-      <TouchableOpacity
-        style={[styles.container, style]}
-        onPress={onPress}
-        onLongPress={handleLongPress}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.icon}>+</Text>
-      </TouchableOpacity>
+      {/* Hide the main FAB when menu is visible to prevent duplication/z-fighting,
+          as FABMenu will render the "Close" button in the same spot. */}
+      {!menuVisible && (
+        <TouchableOpacity
+          style={[styles.container, { backgroundColor: bgColor }, style]}
+          onPress={onPress}
+          onLongPress={handleLongPress}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.icon, { color: fgColor }]}>+</Text>
+        </TouchableOpacity>
+      )}
 
       {actions && (
         <FABMenu
@@ -50,7 +59,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#000', // Uses theme later
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
@@ -58,10 +66,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
-    zIndex: 999, // Ensure it sits above scroll content
+    zIndex: 999,
   },
   icon: {
-    color: '#fff',
     fontSize: 32,
     marginTop: -2,
     fontWeight: '300',
