@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Button } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 // We need a way to list files. The adapter doesn't expose it easily in context?
 // The MobileSandboxVaultAdapter (and VaultAdapter interface) has listFiles.
@@ -102,6 +102,18 @@ export default function ExplorerScreen() {
       }
   };
 
+  const ListHeader = () => {
+    // Show Sandbox link only at root
+    if (currentPath === '') {
+        return (
+            <View style={styles.header}>
+                <Button title="Open Sandbox Tools" onPress={() => router.push('/vault/sandbox')} />
+            </View>
+        );
+    }
+    return null;
+  };
+
   if (loading) {
       return <ActivityIndicator style={{ flex: 1 }} />;
   }
@@ -118,6 +130,7 @@ export default function ExplorerScreen() {
                 <Text style={styles.text}>{item.id.split('/').pop()}</Text>
             </TouchableOpacity>
         )}
+        ListHeaderComponent={ListHeader}
         ListEmptyComponent={<Text style={styles.empty}>No files found</Text>}
       />
     </View>
@@ -128,6 +141,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  header: {
+      padding: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: '#eee',
   },
   item: {
       flexDirection: 'row',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useHomeData } from '../../src/hooks/useHomeData';
@@ -8,10 +8,12 @@ import { RecentSection } from '../../src/components/home/RecentSection';
 import { FAB } from '../../src/components/FAB';
 import { Text } from 'react-native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
+import { PromptModal } from '../../src/components/PromptModal';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { pinned, recents, folders, loading, refresh } = useHomeData();
+  const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
 
   const handleCreateNote = async () => {
     try {
@@ -32,6 +34,7 @@ export default function HomeScreen() {
 
   const handleCreateFolder = async (folderName: string) => {
       try {
+          setIsFolderPromptVisible(false);
           const adapter = new MobileSandboxVaultAdapter();
           await adapter.init();
 
@@ -44,23 +47,10 @@ export default function HomeScreen() {
       }
   };
 
-  const promptForFolder = () => {
-      Alert.prompt(
-          'New Folder',
-          'Enter folder name:',
-          [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Create', onPress: (text: string | undefined) => text && handleCreateFolder(text) }
-          ],
-          'plain-text',
-          'Untitled Folder'
-      );
-  };
-
   const handleCreateOptions = () => {
       Alert.alert('Create New', 'Choose type', [
           { text: 'Note', onPress: handleCreateNote },
-          { text: 'Folder', onPress: promptForFolder },
+          { text: 'Folder', onPress: () => setIsFolderPromptVisible(true) },
           { text: 'Cancel', style: 'cancel' }
       ]);
   };
@@ -100,6 +90,15 @@ export default function HomeScreen() {
       </ScrollView>
 
       <FAB onPress={handleCreateNote} onLongPress={handleCreateOptions} />
+
+      <PromptModal
+        visible={isFolderPromptVisible}
+        title="New Folder"
+        placeholder="Folder Name"
+        defaultValue="Untitled Folder"
+        onCancel={() => setIsFolderPromptVisible(false)}
+        onSubmit={handleCreateFolder}
+      />
     </View>
   );
 }
