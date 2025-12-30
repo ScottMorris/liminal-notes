@@ -9,6 +9,7 @@ import { FAB } from '../../src/components/FAB';
 import { Text } from 'react-native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import { PromptModal } from '../../src/components/PromptModal';
+import { FABAction } from '../../src/components/FABMenu';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -47,13 +48,10 @@ export default function HomeScreen() {
       }
   };
 
-  const handleCreateOptions = () => {
-      Alert.alert('Create New', 'Choose type', [
-          { text: 'Note', onPress: handleCreateNote },
-          { text: 'Folder', onPress: () => setIsFolderPromptVisible(true) },
-          { text: 'Cancel', style: 'cancel' }
-      ]);
-  };
+  const fabActions: FABAction[] = [
+      { id: 'note', label: 'New Note', icon: 'document-text-outline', onPress: handleCreateNote },
+      { id: 'folder', label: 'New Folder', icon: 'folder-outline', onPress: () => setIsFolderPromptVisible(true) },
+  ];
 
   if (loading) {
     return (
@@ -89,7 +87,10 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      <FAB onPress={handleCreateNote} onLongPress={handleCreateOptions} />
+      <FAB
+          onPress={handleCreateNote}
+          actions={fabActions}
+      />
 
       <PromptModal
         visible={isFolderPromptVisible}
