@@ -1,6 +1,12 @@
 import { SearchIndex, NoteIndexEntry, SearchResult, NoteId } from '@liminal-notes/core-shared/indexing/types';
 import * as SQLite from 'expo-sqlite';
 
+export interface FolderActivity {
+    path: string;
+    noteCount: number;
+    lastActive: number; // timestamp
+}
+
 export class SQLiteSearchIndex implements SearchIndex {
   constructor(private db: SQLite.SQLiteDatabase) {}
 
@@ -61,5 +67,46 @@ export class SQLiteSearchIndex implements SearchIndex {
         score: row.title.toLowerCase().includes(query.toLowerCase()) ? 2 : 1,
         // We could implement highlighting here if needed, or use FTS snippet()
     }));
+  }
+
+  // New method for Home Screen
+  async getFolderActivity(): Promise<FolderActivity[]> {
+      // Get all notes to process in memory (or complex SQL if we're brave).
+      // Since paths are just strings, SQL might be tricky for "top level folders".
+      // We can grab all ID and updated_at.
+      const rows = await this.db.getAllAsync<{ id: string; updated_at: number }>(
+          `SELECT id, updated_at FROM notes`
+      );
+
+      const folders = new Map<string, { count: number; lastActive: number }>();
+
+      for (const row of rows) {
+          const parts = row.id.split('/');
+          if (parts.length > 1) {
+              // It's inside a folder.
+              // We only care about top-level folders for now?
+              // "Shows top-level folders as cards/rows."
+              const topFolder = parts[0];
+              const current = folders.get(topFolder) || { count: 0, lastActive: 0 };
+
+              folders.set(topFolder, {
+                  count: current.count + 1,
+                  lastActive: Math.max(current.lastActive, row.updated_at)
+              });
+          }
+      }
+
+      const result: FolderActivity[] = [];
+      folders.forEach((val, key) => {
+          result.push({
+              path: key,
+              noteCount: val.count,
+              lastActive: val.lastActive
+          });
+      });
+
+      // Sort by activity desc
+      result.sort((a, b) => b.lastActive - a.lastActive);
+      return result;
   }
 }
