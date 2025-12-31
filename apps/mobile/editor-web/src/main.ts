@@ -48,6 +48,8 @@ function initEditor(parent: HTMLElement) {
     createEditorTheme(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     EditorView.updateListener.of((update) => {
+      console.log('[Guest] Update:', { docChanged: update.docChanged, host: update.transactions.some(tr => tr.annotation(HostTransaction)) });
+
       // Ignore transactions marked as coming from the host
       if (update.transactions.some(tr => tr.annotation(HostTransaction))) {
         return;
