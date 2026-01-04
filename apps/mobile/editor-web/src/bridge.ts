@@ -12,13 +12,11 @@ import {
  */
 export function send(msg: EventType) {
   console.log(`[editor-bridge] Sending message type: ${msg.type}`);
-
   try {
-    // Check for randomUUID support safely
-    // Android System WebView < 92 has crypto but not randomUUID
-    const uuid = (typeof globalThis.crypto?.randomUUID === 'function')
-        ? globalThis.crypto.randomUUID()
-        : Math.random().toString(36).slice(2);
+    console.log('[editor-bridge] Generating ID...');
+    // Use Math.random fallback exclusively to prevent native crashes on older WebViews
+    const uuid = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    console.log(`[editor-bridge] ID generated: ${uuid}`);
 
     // Construct the envelope
     const envelope: AnyMessage = {
@@ -28,9 +26,14 @@ export function send(msg: EventType) {
       type: msg.type,
       payload: msg.payload
     } as AnyMessage;
+    console.log('[editor-bridge] Envelope constructed');
 
     const validated = createMessage(envelope);
+    console.log('[editor-bridge] Message validated');
+
     const msgStr = JSON.stringify(validated);
+    console.log('[editor-bridge] Message stringified');
+
     // @ts-ignore: ReactNativeWebView is injected by the host
     if (window.ReactNativeWebView) {
       console.log(`[editor-bridge] Posting raw: ${msgStr.substring(0, 200)}...`); // Truncate to avoid huge logs
@@ -41,6 +44,8 @@ export function send(msg: EventType) {
       console.warn('[editor-bridge] ReactNativeWebView not found', validated);
     }
   } catch (e) {
+    // Log error with console.log as well in case console.error is filtered/broken in the bridge
+    console.log('[editor-bridge] CRITICAL ERROR in send:', e);
     console.error('[editor-bridge] Failed to create valid outbound message', e);
   }
 }
