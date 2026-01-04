@@ -61,14 +61,30 @@ export default function HomeScreen() {
     );
   }
 
+  const handleMenuPress = () => {
+    Alert.alert(
+      'Options',
+      undefined,
+      [
+        { text: 'Settings', onPress: () => router.push('/settings') },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Stack.Screen
         options={{
             headerRight: () => (
-                <TouchableOpacity onPress={() => router.push('/search')} style={styles.headerButton}>
-                    <Text style={styles.headerButtonText}>🔍</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity onPress={() => router.push('/search')} style={styles.headerButton}>
+                      <Text style={styles.headerButtonText}>🔍</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleMenuPress} style={styles.headerButton}>
+                      <Text style={styles.headerButtonText}>⋮</Text>
+                  </TouchableOpacity>
+                </View>
             )
         }}
       />
