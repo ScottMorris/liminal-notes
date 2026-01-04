@@ -10,6 +10,9 @@ import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
 import { recentsStorage } from '../../../src/storage/recents';
 
+// TODO: Control this via settings injection in the future
+const DEBUG = false;
+
 enum SaveStatus {
     Idle = 'idle',
     Saving = 'saving',
@@ -232,7 +235,7 @@ export default function NoteScreen() {
   };
 
   const handleDocChanged = (payload: DocChangedPayload) => {
-      console.log('[NoteScreen] DocChanged:', payload);
+      if (DEBUG) console.log('[NoteScreen] DocChanged:', payload);
       setRevision(payload.revision);
       setIsDirty(true);
       if (saveStatus !== SaveStatus.Error) {
@@ -250,10 +253,10 @@ export default function NoteScreen() {
   };
 
   const handleRequestResponse = async (payload: RequestResponsePayload) => {
-      console.log('[NoteScreen] Save Response:', payload);
+      if (DEBUG) console.log('[NoteScreen] Save Response:', payload);
       // Validate request ID
       if (payload.requestId !== lastRequestIdRef.current) {
-          console.log('[NoteScreen] Ignoring stale response', payload.requestId);
+          if (DEBUG) console.log('[NoteScreen] Ignoring stale response', payload.requestId);
           return;
       }
 
