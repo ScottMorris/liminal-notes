@@ -15,7 +15,7 @@ import {
 } from '@liminal-notes/core-shared/mobile/editorProtocol';
 
 import { createEditorTheme, fallbackThemeVars } from './theme';
-import { send, listen } from './bridge';
+import { send, listen, waitForBridge } from './bridge';
 
 // -- Editor Initialization --
 
@@ -48,6 +48,8 @@ function initEditor(parent: HTMLElement) {
     createEditorTheme(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     EditorView.updateListener.of((update) => {
+      console.log('[Guest] Update:', { docChanged: update.docChanged, host: update.transactions.some(tr => tr.annotation(HostTransaction)) });
+
       // Ignore transactions marked as coming from the host
       if (update.transactions.some(tr => tr.annotation(HostTransaction))) {
         return;
@@ -182,18 +184,28 @@ listen(handleCommand);
 // Main boot
 const editorEl = document.getElementById('editor');
 if (editorEl) {
+    console.log('[Guest] Booting editor...');
     editorEl.innerHTML = ''; // Clear loading text
     initEditor(editorEl);
 
+    console.log('[Guest] Waiting for bridge...');
     // Signal Ready
-    send({
-        type: EditorEvent.Ready,
-        payload: {
-            protocolVersion: PROTOCOL_VERSION,
-            capabilities: {
-                links: true, // We have basic link highlighting via GFM
-                selection: true
-            }
+    // Wait for bridge first to ensure the message is not lost
+    waitForBridge().then((ready) => {
+        if (ready) {
+             console.log('[Guest] Bridge found, sending Ready...');
+             send({
+                type: EditorEvent.Ready,
+                payload: {
+                    protocolVersion: PROTOCOL_VERSION,
+                    capabilities: {
+                        links: true, // We have basic link highlighting via GFM
+                        selection: true
+                    }
+                }
+            });
+        } else {
+             console.error('[Guest] Bridge failed to initialize');
         }
     });
 }

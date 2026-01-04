@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Platform, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
@@ -9,6 +9,9 @@ import { themes } from '@liminal-notes/core-shared/theme';
 import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
 import { recentsStorage } from '../../../src/storage/recents';
+
+// TODO: Control this via settings injection in the future
+const DEBUG = false;
 
 enum SaveStatus {
     Idle = 'idle',
@@ -232,6 +235,7 @@ export default function NoteScreen() {
   };
 
   const handleDocChanged = (payload: DocChangedPayload) => {
+      if (DEBUG) console.log('[NoteScreen] DocChanged:', payload);
       setRevision(payload.revision);
       setIsDirty(true);
       if (saveStatus !== SaveStatus.Error) {
@@ -249,9 +253,10 @@ export default function NoteScreen() {
   };
 
   const handleRequestResponse = async (payload: RequestResponsePayload) => {
+      if (DEBUG) console.log('[NoteScreen] Save Response:', payload);
       // Validate request ID
       if (payload.requestId !== lastRequestIdRef.current) {
-          console.log('[NoteScreen] Ignoring stale response', payload.requestId);
+          if (DEBUG) console.log('[NoteScreen] Ignoring stale response', payload.requestId);
           return;
       }
 
@@ -367,6 +372,9 @@ export default function NoteScreen() {
               <Text style={styles.badge}>Rev: {revision}</Text>
               {isDirty && <Text style={[styles.badge, styles.dirtyBadge]}>Dirty</Text>}
           </View>
+          <TouchableOpacity onPress={() => requestSave()} style={styles.saveButton}>
+             <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
       </View>
 
       {/* Editor */}
@@ -450,5 +458,17 @@ const styles = StyleSheet.create({
   footerText: {
       fontSize: 12,
       color: '#888',
+  },
+  saveButton: {
+      marginLeft: 8,
+      backgroundColor: '#007AFF',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 4,
+  },
+  saveButtonText: {
+      color: '#fff',
+      fontSize: 14,
+      fontWeight: '600',
   }
 });

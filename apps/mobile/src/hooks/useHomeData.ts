@@ -46,8 +46,13 @@ export function useHomeData() {
         folders,
         loading: false,
       });
-    } catch (e) {
-      console.error('Failed to load home data', e);
+    } catch (e: any) {
+      // Ignore known race condition in Expo Go/SQLite
+      if (e?.message?.includes('NativeDatabase.prepareAsync') && e?.message?.includes('NullPointerException')) {
+          console.warn('Supressed Home load race condition:', e.message);
+      } else {
+          console.error('Failed to load home data', e);
+      }
       setData(prev => ({ ...prev, loading: false }));
     }
   }, [index]);

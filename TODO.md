@@ -2,6 +2,9 @@
 
 ## Future Improvements
 
+### Mobile
+- [ ] Add 'Enable Debug Logging' setting to Mobile app to control verbose Bridge and Vault logs.
+
 ### Pinning
 - [ ] Support manual reordering of pinned items.
 - [ ] Add pin/unpin affordances inside note and folder views (not only on Home).
