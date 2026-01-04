@@ -31,6 +31,13 @@ export default function RootLayout() {
               title: 'Settings'
             }}
           />
+          <Stack.Screen
+            name="settings/[section]"
+            options={{
+              headerShown: true,
+              title: ''
+            }}
+          />
             </Stack>
           </IndexProvider>
         </VaultProvider>

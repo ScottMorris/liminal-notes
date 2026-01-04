@@ -65,6 +65,7 @@ export default function SettingsSectionScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: resolveColor('--ln-bg') }]} edges={['bottom', 'left', 'right']}>
       <Stack.Screen
         options={{
+            headerShown: true,
             title: activeSection.title,
             headerBackTitle: '',
             headerTintColor: resolveColor('--ln-accent'),
