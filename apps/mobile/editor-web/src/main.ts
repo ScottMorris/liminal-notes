@@ -15,7 +15,7 @@ import {
 } from '@liminal-notes/core-shared/mobile/editorProtocol';
 
 import { createEditorTheme, fallbackThemeVars } from './theme';
-import { send, listen } from './bridge';
+import { send, listen, waitForBridge } from './bridge';
 
 // -- Editor Initialization --
 
@@ -188,14 +188,19 @@ if (editorEl) {
     initEditor(editorEl);
 
     // Signal Ready
-    send({
-        type: EditorEvent.Ready,
-        payload: {
-            protocolVersion: PROTOCOL_VERSION,
-            capabilities: {
-                links: true, // We have basic link highlighting via GFM
-                selection: true
-            }
+    // Wait for bridge first to ensure the message is not lost
+    waitForBridge().then((ready) => {
+        if (ready) {
+             send({
+                type: EditorEvent.Ready,
+                payload: {
+                    protocolVersion: PROTOCOL_VERSION,
+                    capabilities: {
+                        links: true, // We have basic link highlighting via GFM
+                        selection: true
+                    }
+                }
+            });
         }
     });
 }

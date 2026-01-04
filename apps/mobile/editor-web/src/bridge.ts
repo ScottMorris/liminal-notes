@@ -35,6 +35,34 @@ export function send(msg: EventType) {
 }
 
 /**
+ * Waits for the React Native bridge to be injected.
+ * @param timeoutMs Max time to wait (default 5000ms)
+ * @returns Promise that resolves true if bridge is found, false otherwise
+ */
+export function waitForBridge(timeoutMs = 5000): Promise<boolean> {
+    return new Promise((resolve) => {
+        // @ts-ignore
+        if (window.ReactNativeWebView) {
+            resolve(true);
+            return;
+        }
+
+        const start = Date.now();
+        const interval = setInterval(() => {
+            // @ts-ignore
+            if (window.ReactNativeWebView) {
+                clearInterval(interval);
+                resolve(true);
+            } else if (Date.now() - start > timeoutMs) {
+                clearInterval(interval);
+                console.error('[editor-bridge] Timed out waiting for ReactNativeWebView');
+                resolve(false);
+            }
+        }, 100);
+    });
+}
+
+/**
  * Listens for messages from the React Native host.
  * @param handler Function to handle valid incoming messages
  */
