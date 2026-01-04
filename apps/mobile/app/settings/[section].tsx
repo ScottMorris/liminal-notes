@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Text, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { getSections, SettingRowDef } from '../../src/screens/Settings/schema';
 import { useTheme } from '../../src/context/ThemeContext';
@@ -61,9 +62,9 @@ export default function SettingsSectionScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: resolveColor('--ln-bg') }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: resolveColor('--ln-bg') }]} edges={['bottom', 'left', 'right']}>
       <Stack.Screen options={{ title: activeSection.title }} />
-      <ScrollView>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {activeSection.groups.map(group => (
             <View key={group.id} style={styles.group}>
                 {group.title && (
@@ -77,7 +78,7 @@ export default function SettingsSectionScreen() {
             </View>
         ))}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

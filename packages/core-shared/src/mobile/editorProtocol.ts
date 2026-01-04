@@ -35,6 +35,10 @@ export interface InitPayload {
     name: string;
     vars: Record<string, string>;
   };
+  settings?: {
+    showLineNumbers: boolean;
+    wordWrap: boolean;
+  };
   featureFlags: {
     links: boolean;
   };
@@ -47,6 +51,10 @@ export const InitPayloadSchema = z.object({
     name: z.string(),
     vars: z.record(z.string(), z.string())
   }),
+  settings: z.object({
+    showLineNumbers: z.boolean(),
+    wordWrap: z.boolean()
+  }).optional(),
   featureFlags: z.object({
     links: z.boolean()
   })

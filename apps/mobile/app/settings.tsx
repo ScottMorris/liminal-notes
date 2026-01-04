@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { getSections } from '../src/screens/Settings/schema';
 import { useTheme } from '../src/context/ThemeContext';
@@ -30,13 +31,14 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: resolveColor('--ln-bg') }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: resolveColor('--ln-bg') }]} edges={['bottom', 'left', 'right']}>
       <FlatList
         data={sections}
         keyExtractor={i => i.id}
         renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 20 }}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

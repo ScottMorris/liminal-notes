@@ -10,11 +10,13 @@ import { Text } from 'react-native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import { PromptModal } from '../../src/components/PromptModal';
 import { FABAction } from '../../src/components/FABMenu';
+import { HeaderMenu } from '../../src/components/HeaderMenu';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { pinned, recents, folders, loading, refresh } = useHomeData();
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const handleCreateNote = async () => {
     try {
@@ -62,14 +64,7 @@ export default function HomeScreen() {
   }
 
   const handleMenuPress = () => {
-    Alert.alert(
-      'Options',
-      undefined,
-      [
-        { text: 'Settings', onPress: () => router.push('/settings') },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
+    setMenuVisible(true);
   };
 
   return (
@@ -87,6 +82,13 @@ export default function HomeScreen() {
                 </View>
             )
         }}
+      />
+      <HeaderMenu
+          visible={menuVisible}
+          onClose={() => setMenuVisible(false)}
+          actions={[
+              { id: 'settings', label: 'Settings', onPress: () => router.push('/settings') }
+          ]}
       />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.spacer} />

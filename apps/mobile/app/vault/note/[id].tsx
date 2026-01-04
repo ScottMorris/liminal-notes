@@ -9,6 +9,7 @@ import { themes } from '@liminal-notes/core-shared/theme';
 import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
 import { recentsStorage } from '../../../src/storage/recents';
+import { useSettings } from '../../../src/context/SettingsContext';
 
 // TODO: Control this via settings injection in the future
 const DEBUG = false;
@@ -70,6 +71,7 @@ export default function NoteScreen() {
   const navigation = useNavigation();
 
   const { searchIndex, linkIndex } = useIndex();
+  const { settings } = useSettings();
   const editorRef = useRef<EditorViewRef>(null);
 
   // Autosave refs
@@ -191,6 +193,10 @@ export default function NoteScreen() {
         theme: {
             name: themes.light.name,
             vars: themes.light.variables
+        },
+        settings: {
+            showLineNumbers: settings.editor.showLineNumbers,
+            wordWrap: settings.editor.wordWrap
         },
         featureFlags: {
             links: true
