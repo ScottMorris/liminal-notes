@@ -23,10 +23,13 @@ export function send(msg: EventType) {
 
   try {
     const validated = createMessage(envelope);
+    const msgStr = JSON.stringify(validated);
     // @ts-ignore: ReactNativeWebView is injected by the host
     if (window.ReactNativeWebView) {
+      console.log(`[editor-bridge] Posting raw: ${msgStr.substring(0, 200)}...`); // Truncate to avoid huge logs
       // @ts-ignore
-      window.ReactNativeWebView.postMessage(JSON.stringify(validated));
+      window.ReactNativeWebView.postMessage(msgStr);
+      console.log('[editor-bridge] PostMessage complete');
     } else {
       console.warn('[editor-bridge] ReactNativeWebView not found', validated);
     }
