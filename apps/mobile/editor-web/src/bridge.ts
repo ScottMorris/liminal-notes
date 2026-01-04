@@ -11,6 +11,7 @@ import {
  * Sends a message to the React Native host.
  */
 export function send(msg: EventType) {
+  console.log(`[editor-bridge] Sending message type: ${msg.type}`);
   // Construct the envelope
   const envelope: AnyMessage = {
     v: PROTOCOL_VERSION,

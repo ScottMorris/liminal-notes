@@ -184,13 +184,16 @@ listen(handleCommand);
 // Main boot
 const editorEl = document.getElementById('editor');
 if (editorEl) {
+    console.log('[Guest] Booting editor...');
     editorEl.innerHTML = ''; // Clear loading text
     initEditor(editorEl);
 
+    console.log('[Guest] Waiting for bridge...');
     // Signal Ready
     // Wait for bridge first to ensure the message is not lost
     waitForBridge().then((ready) => {
         if (ready) {
+             console.log('[Guest] Bridge found, sending Ready...');
              send({
                 type: EditorEvent.Ready,
                 payload: {
@@ -201,6 +204,8 @@ if (editorEl) {
                     }
                 }
             });
+        } else {
+             console.error('[Guest] Bridge failed to initialize');
         }
     });
 }

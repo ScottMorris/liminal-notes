@@ -107,18 +107,26 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
         // but since we only have onMessage, let's just log.
       }
 
+      function safeStringify(arg) {
+        try {
+            return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+        } catch (e) {
+            return String(arg);
+        }
+      }
+
       console.log = function() {
-        var msg = Array.from(arguments).map(a => String(a)).join(' ');
+        var msg = Array.from(arguments).map(safeStringify).join(' ');
         window.ReactNativeWebView.postMessage(JSON.stringify({ kind: 'log', level: 'log', message: msg }));
         oldLog.apply(console, arguments);
       };
       console.warn = function() {
-        var msg = Array.from(arguments).map(a => String(a)).join(' ');
+        var msg = Array.from(arguments).map(safeStringify).join(' ');
         window.ReactNativeWebView.postMessage(JSON.stringify({ kind: 'log', level: 'warn', message: msg }));
         oldWarn.apply(console, arguments);
       };
       console.error = function() {
-        var msg = Array.from(arguments).map(a => String(a)).join(' ');
+        var msg = Array.from(arguments).map(safeStringify).join(' ');
         window.ReactNativeWebView.postMessage(JSON.stringify({ kind: 'log', level: 'error', message: msg }));
         oldError.apply(console, arguments);
       };
@@ -133,6 +141,7 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
         source={editorHtmlSource}
         style={styles.webview}
         onMessage={(event) => {
+            console.log('[EditorHost] onMessage fired');
             // Intercept logs first
             try {
                 const data = JSON.parse(event.nativeEvent.data);
