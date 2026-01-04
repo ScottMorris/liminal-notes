@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Platform, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
@@ -10,6 +10,7 @@ import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
 import { recentsStorage } from '../../../src/storage/recents';
 import { useSettings } from '../../../src/context/SettingsContext';
+import { Text, Chip, Button, useTheme } from 'react-native-paper';
 
 // TODO: Control this via settings injection in the future
 const DEBUG = false;
@@ -21,16 +22,10 @@ enum SaveStatus {
     Error = 'error'
 }
 
-const SaveStatusColors = {
-    [SaveStatus.Idle]: '#666',
-    [SaveStatus.Saving]: '#f57f17', // Orange
-    [SaveStatus.Saved]: '#2e7d32', // Green
-    [SaveStatus.Error]: '#c62828' // Red
-};
-
 // Helper component for relative time display
 const LastSavedFooter = ({ timestamp }: { timestamp: number | undefined }) => {
     const [text, setText] = useState('');
+    const theme = useTheme();
 
     useEffect(() => {
         if (!timestamp) {
@@ -59,8 +54,8 @@ const LastSavedFooter = ({ timestamp }: { timestamp: number | undefined }) => {
     if (!timestamp) return null;
 
     return (
-        <View style={styles.footer}>
-            <Text style={styles.footerText}>{text}</Text>
+        <View style={[styles.footer, { borderTopColor: theme.colors.outlineVariant, backgroundColor: theme.colors.elevation.level1 }]}>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{text}</Text>
         </View>
     );
 };
@@ -69,6 +64,7 @@ export default function NoteScreen() {
   const { id } = useLocalSearchParams();
   const noteId = Array.isArray(id) ? id[0] : id; // Handle potential array from params
   const navigation = useNavigation();
+  const theme = useTheme();
 
   const { searchIndex, linkIndex } = useIndex();
   const { settings } = useSettings();
@@ -338,18 +334,18 @@ export default function NoteScreen() {
 
   if (status === 'loading') {
       return (
-          <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" />
-              <Text style={styles.statusText}>Loading note...</Text>
+          <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={[styles.statusText, { color: theme.colors.onBackground }]}>Loading note...</Text>
           </View>
       );
   }
 
   if (status === 'error') {
       return (
-          <View style={styles.centerContainer}>
-              <Text style={styles.errorText}>Error: {errorMsg}</Text>
-              <Text style={styles.detailText}>ID: {noteId}</Text>
+          <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
+              <Text style={[styles.errorText, { color: theme.colors.error }]}>Error: {errorMsg}</Text>
+              <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>ID: {noteId}</Text>
           </View>
       );
   }
@@ -364,24 +360,30 @@ export default function NoteScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header / Debug Bar */}
-      <View style={styles.header}>
-          <Text style={styles.title} numberOfLines={1}>{noteId}</Text>
+      <View style={[styles.header, { borderBottomColor: theme.colors.outlineVariant }]}>
+          <Text variant="titleMedium" style={{ flex: 1 }} numberOfLines={1}>{noteId}</Text>
           <View style={styles.badges}>
               {/* Save Status */}
               {saveStatus !== SaveStatus.Idle && (
-                   <Text style={[styles.badge, { color: SaveStatusColors[saveStatus], backgroundColor: 'transparent' }]}>
+                   <Chip
+                    compact
+                    textStyle={{ fontSize: 10 }}
+                    style={{ backgroundColor: 'transparent' }} // Simplified
+                   >
                        {getSaveStatusText()}
-                   </Text>
+                   </Chip>
               )}
-
-              <Text style={styles.badge}>Rev: {revision}</Text>
-              {isDirty && <Text style={[styles.badge, styles.dirtyBadge]}>Dirty</Text>}
+              {isDirty && (
+                  <Chip compact mode="outlined" textStyle={{ color: theme.colors.error }} style={{ borderColor: theme.colors.error }}>
+                      Dirty
+                  </Chip>
+              )}
           </View>
-          <TouchableOpacity onPress={() => requestSave()} style={styles.saveButton}>
-             <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
+          <Button mode="text" onPress={() => requestSave()} compact>
+             Save
+          </Button>
       </View>
 
       {/* Editor */}
@@ -402,80 +404,39 @@ export default function NoteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   centerContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
   },
   statusText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
   },
   errorText: {
     fontSize: 16,
-    color: 'red',
     marginBottom: 8,
   },
   detailText: {
     fontSize: 14,
-    color: '#888',
   },
   header: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 8,
       borderBottomWidth: 1,
-      borderBottomColor: '#eee',
-  },
-  title: {
-      fontSize: 18,
-      fontWeight: '600',
-      flex: 1,
   },
   badges: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-  },
-  badge: {
-      fontSize: 12,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      backgroundColor: '#f0f0f0',
-      borderRadius: 4,
-      overflow: 'hidden',
-  },
-  dirtyBadge: {
-      backgroundColor: '#ffebee',
-      color: '#c62828',
+      gap: 4,
   },
   footer: {
       padding: 8,
       borderTopWidth: 1,
-      borderTopColor: '#eee',
-      backgroundColor: '#fafafa',
       alignItems: 'center',
   },
-  footerText: {
-      fontSize: 12,
-      color: '#888',
-  },
-  saveButton: {
-      marginLeft: 8,
-      backgroundColor: '#007AFF',
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 4,
-  },
-  saveButtonText: {
-      color: '#fff',
-      fontSize: 14,
-      fontWeight: '600',
-  }
 });

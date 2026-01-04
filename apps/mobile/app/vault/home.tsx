@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useHomeData } from '../../src/hooks/useHomeData';
 import { FocusedSection } from '../../src/components/home/FocusedSection';
 import { FolderSection } from '../../src/components/home/FolderSection';
 import { RecentSection } from '../../src/components/home/RecentSection';
-import { FAB } from '../../src/components/FAB';
+import { FAB, FABAction } from '../../src/components/FAB';
 import { Text } from 'react-native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import { PromptModal } from '../../src/components/PromptModal';
-import { FABAction } from '../../src/components/FABMenu';
 import { HeaderMenu } from '../../src/components/HeaderMenu';
+import { IconButton } from 'react-native-paper';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { pinned, recents, folders, loading, refresh } = useHomeData();
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
 
   const handleCreateNote = async () => {
     try {
@@ -51,7 +50,7 @@ export default function HomeScreen() {
   };
 
   const fabActions: FABAction[] = [
-      { id: 'note', label: 'New Note', icon: 'document-text-outline', onPress: handleCreateNote },
+      { id: 'note', label: 'New Note', icon: 'file-document-outline', onPress: handleCreateNote },
       { id: 'folder', label: 'New Folder', icon: 'folder-outline', onPress: () => setIsFolderPromptVisible(true) },
   ];
 
@@ -63,33 +62,24 @@ export default function HomeScreen() {
     );
   }
 
-  const handleMenuPress = () => {
-    setMenuVisible(true);
-  };
-
   return (
     <View style={styles.container}>
       <Stack.Screen
         options={{
             headerRight: () => (
-                <View style={{ flexDirection: 'row' }}>
-                  <TouchableOpacity onPress={() => router.push('/search')} style={styles.headerButton}>
-                      <Text style={styles.headerButtonText}>🔍</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleMenuPress} style={styles.headerButton}>
-                      <Text style={styles.headerButtonText}>⋮</Text>
-                  </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <IconButton icon="magnify" onPress={() => router.push('/search')} />
+                  {/* Self-contained Menu Button */}
+                  <HeaderMenu
+                      actions={[
+                          { id: 'settings', label: 'Settings', onPress: () => router.push('/settings') }
+                      ]}
+                  />
                 </View>
             )
         }}
       />
-      <HeaderMenu
-          visible={menuVisible}
-          onClose={() => setMenuVisible(false)}
-          actions={[
-              { id: 'settings', label: 'Settings', onPress: () => router.push('/settings') }
-          ]}
-      />
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.spacer} />
 
@@ -106,7 +96,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       <FAB
-          onPress={handleCreateNote}
+          onPress={() => {}}
           actions={fabActions}
       />
 
@@ -125,7 +115,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // TODO: Theme
+    backgroundColor: '#fff', // TODO: Theme via hook if needed, but Paper provider handles components
   },
   center: {
     flex: 1,
@@ -146,10 +136,4 @@ const styles = StyleSheet.create({
       fontSize: 18,
       color: '#999',
   },
-  headerButton: {
-      padding: 8,
-  },
-  headerButtonText: {
-      fontSize: 20,
-  }
 });

@@ -1,16 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Button, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
-import { FAB } from '../../src/components/FAB';
+import { FAB, FABAction } from '../../src/components/FAB';
 import { PromptModal } from '../../src/components/PromptModal';
-import { FABAction } from '../../src/components/FABMenu';
+import { useTheme } from 'react-native-paper';
 
 export default function ExplorerScreen() {
   const router = useRouter();
   const { folder } = useLocalSearchParams<{ folder?: string }>();
   const currentPath = folder || '';
+  const theme = useTheme();
 
   const [items, setItems] = useState<VaultFileEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,22 +118,22 @@ export default function ExplorerScreen() {
   };
 
   const fabActions: FABAction[] = [
-      { id: 'note', label: 'New Note', icon: 'document-text-outline', onPress: handleCreateNote },
+      { id: 'note', label: 'New Note', icon: 'file-document-outline', onPress: handleCreateNote },
       { id: 'folder', label: 'New Folder', icon: 'folder-outline', onPress: () => setIsFolderPromptVisible(true) },
   ];
 
   if (loading && items.length === 0) {
-      return <ActivityIndicator style={{ flex: 1 }} />;
+      return <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />;
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen
         options={{
             title: currentPath ? currentPath.split('/').pop() : 'Documents',
             headerRight: currentPath === '' ? () => (
                 <TouchableOpacity onPress={() => router.push('/vault/sandbox')} style={{ marginRight: 8 }}>
-                    <Text style={{ color: '#007AFF', fontSize: 16 }}>Sandbox Tools</Text>
+                    <Text style={{ color: theme.colors.primary, fontSize: 16 }}>Sandbox Tools</Text>
                 </TouchableOpacity>
             ) : undefined
         }}
@@ -142,18 +143,18 @@ export default function ExplorerScreen() {
         data={items}
         keyExtractor={i => i.id}
         renderItem={({ item }) => (
-            <TouchableOpacity style={styles.item} onPress={() => handlePress(item)}>
+            <TouchableOpacity style={[styles.item, { borderBottomColor: theme.colors.outlineVariant }]} onPress={() => handlePress(item)}>
                 <Text style={styles.icon}>{item.type === 'directory' ? '📁' : '📄'}</Text>
-                <Text style={styles.text}>{item.id.split('/').pop()}</Text>
+                <Text style={[styles.text, { color: theme.colors.onBackground }]}>{item.id.split('/').pop()}</Text>
             </TouchableOpacity>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No files found</Text>}
+        ListEmptyComponent={<Text style={[styles.empty, { color: theme.colors.onSurfaceVariant }]}>No files found</Text>}
         contentContainerStyle={{ paddingBottom: 100 }} // Add padding for FAB
       />
 
       <FAB
-        onPress={handleCreateNote} // Default single tap action
-        actions={fabActions}       // Long press menu actions (which includes Create Note too)
+        onPress={handleCreateNote}
+        actions={fabActions}
       />
 
       <PromptModal
@@ -171,14 +172,12 @@ export default function ExplorerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   item: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: '#f0f0f0'
+      borderBottomWidth: StyleSheet.hairlineWidth,
   },
   icon: {
       fontSize: 20,
@@ -190,7 +189,6 @@ const styles = StyleSheet.create({
   empty: {
       padding: 20,
       textAlign: 'center',
-      color: '#999',
       marginTop: 20,
   }
 });

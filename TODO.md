@@ -4,7 +4,6 @@
 
 ### Mobile
 - [ ] Add 'Enable Debug Logging' setting to Mobile app to control verbose Bridge and Vault logs.
-- [ ] Jules: Update app to use _Paper_ for native-like UI elements. (Remove this item when done).
 - [ ] Fix capitalization of entered text in editor (Android keyboard treating it as code/lowercase).
 
 ### Pinning

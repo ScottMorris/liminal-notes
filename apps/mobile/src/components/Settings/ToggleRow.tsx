@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch } from 'react-native';
+import { Switch } from 'react-native-paper';
 import { SettingsRow } from './SettingsRow';
 import { useSettings } from '../../context/SettingsContext';
 
