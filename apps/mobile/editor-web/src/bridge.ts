@@ -8,15 +8,18 @@ import {
 } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import { v4 as uuidv4 } from 'uuid';
 
+// TODO: Control this via settings injection in the future
+const DEBUG = false;
+
 /**
  * Sends a message to the React Native host.
  */
 export function send(msg: EventType) {
-  console.log(`[editor-bridge] Sending message type: ${msg.type}`);
+  if (DEBUG) console.log(`[editor-bridge] Sending message type: ${msg.type}`);
   try {
-    console.log('[editor-bridge] Generating ID...');
+    if (DEBUG) console.log('[editor-bridge] Generating ID...');
     const uuid = uuidv4();
-    console.log(`[editor-bridge] ID generated: ${uuid}`);
+    if (DEBUG) console.log(`[editor-bridge] ID generated: ${uuid}`);
 
     // Construct the envelope
     const envelope: AnyMessage = {
@@ -26,20 +29,20 @@ export function send(msg: EventType) {
       type: msg.type,
       payload: msg.payload
     } as AnyMessage;
-    console.log('[editor-bridge] Envelope constructed');
+    if (DEBUG) console.log('[editor-bridge] Envelope constructed');
 
     const validated = createMessage(envelope);
-    console.log('[editor-bridge] Message validated');
+    if (DEBUG) console.log('[editor-bridge] Message validated');
 
     const msgStr = JSON.stringify(validated);
-    console.log('[editor-bridge] Message stringified');
+    if (DEBUG) console.log('[editor-bridge] Message stringified');
 
     // @ts-ignore: ReactNativeWebView is injected by the host
     if (window.ReactNativeWebView) {
-      console.log(`[editor-bridge] Posting raw: ${msgStr.substring(0, 200)}...`); // Truncate to avoid huge logs
+      if (DEBUG) console.log(`[editor-bridge] Posting raw: ${msgStr.substring(0, 200)}...`); // Truncate to avoid huge logs
       // @ts-ignore
       window.ReactNativeWebView.postMessage(msgStr);
-      console.log('[editor-bridge] PostMessage complete');
+      if (DEBUG) console.log('[editor-bridge] PostMessage complete');
     } else {
       console.warn('[editor-bridge] ReactNativeWebView not found', validated);
     }

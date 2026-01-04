@@ -86,7 +86,7 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
   }
 
   async readNote(id: NoteId): Promise<ReadNoteResult> {
-    console.log(`[MobileSandboxVaultAdapter] Reading note: ${id}`);
+    // console.log(`[MobileSandboxVaultAdapter] Reading note: ${id}`);
     assertSafeNotePath(id);
 
     // Construct file from root + id
@@ -100,7 +100,7 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
     }
 
     const content = file.textSync(); // or await file.text()
-    console.log(`[MobileSandboxVaultAdapter] Read success: ${id} (${content.length} bytes)`);
+    // console.log(`[MobileSandboxVaultAdapter] Read success: ${id} (${content.length} bytes)`);
 
     return {
       id,
@@ -110,7 +110,7 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
   }
 
   async writeNote(id: NoteId, content: string, opts?: WriteNoteOptions): Promise<WriteNoteResult> {
-    console.log(`[MobileSandboxVaultAdapter] Writing note: ${id} (${content.length} bytes)`);
+    // console.log(`[MobileSandboxVaultAdapter] Writing note: ${id} (${content.length} bytes)`);
     assertSafeNotePath(id);
     const segments = id.split('/');
     const file = new File(this.rootDir, ...segments);
@@ -122,13 +122,13 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
 
         // Check if parent dir exists before trying to create it
         if (opts?.createParents && !parentDir.exists) {
-            console.log(`[MobileSandboxVaultAdapter] Creating parent directory for ${id}`);
+            // console.log(`[MobileSandboxVaultAdapter] Creating parent directory for ${id}`);
             parentDir.create({ intermediates: true });
         }
     }
 
     file.write(content);
-    console.log(`[MobileSandboxVaultAdapter] Write success: ${id}`);
+    // console.log(`[MobileSandboxVaultAdapter] Write success: ${id}`);
 
     return {
       id,
