@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { themes } from '@liminal-notes/core-shared/theme';
 import { Theme, ThemeId } from '@liminal-notes/core-shared/theme';
+import { useSettings } from './SettingsContext';
 
 interface ThemeContextType {
   themeId: ThemeId;
@@ -14,7 +15,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme(); // 'light' | 'dark' | null
-  const [themeId, setThemeId] = useState<ThemeId>('system');
+  const { settings, updateSetting } = useSettings();
+
+  const themeId = settings.appearance.theme;
+
+  const setThemeId = (id: ThemeId) => {
+      updateSetting('appearance.theme', id);
+  };
 
   const theme = useMemo(() => {
     if (themeId === 'system') {
@@ -30,7 +37,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
        // 1. Get raw value
        let value = theme.variables[variable];
        if (!value) {
-           console.warn(`Theme variable not found: ${variable}`);
+           // console.warn(`Theme variable not found: ${variable}`);
            return '#FF00FF'; // Magenta error
        }
 

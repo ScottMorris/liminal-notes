@@ -2,13 +2,15 @@ import { Stack } from 'expo-router';
 import { VaultProvider } from '../src/context/VaultContext';
 import { IndexProvider } from '../src/context/IndexContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
+import { SettingsProvider } from '../src/context/SettingsContext';
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <VaultProvider>
-        <IndexProvider>
-          <Stack
+    <SettingsProvider>
+      <ThemeProvider>
+        <VaultProvider>
+          <IndexProvider>
+            <Stack
             screenOptions={{
               headerShown: false,
             }}
@@ -29,9 +31,17 @@ export default function RootLayout() {
               title: 'Settings'
             }}
           />
-          </Stack>
-        </IndexProvider>
-      </VaultProvider>
-    </ThemeProvider>
+          <Stack.Screen
+            name="settings/[section]"
+            options={{
+              headerShown: true,
+              title: ''
+            }}
+          />
+            </Stack>
+          </IndexProvider>
+        </VaultProvider>
+      </ThemeProvider>
+    </SettingsProvider>
   );
 }

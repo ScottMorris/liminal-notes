@@ -10,11 +10,13 @@ import { Text } from 'react-native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import { PromptModal } from '../../src/components/PromptModal';
 import { FABAction } from '../../src/components/FABMenu';
+import { HeaderMenu } from '../../src/components/HeaderMenu';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { pinned, recents, folders, loading, refresh } = useHomeData();
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const handleCreateNote = async () => {
     try {
@@ -61,16 +63,32 @@ export default function HomeScreen() {
     );
   }
 
+  const handleMenuPress = () => {
+    setMenuVisible(true);
+  };
+
   return (
     <View style={styles.container}>
       <Stack.Screen
         options={{
             headerRight: () => (
-                <TouchableOpacity onPress={() => router.push('/search')} style={styles.headerButton}>
-                    <Text style={styles.headerButtonText}>🔍</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity onPress={() => router.push('/search')} style={styles.headerButton}>
+                      <Text style={styles.headerButtonText}>🔍</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleMenuPress} style={styles.headerButton}>
+                      <Text style={styles.headerButtonText}>⋮</Text>
+                  </TouchableOpacity>
+                </View>
             )
         }}
+      />
+      <HeaderMenu
+          visible={menuVisible}
+          onClose={() => setMenuVisible(false)}
+          actions={[
+              { id: 'settings', label: 'Settings', onPress: () => router.push('/settings') }
+          ]}
       />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.spacer} />

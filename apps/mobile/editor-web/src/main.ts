@@ -1,5 +1,5 @@
 import { EditorView, lineNumbers, highlightActiveLine } from '@codemirror/view';
-import { EditorState, Annotation } from '@codemirror/state';
+import { EditorState, Annotation, Compartment } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
 import { history, defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { closeBrackets } from '@codemirror/autocomplete';
@@ -12,6 +12,7 @@ import {
   EditorEvent,
   AnyMessage,
   MessageKind,
+  InitPayload
 } from '@liminal-notes/core-shared/mobile/editorProtocol';
 
 import { createEditorTheme, fallbackThemeVars } from './theme';
@@ -26,6 +27,11 @@ let currentRevision = 0;
 // Annotation to mark programmatic changes from the host
 const HostTransaction = Annotation.define<boolean>();
 
+// Compartments for dynamic configuration
+const lineNumbersCompartment = new Compartment();
+const lineWrappingCompartment = new Compartment();
+const highlightActiveLineCompartment = new Compartment();
+
 // Apply theme vars to document root
 function applyTheme(vars: Record<string, string>) {
   const root = document.documentElement;
@@ -37,13 +43,13 @@ function applyTheme(vars: Record<string, string>) {
 // Apply fallback theme initially to prevent FOUC (Flash of Unstyled Content) if possible, or just wait for init
 applyTheme(fallbackThemeVars);
 
-function initEditor(parent: HTMLElement) {
+function initEditor(parent: HTMLElement, config?: InitPayload['settings']) {
   const extensions = [
-    lineNumbers(),
-    highlightActiveLine(),
+    lineNumbersCompartment.of(config?.showLineNumbers ? lineNumbers() : []),
+    lineWrappingCompartment.of(config?.wordWrap ? EditorView.lineWrapping : []),
+    highlightActiveLineCompartment.of(config?.highlightActiveLine ?? true ? highlightActiveLine() : []),
     history(),
     closeBrackets(),
-    EditorView.lineWrapping,
     markdown({ extensions: [GFM] }),
     createEditorTheme(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
@@ -126,6 +132,17 @@ function handleCommand(msg: AnyMessage) {
       // Apply theme
       if (msg.payload.theme && msg.payload.theme.vars) {
         applyTheme(msg.payload.theme.vars);
+      }
+
+      // Reconfigure editor if already initialized, or just handled by initEditor if called there
+      if (editorView && msg.payload.settings) {
+          editorView.dispatch({
+              effects: [
+                  lineNumbersCompartment.reconfigure(msg.payload.settings.showLineNumbers ? lineNumbers() : []),
+                  lineWrappingCompartment.reconfigure(msg.payload.settings.wordWrap ? EditorView.lineWrapping : []),
+                  highlightActiveLineCompartment.reconfigure(msg.payload.settings.highlightActiveLine ? highlightActiveLine() : [])
+              ]
+          });
       }
       break;
 
