@@ -54,7 +54,7 @@ const LastSavedFooter = ({ timestamp }: { timestamp: number | undefined }) => {
     if (!timestamp) return null;
 
     return (
-        <View style={[styles.footer, { borderTopColor: theme.colors.outlineVariant, backgroundColor: theme.colors.elevation.level1 }]}>
+        <View style={[styles.footer, { borderTopColor: theme.colors.outlineVariant, backgroundColor: theme.colors.surface }]}>
             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{text}</Text>
         </View>
     );
@@ -362,7 +362,7 @@ export default function NoteScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header / Debug Bar */}
-      <View style={[styles.header, { borderBottomColor: theme.colors.outlineVariant }]}>
+      <View style={[styles.header, { borderBottomColor: theme.colors.outlineVariant, backgroundColor: theme.colors.surface }]}>
           <Text variant="titleMedium" style={{ flex: 1 }} numberOfLines={1}>{noteId}</Text>
           <View style={styles.badges}>
               {/* Save Status */}

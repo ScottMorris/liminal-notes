@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { useHomeData } from '../../src/hooks/useHomeData';
 import { FocusedSection } from '../../src/components/home/FocusedSection';
 import { FolderSection } from '../../src/components/home/FolderSection';
@@ -14,6 +15,7 @@ import { IconButton } from 'react-native-paper';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const isFocused = useIsFocused();
   const { pinned, recents, folders, loading, refresh } = useHomeData();
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
 
@@ -96,6 +98,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       <FAB
+          visible={isFocused}
           onPress={() => {}}
           actions={fabActions}
       />

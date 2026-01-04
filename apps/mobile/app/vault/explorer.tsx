@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 import { FAB, FABAction } from '../../src/components/FAB';
@@ -9,6 +10,7 @@ import { useTheme } from 'react-native-paper';
 
 export default function ExplorerScreen() {
   const router = useRouter();
+  const isFocused = useIsFocused();
   const { folder } = useLocalSearchParams<{ folder?: string }>();
   const currentPath = folder || '';
   const theme = useTheme();
@@ -153,6 +155,7 @@ export default function ExplorerScreen() {
       />
 
       <FAB
+        visible={isFocused}
         onPress={handleCreateNote}
         actions={fabActions}
       />
