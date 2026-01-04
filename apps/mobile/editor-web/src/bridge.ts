@@ -6,6 +6,7 @@ import {
   MessageKind,
   EventType
 } from '@liminal-notes/core-shared/mobile/editorProtocol';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Sends a message to the React Native host.
@@ -14,8 +15,7 @@ export function send(msg: EventType) {
   console.log(`[editor-bridge] Sending message type: ${msg.type}`);
   try {
     console.log('[editor-bridge] Generating ID...');
-    // Use Math.random fallback exclusively to prevent native crashes on older WebViews
-    const uuid = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    const uuid = uuidv4();
     console.log(`[editor-bridge] ID generated: ${uuid}`);
 
     // Construct the envelope
