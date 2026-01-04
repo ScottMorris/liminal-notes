@@ -38,6 +38,7 @@ export function HeaderMenu({ visible, onClose, actions }: HeaderMenuProps) {
       transparent
       visible={visible}
       animationType="fade"
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={onClose}>

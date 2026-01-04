@@ -63,7 +63,15 @@ export default function SettingsSectionScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: resolveColor('--ln-bg') }]} edges={['bottom', 'left', 'right']}>
-      <Stack.Screen options={{ title: activeSection.title, headerBackTitle: '', headerTintColor: resolveColor('--ln-accent') }} />
+      <Stack.Screen
+        options={{
+            title: activeSection.title,
+            headerBackTitle: '',
+            headerTintColor: resolveColor('--ln-accent'),
+            headerTransparent: false,
+            headerStyle: { backgroundColor: resolveColor('--ln-bg') }
+        }}
+      />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {activeSection.groups.map(group => (
             <View key={group.id} style={styles.group}>
