@@ -196,6 +196,7 @@ export default function NoteScreen() {
         },
         settings: {
             showLineNumbers: settings.editor.showLineNumbers,
+            highlightActiveLine: settings.editor.highlightActiveLine,
             wordWrap: settings.editor.wordWrap
         },
         featureFlags: {

@@ -122,6 +122,11 @@ export const getSections = (appVersion: string, vaultName: string): SettingsSect
                         controls: [{ kind: 'boolean', key: 'editor.showLineNumbers' }]
                     },
                     {
+                        id: 'highlight-active-line',
+                        label: 'Highlight active line',
+                        controls: [{ kind: 'boolean', key: 'editor.highlightActiveLine' }]
+                    },
+                    {
                         id: 'readable-line-length',
                         label: 'Readable line length',
                         controls: [{ kind: 'boolean', key: 'editor.readableLineLength' }]

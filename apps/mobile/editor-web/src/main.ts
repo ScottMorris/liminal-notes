@@ -30,6 +30,7 @@ const HostTransaction = Annotation.define<boolean>();
 // Compartments for dynamic configuration
 const lineNumbersCompartment = new Compartment();
 const lineWrappingCompartment = new Compartment();
+const highlightActiveLineCompartment = new Compartment();
 
 // Apply theme vars to document root
 function applyTheme(vars: Record<string, string>) {
@@ -46,7 +47,7 @@ function initEditor(parent: HTMLElement, config?: InitPayload['settings']) {
   const extensions = [
     lineNumbersCompartment.of(config?.showLineNumbers ? lineNumbers() : []),
     lineWrappingCompartment.of(config?.wordWrap ? EditorView.lineWrapping : []),
-    highlightActiveLine(),
+    highlightActiveLineCompartment.of(config?.highlightActiveLine ?? true ? highlightActiveLine() : []),
     history(),
     closeBrackets(),
     markdown({ extensions: [GFM] }),
@@ -138,7 +139,8 @@ function handleCommand(msg: AnyMessage) {
           editorView.dispatch({
               effects: [
                   lineNumbersCompartment.reconfigure(msg.payload.settings.showLineNumbers ? lineNumbers() : []),
-                  lineWrappingCompartment.reconfigure(msg.payload.settings.wordWrap ? EditorView.lineWrapping : [])
+                  lineWrappingCompartment.reconfigure(msg.payload.settings.wordWrap ? EditorView.lineWrapping : []),
+                  highlightActiveLineCompartment.reconfigure(msg.payload.settings.highlightActiveLine ? highlightActiveLine() : [])
               ]
           });
       }

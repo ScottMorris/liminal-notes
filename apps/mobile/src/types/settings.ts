@@ -10,6 +10,7 @@ export interface SettingsState {
   editor: {
     focusNewTabs: boolean;
     showLineNumbers: boolean;
+    highlightActiveLine: boolean;
     readableLineLength: boolean;
     wordWrap: boolean;
     defaultMode: 'source' | 'preview';
@@ -29,6 +30,7 @@ export const DEFAULT_SETTINGS: SettingsState = {
   editor: {
     focusNewTabs: true,
     showLineNumbers: false,
+    highlightActiveLine: true,
     readableLineLength: false,
     wordWrap: true,
     defaultMode: 'source',

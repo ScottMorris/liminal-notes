@@ -37,6 +37,7 @@ export interface InitPayload {
   };
   settings?: {
     showLineNumbers: boolean;
+    highlightActiveLine: boolean;
     wordWrap: boolean;
   };
   featureFlags: {
@@ -53,6 +54,7 @@ export const InitPayloadSchema = z.object({
   }),
   settings: z.object({
     showLineNumbers: z.boolean(),
+    highlightActiveLine: z.boolean(),
     wordWrap: z.boolean()
   }).optional(),
   featureFlags: z.object({
