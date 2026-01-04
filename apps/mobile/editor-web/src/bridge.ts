@@ -12,16 +12,23 @@ import {
  */
 export function send(msg: EventType) {
   console.log(`[editor-bridge] Sending message type: ${msg.type}`);
-  // Construct the envelope
-  const envelope: AnyMessage = {
-    v: PROTOCOL_VERSION,
-    id: globalThis.crypto?.randomUUID() || Math.random().toString(36).slice(2),
-    kind: MessageKind.Evt,
-    type: msg.type,
-    payload: msg.payload
-  } as AnyMessage;
 
   try {
+    // Check for randomUUID support safely
+    // Android System WebView < 92 has crypto but not randomUUID
+    const uuid = (typeof globalThis.crypto?.randomUUID === 'function')
+        ? globalThis.crypto.randomUUID()
+        : Math.random().toString(36).slice(2);
+
+    // Construct the envelope
+    const envelope: AnyMessage = {
+      v: PROTOCOL_VERSION,
+      id: uuid,
+      kind: MessageKind.Evt,
+      type: msg.type,
+      payload: msg.payload
+    } as AnyMessage;
+
     const validated = createMessage(envelope);
     const msgStr = JSON.stringify(validated);
     // @ts-ignore: ReactNativeWebView is injected by the host
