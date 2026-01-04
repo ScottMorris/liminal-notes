@@ -11,8 +11,6 @@ import {
  * Sends a message to the React Native host.
  */
 export function send(msg: EventType) {
-  // Debug log to confirm new version is loaded
-  console.log('[editor-bridge] v3-debug: Starting send (Math.random fix active)');
   console.log(`[editor-bridge] Sending message type: ${msg.type}`);
   try {
     console.log('[editor-bridge] Generating ID...');
