@@ -17,6 +17,9 @@ import editorHtml from '../../editor-web/dist/editor.html';
 // Cast for strict type checking until .html declaration is available
 const editorHtmlSource = editorHtml as any;
 
+// TODO: Control this via settings injection in the future
+const DEBUG = false;
+
 interface EditorViewProps {
   onReady?: () => void;
   onDocChanged?: (payload: any) => void;
@@ -44,7 +47,7 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
         })();
       `;
 
-      console.log('[EditorHost] Sending:', envelope);
+      if (DEBUG) console.log('[EditorHost] Sending:', envelope);
       webViewRef.current?.injectJavaScript(script);
     }
   }));
@@ -52,16 +55,16 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
   const handleMessage = useCallback((event: WebViewMessageEvent) => {
     try {
       const { data } = event.nativeEvent;
-      console.log('[EditorHost] Received raw:', data);
+      if (DEBUG) console.log('[EditorHost] Received raw:', data);
 
       const envelope = parseEnvelope(data);
-      console.log('[EditorHost] Parsed envelope:', envelope);
+      if (DEBUG) console.log('[EditorHost] Parsed envelope:', envelope);
 
       if (envelope.kind === MessageKind.Evt) {
         // Cast to any to bypass union narrowing issues with isEvent predicate
         const evt = envelope as any;
         if (isEvent(evt, EditorEvent.Ready)) {
-           console.log('[EditorHost] Editor Ready');
+           if (DEBUG) console.log('[EditorHost] Editor Ready');
            props.onReady?.();
         } else if (isEvent(evt, EditorEvent.Changed)) {
            props.onDocChanged?.(evt.payload);
@@ -141,12 +144,12 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
         source={editorHtmlSource}
         style={styles.webview}
         onMessage={(event) => {
-            console.log('[EditorHost] onMessage fired');
+            if (DEBUG) console.log('[EditorHost] onMessage fired');
             // Intercept logs first
             try {
                 const data = JSON.parse(event.nativeEvent.data);
                 if (data.kind === 'log') {
-                    console.log(`[GuestConsole] [${data.level}] ${data.message}`);
+                    if (DEBUG) console.log(`[GuestConsole] [${data.level}] ${data.message}`);
                     return;
                 }
             } catch (e) {
@@ -161,7 +164,7 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
         domStorageEnabled={true}
         startInLoadingState={true}
         renderLoading={() => <ActivityIndicator style={styles.loading} />}
-        onLoadEnd={() => console.log('[EditorHost] WebView loaded')}
+        onLoadEnd={() => { if (DEBUG) console.log('[EditorHost] WebView loaded'); }}
       />
     </View>
   );
