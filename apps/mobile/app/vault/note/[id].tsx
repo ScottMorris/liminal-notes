@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert } from
 import { useLocalSearchParams, useRouter, Stack, useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme as usePaperTheme, ActivityIndicator, Text } from 'react-native-paper';
-import { EditorView, EditorRef } from '../../../src/editor/EditorView';
+import { EditorView, EditorRef } from '../../../src/components/EditorView';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
 import { recentsStorage } from '../../../src/storage/recents';
