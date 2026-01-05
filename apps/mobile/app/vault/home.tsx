@@ -29,8 +29,8 @@ export default function HomeScreen() {
       // Write empty file
       await adapter.writeNote(id, '', { createParents: true });
 
-      // Navigate
-      router.push(`/vault/note/${id}`);
+      // Navigate - Encode ID to handle potential slashes (though less likely at root, good practice)
+      router.push(`/vault/note/${encodeURIComponent(id)}`);
     } catch (e) {
       console.error('Failed to create note', e);
       Alert.alert('Error', 'Failed to create new note');

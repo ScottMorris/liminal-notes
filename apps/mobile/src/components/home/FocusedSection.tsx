@@ -17,7 +17,8 @@ export function FocusedSection({ items, onRefresh }: FocusedSectionProps) {
 
   const handlePress = (item: PinnedItem) => {
     if (item.type === 'note') {
-      router.push(`/vault/note/${item.id}`);
+      // Encode path to handle nested folders
+      router.push(`/vault/note/${encodeURIComponent(item.id)}`);
     } else {
       router.push({ pathname: '/vault/explorer', params: { folder: item.id } });
     }

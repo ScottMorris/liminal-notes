@@ -21,8 +21,9 @@ export function FAB({ onPress, actions, style, visible = true }: FABProps) {
   const [open, setOpen] = useState(false);
   const { resolveColor } = useTheme();
 
-  const bgColor = resolveColor('--ln-accent');
-  const fgColor = resolveColor('--ln-bg');
+  const bgColour = resolveColor('--ln-accent');
+  const fgColour = resolveColor('--ln-bg');
+  const labelColour = resolveColor('--ln-fg');
 
   if (actions && actions.length > 0) {
       const groupActions = actions.map(a => ({
@@ -30,8 +31,8 @@ export function FAB({ onPress, actions, style, visible = true }: FABProps) {
           label: a.label,
           onPress: a.onPress,
           style: { backgroundColor: 'white' }, // Actions usually need contrast
-          color: bgColor,
-          labelStyle: { color: 'black' },
+          color: bgColour,
+          labelStyle: { color: labelColour },
       }));
 
       return (
@@ -43,8 +44,8 @@ export function FAB({ onPress, actions, style, visible = true }: FABProps) {
                   actions={groupActions}
                   onStateChange={({ open }) => setOpen(open)}
                   // Removed 'onPress' prop to allow default toggle behavior
-                  fabStyle={{ backgroundColor: bgColor }}
-                  color={fgColor}
+                  fabStyle={{ backgroundColor: bgColour }}
+                  color={fgColour}
                   backdropColor="rgba(0,0,0,0.5)"
               />
           </Portal>
@@ -54,8 +55,8 @@ export function FAB({ onPress, actions, style, visible = true }: FABProps) {
   return (
     <PaperFAB
       icon="plus"
-      style={[styles.fab, { backgroundColor: bgColor }, style]}
-      color={fgColor}
+      style={[styles.fab, { backgroundColor: bgColour }, style]}
+      color={fgColour}
       onPress={onPress}
       visible={visible}
     />

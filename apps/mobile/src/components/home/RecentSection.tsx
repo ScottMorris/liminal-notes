@@ -17,7 +17,8 @@ export function RecentSection({ items, onRefresh }: RecentSectionProps) {
   if (items.length === 0) return null;
 
   const handlePress = (id: string) => {
-    router.push(`/vault/note/${id}`);
+    // Encode path to handle nested folders
+    router.push(`/vault/note/${encodeURIComponent(id)}`);
   };
 
   const handleLongPress = (id: string) => {

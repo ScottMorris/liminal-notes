@@ -73,7 +73,8 @@ export default function ExplorerScreen() {
       if (item.type === 'directory') {
           router.push({ pathname: '/vault/explorer', params: { folder: item.id } });
       } else {
-          router.push(`/vault/note/${item.id}`);
+          // Encode path to handle nested folders (slashes)
+          router.push(`/vault/note/${encodeURIComponent(item.id)}`);
       }
   };
 
@@ -86,7 +87,8 @@ export default function ExplorerScreen() {
       await adapter.init();
       await adapter.writeNote(fullPath, '', { createParents: true });
 
-      router.push(`/vault/note/${fullPath}`);
+      // Encode path to handle nested folders
+      router.push(`/vault/note/${encodeURIComponent(fullPath)}`);
     } catch (e) {
       console.error('Failed to create note', e);
       Alert.alert('Error', 'Failed to create new note');
@@ -144,6 +146,7 @@ export default function ExplorerScreen() {
           <>
             <List.Item
               title={item.id.split('/').pop()}
+              description={item.mtimeMs ? new Date(item.mtimeMs).toLocaleDateString() : undefined}
               left={props => <List.Icon {...props} icon={item.type === 'directory' ? 'folder-outline' : 'file-document-outline'} />}
               onPress={() => handlePress(item)}
               titleStyle={{ color: theme.colors.onBackground }}
