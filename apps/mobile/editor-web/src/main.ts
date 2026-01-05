@@ -15,8 +15,17 @@ import {
   InitPayload
 } from '@liminal-notes/core-shared/mobile/editorProtocol';
 
+import { markdownDecorations } from '@liminal-notes/core-shared/editor/decorations';
+import { frontmatterHider } from '@liminal-notes/core-shared/editor/frontmatterHider';
+import { sharedEditingCommands } from '@liminal-notes/core-shared/editor/commands';
 import { createEditorTheme, fallbackThemeVars } from './theme';
 import { send, listen, waitForBridge } from './bridge';
+
+declare global {
+  interface Window {
+    LIMINAL_INITIAL_CONTENT?: string;
+  }
+}
 
 // -- Editor Initialization --
 

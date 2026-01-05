@@ -5,6 +5,9 @@
 ### Mobile
 - [ ] Add 'Enable Debug Logging' setting to Mobile app to control verbose Bridge and Vault logs.
 - [x] Fix capitalization of entered text in editor (Android keyboard treating it as code/lowercase).
+- [ ] **Search in Note:** Implement Find/Replace functionality for the mobile editor.
+- [ ] **Advanced Input Support:** Add keyboard shortcuts (Cmd+B, etc.) and mouse support for tablets/Bluetooth keyboards.
+- [ ] **Native Context Menu:** The mobile editor currently lacks the rich custom context menu of the desktop app. Investigate feasibility of a custom native menu or enhanced web context menu.
 
 ### Pinning
 - [ ] Support manual reordering of pinned items.

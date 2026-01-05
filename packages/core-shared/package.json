@@ -8,14 +8,54 @@
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
-    ".": "./dist/index.mjs",
-    "./types": "./dist/types.mjs",
-    "./wikilinks": "./dist/wikilinks.mjs",
-    "./frontmatter": "./dist/frontmatter.mjs",
-    "./mobile/editorProtocol": "./dist/mobile/editorProtocol.mjs",
-    "./theme": "./dist/theme/index.mjs",
-    "./indexing/types": "./dist/indexing/types.mjs",
-    "./indexing/resolution": "./dist/indexing/resolution.mjs"
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.mts",
+      "default": "./dist/types.mjs"
+    },
+    "./wikilinks": {
+      "types": "./dist/wikilinks.d.mts",
+      "default": "./dist/wikilinks.mjs"
+    },
+    "./frontmatter": {
+      "types": "./dist/frontmatter.d.mts",
+      "default": "./dist/frontmatter.mjs"
+    },
+    "./mobile/editorProtocol": {
+      "types": "./dist/mobile/editorProtocol.d.mts",
+      "default": "./dist/mobile/editorProtocol.mjs"
+    },
+    "./theme": {
+      "types": "./dist/theme/index.d.mts",
+      "default": "./dist/theme/index.mjs"
+    },
+    "./indexing/types": {
+      "types": "./dist/indexing/types.d.mts",
+      "default": "./dist/indexing/types.mjs"
+    },
+    "./indexing/resolution": {
+      "types": "./dist/indexing/resolution.d.mts",
+      "default": "./dist/indexing/resolution.mjs"
+    },
+    "./editor/decorations": {
+      "types": "./dist/editor/decorations.d.mts",
+      "default": "./dist/editor/decorations.mjs"
+    },
+    "./editor/commands": {
+      "types": "./dist/editor/commands.d.mts",
+      "default": "./dist/editor/commands.mjs"
+    },
+    "./editor/frontmatterHider": {
+      "types": "./dist/editor/frontmatterHider.d.mts",
+      "default": "./dist/editor/frontmatterHider.mjs"
+    },
+    "./editor/wikiLinkParser": {
+      "types": "./dist/editor/wikiLinkParser.d.mts",
+      "default": "./dist/editor/wikiLinkParser.mjs"
+    }
   },
   "scripts": {
     "build": "tsdown",
@@ -23,11 +63,18 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.0",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.39.4",
+    "@lezer/common": "^1.5.0",
+    "@lezer/highlight": "^1.2.3",
     "gray-matter": "^4.0.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "buffer": "^6.0.3",
+    "happy-dom": "^20.0.11",
     "tsdown": "^0.18.3",
     "typescript": "^5.8.3",
     "vitest": "^1.3.1"

@@ -12,6 +12,7 @@ import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution';
 import { themes } from '@liminal-notes/core-shared/theme';
 import { useSettings } from '../../../src/context/SettingsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
+import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
 
 const DEBUG = true;
 
@@ -352,12 +353,16 @@ export default function NoteScreen() {
       {/* Editor */}
       <EditorView
         ref={editorRef}
+        initialContent={content}
         onReady={handleEditorReady}
         onDocChanged={handleDocChanged}
         onRequestResponse={handleRequestResponse}
         onError={(e) => console.error('Editor Error:', e)}
         // We can pass styles to inject theme vars but EditorView handles internal protocol theme
       />
+
+      {/* Formatting Toolbar */}
+      <FormattingToolbar editorRef={editorRef} />
 
       {/* Footer */}
       <LastSavedFooter timestamp={lastSavedAt} />

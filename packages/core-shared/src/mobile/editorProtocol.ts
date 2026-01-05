@@ -25,8 +25,17 @@ export interface Envelope<T = unknown> {
 export enum EditorCommand {
   Init = 'editor/init',
   Set = 'doc/set',
+  Execute = 'editor/execute',
   RequestState = 'request/state'
 }
+
+export interface ExecutePayload {
+  id: string;
+}
+
+export const ExecutePayloadSchema = z.object({
+  id: z.string()
+});
 
 export interface InitPayload {
   platform: 'android' | 'ios';
