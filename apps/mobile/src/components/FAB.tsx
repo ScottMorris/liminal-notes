@@ -23,6 +23,7 @@ export function FAB({ onPress, actions, style, visible = true }: FABProps) {
 
   const bgColor = resolveColor('--ln-accent');
   const fgColor = resolveColor('--ln-bg');
+  const labelColor = resolveColor('--ln-fg');
 
   if (actions && actions.length > 0) {
       const groupActions = actions.map(a => ({
@@ -31,7 +32,7 @@ export function FAB({ onPress, actions, style, visible = true }: FABProps) {
           onPress: a.onPress,
           style: { backgroundColor: 'white' }, // Actions usually need contrast
           color: bgColor,
-          labelStyle: { color: 'black' },
+          labelStyle: { color: labelColor },
       }));
 
       return (
