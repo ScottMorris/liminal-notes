@@ -367,10 +367,10 @@ export default function NoteScreen() {
 
           {/* Formatting Toolbar */}
           <FormattingToolbar editorRef={editorRef} />
-
-          {/* Footer */}
-          <LastSavedFooter timestamp={lastSavedAt} />
       </KeyboardAvoidingView>
+
+      {/* Footer */}
+      <LastSavedFooter timestamp={lastSavedAt} />
     </SafeAreaView>
   );
 }

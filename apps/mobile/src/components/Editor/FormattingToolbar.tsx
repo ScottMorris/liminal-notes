@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Keyboard, Platform } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { EditorCommand } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import type { EditorRef } from '../EditorView';
@@ -12,12 +12,31 @@ const TOOLBAR_HEIGHT = 44;
 
 export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
   const theme = useTheme();
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = () => setKeyboardVisible(true);
+    const onHide = () => setKeyboardVisible(false);
+
+    const showSub = Keyboard.addListener(showEvent, onShow);
+    const hideSub = Keyboard.addListener(hideEvent, onHide);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleCommand = (id: string) => {
     if (editorRef.current) {
       editorRef.current.sendCommand(EditorCommand.Execute, { id });
     }
   };
+
+  if (!isKeyboardVisible) return null;
 
   return (
     <View style={[styles.container, {
