@@ -14,6 +14,7 @@
   "dependencies": {
     "@liminal-notes/core-shared": "workspace:*",
     "@liminal-notes/vault-core": "workspace:*",
+    "@pchmn/expo-material3-theme": "^1.3.2",
     "@react-native-community/slider": "^5.1.1",
     "babel-preset-expo": "^54.0.9",
     "expo": "~54.0.30",
