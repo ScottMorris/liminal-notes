@@ -146,6 +146,7 @@ export default function ExplorerScreen() {
           <>
             <List.Item
               title={item.id.split('/').pop()}
+              description={item.mtimeMs ? new Date(item.mtimeMs).toLocaleDateString() : undefined}
               left={props => <List.Icon {...props} icon={item.type === 'directory' ? 'folder-outline' : 'file-document-outline'} />}
               onPress={() => handlePress(item)}
               titleStyle={{ color: theme.colors.onBackground }}
