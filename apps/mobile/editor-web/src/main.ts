@@ -65,6 +65,8 @@ function initEditor(parent: HTMLElement, config?: InitPayload['settings']) {
     history(),
     closeBrackets(),
     markdown({ extensions: [GFM] }),
+    markdownDecorations,
+    frontmatterHider,
     createEditorTheme(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     EditorView.updateListener.of((update) => {
@@ -201,6 +203,14 @@ function handleCommand(msg: AnyMessage) {
         type: EditorEvent.RequestResponse,
         payload: response
       });
+      break;
+
+    case EditorCommand.Execute:
+      if (sharedEditingCommands[msg.payload.id]) {
+        sharedEditingCommands[msg.payload.id](editorView);
+      } else {
+        console.warn(`[Guest] Unknown execute command: ${msg.payload.id}`);
+      }
       break;
 
     default:

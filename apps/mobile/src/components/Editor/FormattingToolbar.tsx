@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Keyboard, Platform, KeyboardEvent } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { EditorCommand } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import type { EditorRef } from '../EditorView';
@@ -12,31 +12,6 @@ const TOOLBAR_HEIGHT = 44;
 
 export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
   const theme = useTheme();
-  const [visible, setVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const onShow = (e: KeyboardEvent) => {
-      setKeyboardHeight(e.endCoordinates.height);
-      setVisible(true);
-    };
-
-    const onHide = () => {
-      setKeyboardHeight(0);
-      setVisible(false);
-    };
-
-    const showSub = Keyboard.addListener(showEvent, onShow);
-    const hideSub = Keyboard.addListener(hideEvent, onHide);
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   const handleCommand = (id: string) => {
     if (editorRef.current) {
@@ -44,15 +19,12 @@ export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
     }
   };
 
-  if (!visible) return null;
-
   return (
     <View style={[styles.container, {
-      bottom: Platform.OS === 'ios' ? keyboardHeight : 0,
       backgroundColor: theme.colors.elevation.level2,
       borderTopColor: theme.colors.outlineVariant
     }]}>
-      <View style={styles.scrollContainer}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
         <TouchableOpacity style={styles.button} onPress={() => handleCommand('editor.format.bold')}>
           <Text style={[styles.buttonText, { color: theme.colors.onSurface }]}>B</Text>
         </TouchableOpacity>
@@ -78,27 +50,23 @@ export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
         <TouchableOpacity style={styles.button} onPress={() => handleCommand('editor.format.clear')}>
           <Text style={[styles.buttonText, { color: theme.colors.onSurface }]}>Clear</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
     height: TOOLBAR_HEIGHT,
     borderTopWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    zIndex: 1000,
+    width: '100%',
   },
   scrollContainer: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 8,
     gap: 4,
   },
   button: {

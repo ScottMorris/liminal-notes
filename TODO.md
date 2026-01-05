@@ -5,9 +5,6 @@
 ### Mobile
 - [ ] Add 'Enable Debug Logging' setting to Mobile app to control verbose Bridge and Vault logs.
 - [x] Fix capitalization of entered text in editor (Android keyboard treating it as code/lowercase).
-- [ ] **Search in Note:** Implement Find/Replace functionality for the mobile editor.
-- [ ] **Advanced Input Support:** Add keyboard shortcuts (Cmd+B, etc.) and mouse support for tablets/Bluetooth keyboards.
-- [ ] **Native Context Menu:** The mobile editor currently lacks the rich custom context menu of the desktop app. Investigate feasibility of a custom native menu or enhanced web context menu.
 
 ### Pinning
 - [ ] Support manual reordering of pinned items.
@@ -154,3 +151,26 @@ Currently, unsaved tabs are stored in `localStorage` which means:
 
 - **Linux Accent Color (Pro Mode):** The "Pro Mode" accent colour detection using `libadwaita` crate features (`v1_6`) requires system libraries (`libadwaita-1 >= 1.6`) which are not available in Ubuntu 24.04 (Noble). Currently, we use a `gsettings` CLI fallback.
   - **Task:** Upgrade the dev container and CI environment to a newer base image (e.g., Ubuntu 24.10+) once stable/available, or install updated libraries, to enable the `libadwaita` crate dependency for robust, native accent colour detection.
+
+# Mobile Editor Parity TODOs
+
+This file tracks features that are present in the Desktop editor but currently missing or incomplete in the Mobile editor.
+
+## Formatting & Commands
+
+- [ ] **Advanced Markdown Commands**: `structure.ts` commands (lists, blockquotes, headings) are not fully exposed in the mobile toolbar.
+- [ ] **Search & Replace**: The `editor.action.search` (Ctrl+F) functionality is missing in Mobile.
+- [ ] **Quick Open**: `global.ts` (Ctrl+P) equivalent is missing.
+- [ ] **File Operations**: `file.ts` (Move, Duplicate) are limited in Mobile.
+- [ ] **Link Management**: `links.ts` (Follow link, etc.) works via click but lacks explicit command palette support.
+
+## UI/UX
+
+- [ ] **Command Palette**: There is no "Command Palette" (Ctrl+Shift+P) in Mobile to access all commands.
+- [ ] **Context Menus**: No custom context menus (long-press) for file tree or editor.
+- [ ] **Tab Management**: Mobile uses a stack navigator, lacking the "Tabs" concept of Desktop (pinning, split view).
+
+## Technical Debt
+
+- [ ] **Command Registry**: Mobile does not use the shared `CommandRegistry` pattern, instead relying on ad-hoc handlers in `FormattingToolbar` and `EditorView`.
+- [ ] **Keyboard Shortcuts**: External keyboard support (Bluetooth keyboards) is minimal.

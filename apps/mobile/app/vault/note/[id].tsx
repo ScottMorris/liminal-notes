@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert, KeyboardAvoidingView } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme as usePaperTheme, ActivityIndicator, Text } from 'react-native-paper';
@@ -350,22 +350,27 @@ export default function NoteScreen() {
           </TouchableOpacity>
       </View>
 
-      {/* Editor */}
-      <EditorView
-        ref={editorRef}
-        initialContent={content}
-        onReady={handleEditorReady}
-        onDocChanged={handleDocChanged}
-        onRequestResponse={handleRequestResponse}
-        onError={(e) => console.error('Editor Error:', e)}
-        // We can pass styles to inject theme vars but EditorView handles internal protocol theme
-      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+          {/* Editor */}
+          <EditorView
+            ref={editorRef}
+            initialContent={content}
+            onReady={handleEditorReady}
+            onDocChanged={handleDocChanged}
+            onRequestResponse={handleRequestResponse}
+            onError={(e) => console.error('Editor Error:', e)}
+            // We can pass styles to inject theme vars but EditorView handles internal protocol theme
+          />
 
-      {/* Formatting Toolbar */}
-      <FormattingToolbar editorRef={editorRef} />
+          {/* Formatting Toolbar */}
+          <FormattingToolbar editorRef={editorRef} />
 
-      {/* Footer */}
-      <LastSavedFooter timestamp={lastSavedAt} />
+          {/* Footer */}
+          <LastSavedFooter timestamp={lastSavedAt} />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
