@@ -15,19 +15,18 @@ import { useTheme } from '../../../src/context/ThemeContext'; // Import custom T
 
 const DEBUG = true;
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-const SaveStatus = {
-    Idle: 'idle',
-    Saving: 'saving',
-    Saved: 'saved',
-    Error: 'error'
-} as const;
+enum SaveStatus {
+    Idle = 'idle',
+    Saving = 'saving',
+    Saved = 'saved',
+    Error = 'error'
+}
 
 const SaveStatusColors = {
-    idle: '#888',
-    saving: '#e6a23c', // Warning/Orange
-    saved: '#67c23a', // Success/Green
-    error: '#f56c6c', // Danger/Red
+    [SaveStatus.Idle]: '#888',
+    [SaveStatus.Saving]: '#e6a23c', // Warning/Orange
+    [SaveStatus.Saved]: '#67c23a', // Success/Green
+    [SaveStatus.Error]: '#f56c6c', // Danger/Red
 };
 
 // Simplified Footer without date-fns for now
