@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 import { FAB, FABAction } from '../../src/components/FAB';
 import { PromptModal } from '../../src/components/PromptModal';
-import { useTheme, Text } from 'react-native-paper'; // Use Paper Text and Theme
+import { useTheme, Text, List, ActivityIndicator, Divider } from 'react-native-paper';
 
 export default function ExplorerScreen() {
   const router = useRouter();
@@ -19,7 +19,6 @@ export default function ExplorerScreen() {
   const [loading, setLoading] = useState(true);
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
 
-  // useFocusEffect to refresh data when screen becomes active (e.g. back from note or subfolder)
   useFocusEffect(
     useCallback(() => {
       loadFiles();
@@ -27,9 +26,6 @@ export default function ExplorerScreen() {
   );
 
   const loadFiles = async () => {
-    // Don't set loading to true on refresh to avoid flickering, only on initial mount or path change
-    // But since we use same function, maybe check if items is empty?
-    // Actually, fast refresh is better.
     try {
         const adapter = new MobileSandboxVaultAdapter();
         await adapter.init();
@@ -43,11 +39,9 @@ export default function ExplorerScreen() {
             if (currentPath && !relPath.startsWith(currentPath + '/')) continue;
 
             const relativeToFolder = currentPath ? relPath.slice(currentPath.length + 1) : relPath;
-            // Filter out exact match (the folder itself if listed)
             if (!relativeToFolder) continue;
 
             const parts = relativeToFolder.split('/');
-
             const name = parts[0];
             const isExplicitDir = file.type === 'directory';
             const isDir = isExplicitDir || parts.length > 1;
@@ -110,8 +104,6 @@ export default function ExplorerScreen() {
           await adapter.init();
 
           await adapter.mkdir(fullPath, { recursive: true });
-
-          // Refresh list immediately
           loadFiles();
       } catch (e) {
           console.error('Failed to create folder', e);
@@ -127,7 +119,7 @@ export default function ExplorerScreen() {
   if (loading && items.length === 0) {
       return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />
+            <ActivityIndicator style={{ flex: 1 }} animating={true} color={theme.colors.primary} />
         </View>
       );
   }
@@ -149,13 +141,18 @@ export default function ExplorerScreen() {
         data={items}
         keyExtractor={i => i.id}
         renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.item, { borderBottomColor: theme.colors.outlineVariant }]} onPress={() => handlePress(item)}>
-                <Text style={styles.icon}>{item.type === 'directory' ? '📁' : '📄'}</Text>
-                <Text style={[styles.text, { color: theme.colors.onBackground }]}>{item.id.split('/').pop()}</Text>
-            </TouchableOpacity>
+          <>
+            <List.Item
+              title={item.id.split('/').pop()}
+              left={props => <List.Icon {...props} icon={item.type === 'directory' ? 'folder-outline' : 'file-document-outline'} />}
+              onPress={() => handlePress(item)}
+              titleStyle={{ color: theme.colors.onBackground }}
+            />
+            <Divider />
+          </>
         )}
         ListEmptyComponent={<Text style={[styles.empty, { color: theme.colors.onSurfaceVariant }]}>No files found</Text>}
-        contentContainerStyle={{ paddingBottom: 100 }} // Add padding for FAB
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
 
       <FAB
@@ -179,19 +176,6 @@ export default function ExplorerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  item: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 16,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  icon: {
-      fontSize: 20,
-      marginRight: 12,
-  },
-  text: {
-      fontSize: 16,
   },
   empty: {
       padding: 20,

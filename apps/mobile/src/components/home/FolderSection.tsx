@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Text, Card, useTheme } from 'react-native-paper';
 import { FolderActivity } from '../../indexing/sqlite/SQLiteSearchIndex';
 import { pinnedStorage } from '../../storage/pinned';
 
@@ -11,6 +12,7 @@ interface FolderSectionProps {
 
 export function FolderSection({ folders, onRefresh }: FolderSectionProps) {
   const router = useRouter();
+  const theme = useTheme();
 
   if (folders.length === 0) return null;
 
@@ -40,23 +42,25 @@ export function FolderSection({ folders, onRefresh }: FolderSectionProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Spaces</Text>
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>Spaces</Text>
       <View style={styles.grid}>
         {folders.map((f) => (
-          <TouchableOpacity
+          <Card
             key={f.path}
             style={styles.card}
             onPress={() => handlePress(f.path)}
             onLongPress={() => handleLongPress(f.path)}
+            mode="outlined"
           >
-            <View style={styles.header}>
-                <Text style={styles.icon}>📁</Text>
-                <Text style={styles.title} numberOfLines={1}>{f.path}</Text>
-            </View>
-            <Text style={styles.meta}>
-              {f.noteCount} notes
-            </Text>
-          </TouchableOpacity>
+            <Card.Content style={styles.cardContent}>
+                <View>
+                    <Text variant="titleMedium" numberOfLines={1}>{f.path}</Text>
+                </View>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  {f.noteCount} notes
+                </Text>
+            </Card.Content>
+          </Card>
         ))}
       </View>
     </View>
@@ -71,7 +75,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
     marginBottom: 12,
     textTransform: 'uppercase',
   },
@@ -82,27 +85,10 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '48%', // roughly 2 columns
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 12,
-    padding: 12,
     minHeight: 80,
-    justifyContent: 'space-between',
   },
-  header: {
-      marginBottom: 8,
-  },
-  icon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  meta: {
-    fontSize: 12,
-    color: '#888',
-  },
+  cardContent: {
+      flex: 1,
+      justifyContent: 'space-between',
+  }
 });

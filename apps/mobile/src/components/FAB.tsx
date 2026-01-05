@@ -29,7 +29,7 @@ export function FAB({ onPress, actions, style, visible = true }: FABProps) {
           icon: a.icon,
           label: a.label,
           onPress: a.onPress,
-          style: { backgroundColor: 'white' },
+          style: { backgroundColor: 'white' }, // Actions usually need contrast
           color: bgColor,
           labelStyle: { color: 'black' },
       }));
@@ -42,9 +42,7 @@ export function FAB({ onPress, actions, style, visible = true }: FABProps) {
                   icon={open ? 'close' : 'plus'}
                   actions={groupActions}
                   onStateChange={({ open }) => setOpen(open)}
-                  onPress={() => {
-                      // Toggle handled by state
-                  }}
+                  // Removed 'onPress' prop to allow default toggle behavior
                   fabStyle={{ backgroundColor: bgColor }}
                   color={fgColor}
                   backdropColor="rgba(0,0,0,0.5)"
