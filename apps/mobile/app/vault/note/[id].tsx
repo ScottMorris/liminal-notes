@@ -22,7 +22,7 @@ enum SaveStatus {
     Error = 'error'
 }
 
-const SaveStatusColors = {
+const SaveStatusColours = {
     [SaveStatus.Idle]: '#888',
     [SaveStatus.Saving]: '#e6a23c', // Warning/Orange
     [SaveStatus.Saved]: '#67c23a', // Success/Green
@@ -336,7 +336,7 @@ export default function NoteScreen() {
 
           <View style={styles.badges}>
               {saveStatus !== SaveStatus.Idle && (
-                   <Text style={[styles.badge, { color: SaveStatusColors[saveStatus], backgroundColor: 'transparent' }]}>
+                   <Text style={[styles.badge, { color: SaveStatusColours[saveStatus], backgroundColor: 'transparent' }]}>
                        {getSaveStatusText()}
                    </Text>
               )}
