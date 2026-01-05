@@ -48,7 +48,8 @@ export interface SettingsSectionDef {
 export const getSections = (appVersion: string, vaultName: string): SettingsSectionDef[] => {
     // Flatten themes for mobile select
     const themeOptions = [
-        { value: 'system', label: 'System' },
+        { value: 'system', label: 'System (Default)' },
+        { value: 'material', label: 'System Material (Dynamic)' },
         ...Object.values(themes).map(t => ({ value: t.id, label: t.name }))
     ];
 

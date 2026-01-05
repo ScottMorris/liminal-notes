@@ -1,9 +1,9 @@
 import React from 'react';
 import Slider from '@react-native-community/slider';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text, useTheme } from 'react-native-paper'; // Use Paper Text and Theme
 import { SettingsRow } from './SettingsRow';
 import { useSettings } from '../../context/SettingsContext';
-import { useTheme } from '../../context/ThemeContext';
 
 interface SliderRowProps {
   label: string;
@@ -20,7 +20,7 @@ function getNestedValue(obj: any, path: string): any {
 
 export function SliderRow({ label, description, settingKey, min, max, step = 1 }: SliderRowProps) {
   const { settings, updateSetting } = useSettings();
-  const { resolveColor } = useTheme();
+  const theme = useTheme();
 
   const value = getNestedValue(settings, settingKey);
 
@@ -28,8 +28,10 @@ export function SliderRow({ label, description, settingKey, min, max, step = 1 }
     updateSetting(settingKey, val);
   };
 
-  const accent = resolveColor('--ln-accent');
-  const fg = resolveColor('--ln-fg');
+  // Use Paper theme colors
+  const accent = theme.colors.primary;
+  const inactive = theme.colors.outline;
+  const fg = theme.colors.onBackground;
 
   return (
     <SettingsRow
@@ -46,7 +48,7 @@ export function SliderRow({ label, description, settingKey, min, max, step = 1 }
                 value={value}
                 onSlidingComplete={handleValueChange}
                 minimumTrackTintColor={accent}
-                maximumTrackTintColor="#ccc"
+                maximumTrackTintColor={inactive}
                 thumbTintColor={accent}
             />
           </View>

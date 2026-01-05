@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { List, Text, useTheme, Surface } from 'react-native-paper';
 import { PinnedItem, pinnedStorage } from '../../storage/pinned';
 
 interface FocusedSectionProps {
@@ -10,6 +11,7 @@ interface FocusedSectionProps {
 
 export function FocusedSection({ items, onRefresh }: FocusedSectionProps) {
   const router = useRouter();
+  const theme = useTheme();
 
   if (items.length === 0) return null;
 
@@ -41,20 +43,19 @@ export function FocusedSection({ items, onRefresh }: FocusedSectionProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Focused</Text>
-      <View style={styles.list}>
-        {items.map((item) => (
-          <TouchableOpacity
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>Focused</Text>
+      <Surface style={styles.list} elevation={1}>
+        {items.map((item, index) => (
+          <List.Item
             key={item.id}
-            style={styles.card}
+            title={item.id}
+            left={props => <List.Icon {...props} icon={item.type === 'folder' ? 'folder-outline' : 'file-document-outline'} />}
             onPress={() => handlePress(item)}
             onLongPress={() => handleLongPress(item)}
-          >
-            <Text style={styles.icon}>{item.type === 'folder' ? '📁' : '📝'}</Text>
-            <Text style={styles.label} numberOfLines={1}>{item.id}</Text>
-          </TouchableOpacity>
+            style={index < items.length - 1 ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.outlineVariant } : undefined}
+          />
         ))}
-      </View>
+      </Surface>
     </View>
   );
 }
@@ -67,26 +68,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
     marginBottom: 8,
     textTransform: 'uppercase',
   },
   list: {
-    gap: 8,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 12,
-    borderRadius: 8,
-  },
-  icon: {
-    marginRight: 8,
-    fontSize: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
 });

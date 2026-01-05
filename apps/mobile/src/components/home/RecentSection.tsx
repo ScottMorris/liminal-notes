@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { List, Surface, Text, useTheme } from 'react-native-paper';
 import { RecentItem } from '../../storage/recents';
 import { pinnedStorage } from '../../storage/pinned';
 
@@ -11,6 +12,7 @@ interface RecentSectionProps {
 
 export function RecentSection({ items, onRefresh }: RecentSectionProps) {
   const router = useRouter();
+  const theme = useTheme();
 
   if (items.length === 0) return null;
 
@@ -37,26 +39,20 @@ export function RecentSection({ items, onRefresh }: RecentSectionProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Resume</Text>
-      <View style={styles.list}>
-        {items.map((item) => (
-          <TouchableOpacity
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>Resume</Text>
+      <Surface style={styles.list} elevation={1}>
+        {items.map((item, index) => (
+          <List.Item
             key={item.id}
-            style={styles.row}
+            title={item.id}
+            description={new Date(item.openedAt).toLocaleDateString()}
+            left={props => <List.Icon {...props} icon="file-document-outline" />}
             onPress={() => handlePress(item.id)}
             onLongPress={() => handleLongPress(item.id)}
-          >
-            <Text style={styles.icon}>📄</Text>
-            <View style={styles.content}>
-              <Text style={styles.title} numberOfLines={1}>{item.id}</Text>
-              <Text style={styles.meta}>
-                 {/* TODO: Format relative time */}
-                 {new Date(item.openedAt).toLocaleDateString()}
-              </Text>
-            </View>
-          </TouchableOpacity>
+            style={index < items.length - 1 ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.outlineVariant } : undefined}
+          />
         ))}
-      </View>
+      </Surface>
     </View>
   );
 }
@@ -69,37 +65,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
     marginBottom: 8,
     textTransform: 'uppercase',
   },
   list: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  icon: {
-    fontSize: 18,
-    marginRight: 12,
-    color: '#666',
-  },
-  content: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 2,
-  },
-  meta: {
-    fontSize: 12,
-    color: '#999',
   },
 });

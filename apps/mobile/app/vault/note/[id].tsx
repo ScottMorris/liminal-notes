@@ -1,18 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Platform, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert } from 'react-native';
+import { useLocalSearchParams, useRouter, Stack, useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
-import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
+import { useTheme as usePaperTheme, ActivityIndicator, Text } from 'react-native-paper';
+import { EditorView, EditorRef } from '../../../src/components/EditorView';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
-import { themes } from '@liminal-notes/core-shared/theme';
-import { useIndex } from '../../../src/context/IndexContext';
-import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
+import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
 import { recentsStorage } from '../../../src/storage/recents';
+import { useIndex } from '../../../src/context/IndexContext';
+import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution';
+import { themes } from '@liminal-notes/core-shared/theme';
 import { useSettings } from '../../../src/context/SettingsContext';
+import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
 
-// TODO: Control this via settings injection in the future
-const DEBUG = false;
+const DEBUG = true;
 
 enum SaveStatus {
     Idle = 'idle',
@@ -21,111 +22,82 @@ enum SaveStatus {
     Error = 'error'
 }
 
-const SaveStatusColors = {
-    [SaveStatus.Idle]: '#666',
-    [SaveStatus.Saving]: '#f57f17', // Orange
-    [SaveStatus.Saved]: '#2e7d32', // Green
-    [SaveStatus.Error]: '#c62828' // Red
+const SaveStatusColours = {
+    [SaveStatus.Idle]: '#888',
+    [SaveStatus.Saving]: '#e6a23c', // Warning/Orange
+    [SaveStatus.Saved]: '#67c23a', // Success/Green
+    [SaveStatus.Error]: '#f56c6c', // Danger/Red
 };
 
-// Helper component for relative time display
-const LastSavedFooter = ({ timestamp }: { timestamp: number | undefined }) => {
-    const [text, setText] = useState('');
+// Simplified Footer without date-fns for now
+function LastSavedFooter({ timestamp }: { timestamp: number | null }) {
+    const theme = usePaperTheme();
+    if (!timestamp) return <View style={[styles.footer, { backgroundColor: theme.colors.elevation.level1, borderTopColor: theme.colors.outlineVariant }]}><Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12 }}>Unsaved</Text></View>;
 
-    useEffect(() => {
-        if (!timestamp) {
-            setText('');
-            return;
-        }
-
-        const update = () => {
-            const now = Date.now();
-            const diffMin = Math.floor((now - timestamp) / 60000);
-            const date = new Date(timestamp);
-            const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-
-            if (diffMin < 1) {
-                setText(`Saved just now • ${timeStr}`);
-            } else {
-                setText(`Saved ${diffMin} min ago • ${timeStr}`);
-            }
-        };
-
-        update();
-        const timer = setInterval(update, 30000); // Update every 30s
-        return () => clearInterval(timer);
-    }, [timestamp]);
-
-    if (!timestamp) return null;
-
+    const date = new Date(timestamp);
     return (
-        <View style={styles.footer}>
-            <Text style={styles.footerText}>{text}</Text>
+        <View style={[styles.footer, { backgroundColor: theme.colors.elevation.level1, borderTopColor: theme.colors.outlineVariant }]}>
+            <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12 }}>Last saved: {date.toLocaleTimeString()}</Text>
         </View>
     );
-};
+}
 
 export default function NoteScreen() {
-  const { id } = useLocalSearchParams();
-  const noteId = Array.isArray(id) ? id[0] : id; // Handle potential array from params
-  const navigation = useNavigation();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  // Decode ID in case it contains encoded characters
+  const noteId = id ? decodeURIComponent(id) : null;
 
+  const router = useRouter();
+  const navigation = useNavigation();
   const { searchIndex, linkIndex } = useIndex();
   const { settings } = useSettings();
-  const editorRef = useRef<EditorViewRef>(null);
+  const paperTheme = usePaperTheme();
+  const { theme } = useTheme(); // Use custom theme context to get active theme vars
 
-  // Autosave refs
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastRequestIdRef = useRef<string | null>(null);
-  const isMountedRef = useRef<boolean>(true);
-  const pendingNavigationAction = useRef<any>(null);
-
-  // State
-  const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [content, setContent] = useState<string>('');
-  const [lastSavedAt, setLastSavedAt] = useState<number | undefined>(undefined);
 
-  // Verification State
-  const [revision, setRevision] = useState<number>(0);
-  const [isDirty, setIsDirty] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.Idle);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [revision, setRevision] = useState(0);
 
-  // Navigation Interception
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
-        // If not dirty or already saving/saved, let it pass
-        // But if we are dirty, we must intercept
-        if (!isDirty) {
-            return;
-        }
+  const editorRef = useRef<EditorRef>(null);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+  const lastRequestIdRef = useRef<string | null>(null);
 
-        e.preventDefault();
-
-        // Save the action to resume later
-        pendingNavigationAction.current = e.action;
-
-        // Trigger save immediately
-        requestSave();
-    });
-
-    return unsubscribe;
-  }, [navigation, isDirty]);
+  // To handle navigation blocking
+  const pendingNavigationAction = useRef<any>(null);
 
   useEffect(() => {
-    isMountedRef.current = true;
-    loadNote();
-    return () => {
-      isMountedRef.current = false;
-      // Best-effort flush on unmount:
-      // If a save was pending (timer running), cancel timer and trigger save immediately.
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = null;
-        // Attempt to save immediately
-        requestSave();
-      }
-    };
+      isMountedRef.current = true;
+      loadNote();
+
+      const onBeforeRemove = (e: any) => {
+          if (!isDirty) {
+              return;
+          }
+
+          // Prevent default behavior of leaving the screen
+          e.preventDefault();
+
+          // Trigger save and then navigate
+          if (DEBUG) console.log('[NoteScreen] Navigation blocked due to dirty state. Saving...');
+
+          pendingNavigationAction.current = e.data.action;
+          requestSave();
+      };
+
+      // Add listener
+      navigation.addListener('beforeRemove', onBeforeRemove);
+
+      return () => {
+          isMountedRef.current = false;
+          navigation.removeListener('beforeRemove', onBeforeRemove);
+          if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      };
   }, [noteId]);
 
   const loadNote = async () => {
@@ -149,7 +121,6 @@ export default function NoteScreen() {
         setLastSavedAt(result.mtimeMs);
 
         // Lazy Indexing: Upsert on open
-        // Sequential to avoid SQLite transaction locks
         if (searchIndex) {
             try {
                 await searchIndex.upsert({
@@ -191,8 +162,8 @@ export default function NoteScreen() {
         platform: Platform.OS === 'ios' ? 'ios' : 'android',
         readOnly: false,
         theme: {
-            name: themes.light.name,
-            vars: themes.light.variables
+            name: theme.name, // Use active theme name from context
+            vars: theme.variables // Use resolved theme variables from context
         },
         settings: {
             showLineNumbers: settings.editor.showLineNumbers,
@@ -208,7 +179,6 @@ export default function NoteScreen() {
     editorRef.current.sendCommand(EditorCommand.Set, {
         docId: noteId!,
         text: content,
-        // selection could be restored here if we persisted it
     });
 
     // Reset revision tracking
@@ -218,11 +188,8 @@ export default function NoteScreen() {
   };
 
   const requestSave = () => {
-    // Note: requestSave might be called during unmount (in cleanup).
-    // We check editorRef, but isMounted check is for state updates only.
     if (!editorRef.current || !noteId) return;
 
-    // Clear any existing timer
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
@@ -249,7 +216,6 @@ export default function NoteScreen() {
         setSaveStatus(SaveStatus.Idle);
       }
 
-      // Reset debounce timer
       if (saveTimerRef.current) {
           clearTimeout(saveTimerRef.current);
       }
@@ -261,19 +227,15 @@ export default function NoteScreen() {
 
   const handleRequestResponse = async (payload: RequestResponsePayload) => {
       if (DEBUG) console.log('[NoteScreen] Save Response:', payload);
-      // Validate request ID
       if (payload.requestId !== lastRequestIdRef.current) {
-          if (DEBUG) console.log('[NoteScreen] Ignoring stale response', payload.requestId);
           return;
       }
 
       if (!payload.state.text && payload.state.text !== '') {
-           // Allow empty string saves, but check for undefined
           console.warn('[NoteScreen] Received empty text in response');
           return;
       }
 
-      // Handle text being possibly undefined but we know we requested it
       const textToSave = payload.state.text ?? '';
 
       try {
@@ -281,8 +243,6 @@ export default function NoteScreen() {
           await adapter.writeNote(noteId!, textToSave);
           const saveTime = Date.now();
 
-          // Incremental Indexing: Upsert on save
-          // Sequential await to prevent transaction collision
           if (searchIndex) {
               try {
                   await searchIndex.upsert({
@@ -312,15 +272,11 @@ export default function NoteScreen() {
           if (isMountedRef.current) {
               setSaveStatus(SaveStatus.Saved);
               setLastSavedAt(saveTime);
-
-              // Only clear isDirty if NO new save is pending.
-              // If saveTimerRef.current is set, it means the user typed while this save was in-flight.
               if (!saveTimerRef.current) {
                 setIsDirty(false);
               }
           }
 
-          // Resume pending navigation if exists
           if (pendingNavigationAction.current) {
               const action = pendingNavigationAction.current;
               pendingNavigationAction.current = null;
@@ -331,25 +287,24 @@ export default function NoteScreen() {
           console.error('[NoteScreen] Save failed:', e);
           if (isMountedRef.current) {
               setSaveStatus(SaveStatus.Error);
-              // Keep isDirty true
           }
       }
   };
 
   if (status === 'loading') {
       return (
-          <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" />
-              <Text style={styles.statusText}>Loading note...</Text>
+          <View style={[styles.centerContainer, { backgroundColor: paperTheme.colors.background }]}>
+              <ActivityIndicator size="large" animating={true} color={paperTheme.colors.primary} />
+              <Text style={[styles.statusText, { color: paperTheme.colors.onSurfaceVariant }]}>Loading note...</Text>
           </View>
       );
   }
 
   if (status === 'error') {
       return (
-          <View style={styles.centerContainer}>
-              <Text style={styles.errorText}>Error: {errorMsg}</Text>
-              <Text style={styles.detailText}>ID: {noteId}</Text>
+          <View style={[styles.centerContainer, { backgroundColor: paperTheme.colors.background }]}>
+              <Text style={[styles.errorText, { color: paperTheme.colors.error }]}>Error: {errorMsg}</Text>
+              <Text style={[styles.detailText, { color: paperTheme.colors.onSurfaceVariant }]}>ID: {noteId}</Text>
           </View>
       );
   }
@@ -364,23 +319,33 @@ export default function NoteScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: paperTheme.colors.background }]}>
+      <Stack.Screen
+          options={{
+              headerShown: false // We use custom header inside SafeAreaView or could use Stack header
+          }}
+      />
+
       {/* Header / Debug Bar */}
-      <View style={styles.header}>
-          <Text style={styles.title} numberOfLines={1}>{noteId}</Text>
+      <View style={[styles.header, { borderBottomColor: paperTheme.colors.outlineVariant }]}>
+          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
+             <Text style={{ fontSize: 24, color: paperTheme.colors.onSurface }}>←</Text>
+          </TouchableOpacity>
+
+          <Text style={[styles.title, { color: paperTheme.colors.onSurface }]} numberOfLines={1}>{noteId}</Text>
+
           <View style={styles.badges}>
-              {/* Save Status */}
               {saveStatus !== SaveStatus.Idle && (
-                   <Text style={[styles.badge, { color: SaveStatusColors[saveStatus], backgroundColor: 'transparent' }]}>
+                   <Text style={[styles.badge, { color: SaveStatusColours[saveStatus], backgroundColor: 'transparent' }]}>
                        {getSaveStatusText()}
                    </Text>
               )}
 
-              <Text style={styles.badge}>Rev: {revision}</Text>
-              {isDirty && <Text style={[styles.badge, styles.dirtyBadge]}>Dirty</Text>}
+              {DEBUG && <Text style={[styles.badge, { color: paperTheme.colors.onSurfaceVariant, backgroundColor: paperTheme.colors.surfaceVariant }]}>Rev: {revision}</Text>}
+              {isDirty && <Text style={[styles.badge, styles.dirtyBadge, { backgroundColor: paperTheme.colors.errorContainer, color: paperTheme.colors.onErrorContainer }]}>Dirty</Text>}
           </View>
-          <TouchableOpacity onPress={() => requestSave()} style={styles.saveButton}>
-             <Text style={styles.saveButtonText}>Save</Text>
+          <TouchableOpacity onPress={() => requestSave()} style={[styles.saveButton, { backgroundColor: paperTheme.colors.primary }]}>
+             <Text style={[styles.saveButtonText, { color: paperTheme.colors.onPrimary }]}>Save</Text>
           </TouchableOpacity>
       </View>
 
@@ -391,6 +356,7 @@ export default function NoteScreen() {
         onDocChanged={handleDocChanged}
         onRequestResponse={handleRequestResponse}
         onError={(e) => console.error('Editor Error:', e)}
+        // We can pass styles to inject theme vars but EditorView handles internal protocol theme
       />
 
       {/* Footer */}
@@ -402,27 +368,22 @@ export default function NoteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   centerContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
   },
   statusText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
   },
   errorText: {
     fontSize: 16,
-    color: 'red',
     marginBottom: 8,
   },
   detailText: {
     fontSize: 14,
-    color: '#888',
   },
   header: {
       flexDirection: 'row',
@@ -431,7 +392,6 @@ const styles = StyleSheet.create({
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: '#eee',
   },
   title: {
       fontSize: 18,
@@ -447,34 +407,24 @@ const styles = StyleSheet.create({
       fontSize: 12,
       paddingHorizontal: 6,
       paddingVertical: 2,
-      backgroundColor: '#f0f0f0',
       borderRadius: 4,
       overflow: 'hidden',
   },
   dirtyBadge: {
-      backgroundColor: '#ffebee',
-      color: '#c62828',
+      // Colors handled in render
   },
   footer: {
       padding: 8,
       borderTopWidth: 1,
-      borderTopColor: '#eee',
-      backgroundColor: '#fafafa',
       alignItems: 'center',
-  },
-  footerText: {
-      fontSize: 12,
-      color: '#888',
   },
   saveButton: {
       marginLeft: 8,
-      backgroundColor: '#007AFF',
       paddingHorizontal: 10,
       paddingVertical: 4,
       borderRadius: 4,
   },
   saveButtonText: {
-      color: '#fff',
       fontSize: 14,
       fontWeight: '600',
   }

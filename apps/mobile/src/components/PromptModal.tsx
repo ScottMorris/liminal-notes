@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { Modal, View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, TextInput, Button, useTheme, Surface } from 'react-native-paper';
 
 interface PromptModalProps {
   visible: boolean;
@@ -21,6 +22,7 @@ export function PromptModal({
   onSubmit,
 }: PromptModalProps) {
   const [value, setValue] = useState(defaultValue);
+  const theme = useTheme();
 
   const handleSubmit = () => {
     onSubmit(value);
@@ -43,27 +45,24 @@ export function PromptModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
       >
-        <View style={styles.dialog}>
-          <Text style={styles.title}>{title}</Text>
-          {message && <Text style={styles.message}>{message}</Text>}
+        <Surface style={[styles.dialog, { backgroundColor: theme.colors.elevation.level3 }]} elevation={5}>
+          <Text variant="headlineSmall" style={styles.title}>{title}</Text>
+          {message && <Text variant="bodyMedium" style={styles.message}>{message}</Text>}
 
           <TextInput
-            style={styles.input}
+            mode="outlined"
             value={value}
             onChangeText={setValue}
             placeholder={placeholder}
             autoFocus
+            style={styles.input}
           />
 
           <View style={styles.buttons}>
-            <TouchableOpacity style={styles.button} onPress={handleCancel}>
-              <Text style={styles.buttonTextCancel}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-              <Text style={styles.buttonTextSubmit}>OK</Text>
-            </TouchableOpacity>
+            <Button onPress={handleCancel} style={styles.button}>Cancel</Button>
+            <Button onPress={handleSubmit} mode="contained" style={styles.button}>OK</Button>
           </View>
-        </View>
+        </Surface>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -78,53 +77,28 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   dialog: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 28, // Material 3 Dialog shape
+    padding: 24,
     width: '100%',
     maxWidth: 320,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
     marginBottom: 8,
   },
   message: {
-    fontSize: 14,
-    color: '#666',
     marginBottom: 16,
+    opacity: 0.7,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 24,
+    backgroundColor: 'transparent',
   },
   buttons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 16,
+    gap: 8,
   },
   button: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  buttonTextCancel: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonTextSubmit: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
+    minWidth: 80,
   },
 });

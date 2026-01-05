@@ -1,7 +1,5 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, TouchableWithoutFeedback, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../context/ThemeContext';
+import { IconButton, Menu } from 'react-native-paper';
 
 export interface HeaderMenuAction {
   id: string;
@@ -10,90 +8,37 @@ export interface HeaderMenuAction {
   destructive?: boolean;
 }
 
-interface HeaderMenuProps {
-  visible: boolean;
-  onClose: () => void;
-  actions: HeaderMenuAction[];
-}
+// NOTE: We simplified the implementation. It is now a self-contained button + menu.
+// The `visible` prop is managed internally.
+// We accept `icon` to customize the trigger.
 
-export function HeaderMenu({ visible, onClose, actions }: HeaderMenuProps) {
-  const { resolveColor } = useTheme();
-  const insets = useSafeAreaInsets();
+export function HeaderMenu({ actions, icon = "dots-vertical" }: { actions: HeaderMenuAction[], icon?: string }) {
+    const [visible, setVisible] = React.useState(false);
 
-  if (!visible) return null;
+    const openMenu = () => setVisible(true);
+    const closeMenu = () => setVisible(false);
 
-  const bg = resolveColor('--ln-menu-bg') || resolveColor('--ln-bg') || '#fff';
-  const fg = resolveColor('--ln-menu-fg') || resolveColor('--ln-fg') || '#000';
-  const border = resolveColor('--ln-border') || '#ccc';
-
-  // Calculate top position
-  // Header height is typically 44 (iOS) or 56 (Android).
-  // Status bar is insets.top.
-  // We want it to appear just below the header.
-  const headerHeight = Platform.OS === 'android' ? 56 : 44;
-  const topOffset = insets.top + headerHeight;
-
-  return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="fade"
-      statusBarTranslucent={true}
-      onRequestClose={onClose}
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <View style={[styles.menuContainer, { top: topOffset, backgroundColor: bg, borderColor: border }]}>
-            {actions.map((action, index) => (
-              <TouchableOpacity
-                key={action.id}
-                style={[
-                    styles.menuItem,
-                    index < actions.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: border }
-                ]}
-                onPress={() => {
-                  onClose();
-                  setTimeout(action.onPress, 50);
-                }}
-              >
-                <Text style={[
-                    styles.menuItemText,
-                    { color: action.destructive ? '#FF3B30' : fg }
-                ]}>
-                  {action.label}
-                </Text>
-              </TouchableOpacity>
+    return (
+        <Menu
+            visible={visible}
+            onDismiss={closeMenu}
+            anchor={
+                <IconButton icon={icon} onPress={openMenu} />
+            }
+        >
+            {actions.map((action) => (
+                <Menu.Item
+                    key={action.id}
+                    onPress={() => {
+                        closeMenu();
+                        // Defer action slightly to allow menu close animation?
+                        // Paper usually handles this well, but let's just call it.
+                        action.onPress();
+                    }}
+                    title={action.label}
+                    titleStyle={action.destructive ? { color: 'red' } : undefined}
+                />
             ))}
-          </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
+        </Menu>
+    );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-  },
-  menuContainer: {
-    position: 'absolute',
-    right: 10,
-    minWidth: 180,
-    borderRadius: 8,
-    borderWidth: 1,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    overflow: 'hidden',
-  },
-  menuItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  menuItemText: {
-    fontSize: 16,
-  },
-});

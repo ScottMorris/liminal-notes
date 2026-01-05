@@ -1,22 +1,24 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Button, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
-import { FAB } from '../../src/components/FAB';
+import { FAB, FABAction } from '../../src/components/FAB';
 import { PromptModal } from '../../src/components/PromptModal';
-import { FABAction } from '../../src/components/FABMenu';
+import { useTheme, Text, List, ActivityIndicator, Divider } from 'react-native-paper';
 
 export default function ExplorerScreen() {
   const router = useRouter();
+  const isFocused = useIsFocused();
   const { folder } = useLocalSearchParams<{ folder?: string }>();
   const currentPath = folder || '';
+  const theme = useTheme();
 
   const [items, setItems] = useState<VaultFileEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
 
-  // useFocusEffect to refresh data when screen becomes active (e.g. back from note or subfolder)
   useFocusEffect(
     useCallback(() => {
       loadFiles();
@@ -24,9 +26,6 @@ export default function ExplorerScreen() {
   );
 
   const loadFiles = async () => {
-    // Don't set loading to true on refresh to avoid flickering, only on initial mount or path change
-    // But since we use same function, maybe check if items is empty?
-    // Actually, fast refresh is better.
     try {
         const adapter = new MobileSandboxVaultAdapter();
         await adapter.init();
@@ -40,11 +39,9 @@ export default function ExplorerScreen() {
             if (currentPath && !relPath.startsWith(currentPath + '/')) continue;
 
             const relativeToFolder = currentPath ? relPath.slice(currentPath.length + 1) : relPath;
-            // Filter out exact match (the folder itself if listed)
             if (!relativeToFolder) continue;
 
             const parts = relativeToFolder.split('/');
-
             const name = parts[0];
             const isExplicitDir = file.type === 'directory';
             const isDir = isExplicitDir || parts.length > 1;
@@ -107,8 +104,6 @@ export default function ExplorerScreen() {
           await adapter.init();
 
           await adapter.mkdir(fullPath, { recursive: true });
-
-          // Refresh list immediately
           loadFiles();
       } catch (e) {
           console.error('Failed to create folder', e);
@@ -117,22 +112,26 @@ export default function ExplorerScreen() {
   };
 
   const fabActions: FABAction[] = [
-      { id: 'note', label: 'New Note', icon: 'document-text-outline', onPress: handleCreateNote },
+      { id: 'note', label: 'New Note', icon: 'file-document-outline', onPress: handleCreateNote },
       { id: 'folder', label: 'New Folder', icon: 'folder-outline', onPress: () => setIsFolderPromptVisible(true) },
   ];
 
   if (loading && items.length === 0) {
-      return <ActivityIndicator style={{ flex: 1 }} />;
+      return (
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <ActivityIndicator style={{ flex: 1 }} animating={true} color={theme.colors.primary} />
+        </View>
+      );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen
         options={{
             title: currentPath ? currentPath.split('/').pop() : 'Documents',
             headerRight: currentPath === '' ? () => (
                 <TouchableOpacity onPress={() => router.push('/vault/sandbox')} style={{ marginRight: 8 }}>
-                    <Text style={{ color: '#007AFF', fontSize: 16 }}>Sandbox Tools</Text>
+                    <Text style={{ color: theme.colors.primary, fontSize: 16 }}>Sandbox Tools</Text>
                 </TouchableOpacity>
             ) : undefined
         }}
@@ -142,18 +141,24 @@ export default function ExplorerScreen() {
         data={items}
         keyExtractor={i => i.id}
         renderItem={({ item }) => (
-            <TouchableOpacity style={styles.item} onPress={() => handlePress(item)}>
-                <Text style={styles.icon}>{item.type === 'directory' ? '📁' : '📄'}</Text>
-                <Text style={styles.text}>{item.id.split('/').pop()}</Text>
-            </TouchableOpacity>
+          <>
+            <List.Item
+              title={item.id.split('/').pop()}
+              left={props => <List.Icon {...props} icon={item.type === 'directory' ? 'folder-outline' : 'file-document-outline'} />}
+              onPress={() => handlePress(item)}
+              titleStyle={{ color: theme.colors.onBackground }}
+            />
+            <Divider />
+          </>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No files found</Text>}
-        contentContainerStyle={{ paddingBottom: 100 }} // Add padding for FAB
+        ListEmptyComponent={<Text style={[styles.empty, { color: theme.colors.onSurfaceVariant }]}>No files found</Text>}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
 
       <FAB
-        onPress={handleCreateNote} // Default single tap action
-        actions={fabActions}       // Long press menu actions (which includes Create Note too)
+        visible={isFocused}
+        onPress={handleCreateNote}
+        actions={fabActions}
       />
 
       <PromptModal
@@ -171,26 +176,10 @@ export default function ExplorerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  item: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: '#f0f0f0'
-  },
-  icon: {
-      fontSize: 20,
-      marginRight: 12,
-  },
-  text: {
-      fontSize: 16,
   },
   empty: {
       padding: 20,
       textAlign: 'center',
-      color: '#999',
       marginTop: 20,
   }
 });

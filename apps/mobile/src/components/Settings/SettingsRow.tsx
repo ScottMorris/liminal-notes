@@ -1,71 +1,31 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, Pressable } from 'react-native';
-import { useTheme } from '../../context/ThemeContext';
+import { List, useTheme } from 'react-native-paper';
 
 interface SettingsRowProps {
   label: string;
   description?: string;
   rightElement?: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
 }
 
-export function SettingsRow({ label, description, rightElement, onPress, style }: SettingsRowProps) {
-  const { resolveColor } = useTheme();
-
-  const textColor = resolveColor('--ln-fg');
-  const descColor = resolveColor('--ln-fg-muted'); // Assuming this exists or similar
-  const borderBottomColor = resolveColor('--ln-border');
+export function SettingsRow({ label, description, rightElement, onPress }: SettingsRowProps) {
+  const theme = useTheme();
 
   return (
-    <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [
-            styles.container,
-            { borderBottomColor },
-            pressed && onPress ? { opacity: 0.7 } : {},
-            style
-        ]}
-    >
-      <View style={styles.content}>
-        <Text style={[styles.label, { color: textColor }]}>{label}</Text>
-        {description && (
-          <Text style={[styles.description, { color: descColor }]}>{description}</Text>
-        )}
-      </View>
-      {rightElement && (
-        <View style={styles.right}>
-          {rightElement}
-        </View>
-      )}
-    </Pressable>
+    <List.Item
+      title={label}
+      description={description}
+      onPress={onPress}
+      right={() => rightElement ? <>{rightElement}</> : null}
+      titleStyle={{ color: theme.colors.onBackground }}
+      descriptionStyle={{ color: theme.colors.onSurfaceVariant }}
+      style={{
+        borderBottomColor: theme.colors.outlineVariant,
+        borderBottomWidth: 1, // Using 1 pixel for consistency with List.Item separator or standard RN look
+        // However, standard List.Item doesn't enforce border. But settings lists often have them.
+        // Let's use StyleSheet.hairlineWidth if we want it fine.
+      }}
+      // List.Item handles background color transparently or via theme, which matches our need.
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: 56,
-  },
-  content: {
-    flex: 1,
-    paddingRight: 16,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  description: {
-    fontSize: 13,
-    opacity: 0.7,
-  },
-  right: {
-    // minWidth: 40,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  }
-});

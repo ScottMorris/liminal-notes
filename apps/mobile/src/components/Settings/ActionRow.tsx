@@ -1,7 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Button } from 'react-native-paper';
 import { SettingsRow } from './SettingsRow';
-import { useTheme } from '../../context/ThemeContext';
 
 interface ActionRowProps {
   label: string;
@@ -12,30 +11,20 @@ interface ActionRowProps {
 }
 
 export function ActionRow({ label, description, actionLabel, onAction, danger }: ActionRowProps) {
-  const { resolveColor } = useTheme();
-
-  const color = danger ? '#FF3B30' : resolveColor('--ln-accent');
-
   return (
     <SettingsRow
       label={label}
       description={description}
       rightElement={
-        <TouchableOpacity onPress={onAction} style={styles.button}>
-            <Text style={[styles.buttonText, { color }]}>{actionLabel}</Text>
-        </TouchableOpacity>
+        <Button
+            mode="text"
+            onPress={onAction}
+            textColor={danger ? '#FF3B30' : undefined}
+            compact
+        >
+            {actionLabel}
+        </Button>
       }
     />
   );
 }
-
-const styles = StyleSheet.create({
-    button: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: '600',
-    }
-});
