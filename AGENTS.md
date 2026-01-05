@@ -178,18 +178,16 @@ When touching anything related to plugins or AI:
 
 ## Canadian English Spelling
 
-Documentation, code comments, commit messages, and variable names should use Canadian English spelling where natural in prose:
+**IMPORTANT:** Documentation, code comments, commit messages, and variable names MUST use Canadian English spelling where natural in prose. This is a strict requirement for all text visible to users or developers.
 
-- colour
-- centre
-- licence (noun)
-- organise
-- behaviour
-- favour
+Examples:
+- **colour** (not color)
+- **centre** (not center)
+- **licence** (noun) (not license)
+- **organise** (not organize)
+- **behaviour** (not behavior)
+- **favour** (not favor)
 
-Code identifiers should still respect platform and ecosystem conventions:
-
-- CSS uses `color`, `center`.
-- Web APIs and libraries are not renamed.
+Code identifiers (variable names, CSS properties) should still respect platform and ecosystem conventions (e.g. `css: { color: 'red' }`), but comments and UI strings must use Canadian spelling (e.g. `// Update the colour`).
 
 When in doubt, follow the existing local patterns in the file you are editing.

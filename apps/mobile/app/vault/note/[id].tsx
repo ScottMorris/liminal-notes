@@ -5,12 +5,12 @@ import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
 import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
-import { themes } from '@liminal-notes/core-shared/theme';
 import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
 import { recentsStorage } from '../../../src/storage/recents';
 import { useSettings } from '../../../src/context/SettingsContext';
 import { Text, Chip, Button, useTheme } from 'react-native-paper';
+import { useTheme as useLiminalTheme } from '../../../src/context/ThemeContext';
 
 // TODO: Control this via settings injection in the future
 const DEBUG = false;
@@ -65,6 +65,7 @@ export default function NoteScreen() {
   const noteId = Array.isArray(id) ? id[0] : id; // Handle potential array from params
   const navigation = useNavigation();
   const theme = useTheme();
+  const { theme: liminalTheme } = useLiminalTheme();
 
   const { searchIndex, linkIndex } = useIndex();
   const { settings } = useSettings();
@@ -187,8 +188,8 @@ export default function NoteScreen() {
         platform: Platform.OS === 'ios' ? 'ios' : 'android',
         readOnly: false,
         theme: {
-            name: themes.light.name,
-            vars: themes.light.variables
+            name: liminalTheme.name,
+            vars: liminalTheme.variables
         },
         settings: {
             showLineNumbers: settings.editor.showLineNumbers,
