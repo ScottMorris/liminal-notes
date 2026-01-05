@@ -48,6 +48,11 @@ function initEditor(parent: HTMLElement, config?: InitPayload['settings']) {
     lineNumbersCompartment.of(config?.showLineNumbers ? lineNumbers() : []),
     lineWrappingCompartment.of(config?.wordWrap ? EditorView.lineWrapping : []),
     highlightActiveLineCompartment.of(config?.highlightActiveLine ?? true ? highlightActiveLine() : []),
+    EditorView.contentAttributes.of({
+      autocapitalize: 'sentences',
+      autocorrect: 'on',
+      spellcheck: 'true'
+    }),
     history(),
     closeBrackets(),
     markdown({ extensions: [GFM] }),

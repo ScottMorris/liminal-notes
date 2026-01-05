@@ -4,7 +4,7 @@
 
 ### Mobile
 - [ ] Add 'Enable Debug Logging' setting to Mobile app to control verbose Bridge and Vault logs.
-- [ ] Fix capitalization of entered text in editor (Android keyboard treating it as code/lowercase).
+- [x] Fix capitalization of entered text in editor (Android keyboard treating it as code/lowercase).
 
 ### Pinning
 - [ ] Support manual reordering of pinned items.
