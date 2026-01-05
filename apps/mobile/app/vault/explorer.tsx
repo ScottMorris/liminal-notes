@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 import { FAB, FABAction } from '../../src/components/FAB';
 import { PromptModal } from '../../src/components/PromptModal';
-import { useTheme } from 'react-native-paper';
+import { useTheme, Text } from 'react-native-paper'; // Use Paper Text and Theme
 
 export default function ExplorerScreen() {
   const router = useRouter();
@@ -125,7 +125,11 @@ export default function ExplorerScreen() {
   ];
 
   if (loading && items.length === 0) {
-      return <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />;
+      return (
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <ActivityIndicator style={{ flex: 1 }} color={theme.colors.primary} />
+        </View>
+      );
   }
 
   return (

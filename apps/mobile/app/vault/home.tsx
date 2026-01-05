@@ -7,7 +7,7 @@ import { FocusedSection } from '../../src/components/home/FocusedSection';
 import { FolderSection } from '../../src/components/home/FolderSection';
 import { RecentSection } from '../../src/components/home/RecentSection';
 import { FAB, FABAction } from '../../src/components/FAB';
-import { Text } from 'react-native';
+import { Text, useTheme } from 'react-native-paper'; // Use Paper Text and useTheme
 import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import { PromptModal } from '../../src/components/PromptModal';
 import { HeaderMenu } from '../../src/components/HeaderMenu';
@@ -16,6 +16,7 @@ import { IconButton } from 'react-native-paper';
 export default function HomeScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
+  const theme = useTheme();
   const { pinned, recents, folders, loading, refresh } = useHomeData();
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
 
@@ -58,14 +59,14 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen
         options={{
             headerRight: () => (
@@ -92,7 +93,7 @@ export default function HomeScreen() {
         {/* Empty State */}
         {pinned.length === 0 && recents.length === 0 && folders.length === 0 && (
              <View style={styles.emptyState}>
-                 <Text style={styles.emptyText}>Create your first note</Text>
+                 <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Create your first note</Text>
              </View>
         )}
       </ScrollView>
@@ -118,7 +119,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // TODO: Theme via hook if needed, but Paper provider handles components
   },
   center: {
     flex: 1,
@@ -137,6 +137,5 @@ const styles = StyleSheet.create({
   },
   emptyText: {
       fontSize: 18,
-      color: '#999',
   },
 });

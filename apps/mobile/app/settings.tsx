@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, FlatList, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { List, useTheme, Text, Divider } from 'react-native-paper'; // Use Paper
+import { List, useTheme, Divider } from 'react-native-paper'; // Use Paper
 import { getSections, SettingsSectionDef } from '../src/screens/Settings/schema';
 import { useVault } from '../src/context/VaultContext';
 
@@ -22,9 +22,9 @@ export default function SettingsScreen() {
           <List.Item
             title={item.title}
             onPress={() => router.push({ pathname: '/settings/[section]', params: { section: item.id } })}
-            right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.primary} />} // Theme-colored arrow
-            style={{ backgroundColor: theme.colors.surface }}
-            titleStyle={{ color: theme.colors.onSurface }}
+            right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.primary} />}
+            titleStyle={{ color: theme.colors.onBackground }}
+            // Removed explicit backgroundColor to match section screens (transparent/background)
           />
           <Divider />
       </React.Fragment>
