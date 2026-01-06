@@ -29,6 +29,19 @@ export const getSections = (
         }
     ];
 
+    const voiceOptions = [
+        { value: 'af_sky', label: 'Sky (American Female)' },
+        { value: 'af_bella', label: 'Bella (American Female)' },
+        { value: 'af_nicole', label: 'Nicole (American Female)' },
+        { value: 'af_sarah', label: 'Sarah (American Female)' },
+        { value: 'am_adam', label: 'Adam (American Male)' },
+        { value: 'am_michael', label: 'Michael (American Male)' },
+        { value: 'bf_emma', label: 'Emma (British Female)' },
+        { value: 'bf_isabella', label: 'Isabella (British Female)' },
+        { value: 'bm_george', label: 'George (British Male)' },
+        { value: 'bm_lewis', label: 'Lewis (British Male)' },
+    ];
+
     return [
     {
         id: 'general',
@@ -186,8 +199,45 @@ export const getSections = (
                 rows: [
                     {
                         id: 'plugins-collection',
-                        label: '', // Hidden label
+                        label: '',
                         controls: [{ kind: 'collection', collectionId: 'core-plugins' }]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'read-aloud',
+        title: 'Read Aloud',
+        groups: [
+            {
+                id: 'tts-settings',
+                rows: [
+                    {
+                        id: 'tts-voice',
+                        label: 'Default Voice',
+                        controls: [{
+                            kind: 'select',
+                            key: 'tts.defaultVoice',
+                            options: voiceOptions
+                        }]
+                    },
+                    {
+                        id: 'tts-speed',
+                        label: 'Default Speed',
+                        controls: [{
+                            kind: 'slider',
+                            key: 'tts.defaultSpeed',
+                            min: 0.5,
+                            max: 2.0,
+                            step: 0.1
+                        }]
+                    },
+                    {
+                        id: 'tts-preview',
+                        label: 'Voice Preview',
+                        description: 'Play a short sample of the selected voice.',
+                        controls: [{ kind: 'action', label: 'Play Sample', actionId: 'tts-preview' }]
                     }
                 ]
             }
