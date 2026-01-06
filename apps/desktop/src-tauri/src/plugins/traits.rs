@@ -11,6 +11,7 @@ pub trait Invocable: Send + Sync {
 pub trait NativeBackendPlugin<R: Runtime>: Send + Sync {
     fn id(&self) -> &'static str;
     fn activate(&self, ctx: NativePluginContext<R>) -> Result<ActivePlugin, String>;
+    // Deactivation is currently not fully implemented in the frontend lifecycle, causing dead code warning.
     #[allow(dead_code)]
     fn deactivate(&self, handle: ActivePlugin) -> Result<(), String>;
 }

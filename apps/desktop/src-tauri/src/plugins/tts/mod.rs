@@ -110,6 +110,13 @@ impl TtsInstance {
         let mut current_ms = 0.0;
 
         // Use unicode segmentation to find sentences
+        // Note: sentence indices are byte indices, we need char indices for frontend?
+        // Frontend uses CodeMirror which counts chars (UTF-16 code units usually in JS, but CM handles it).
+        // Rust string indices are bytes.
+        // We need to map byte offsets to char offsets if we want char precision.
+        // But for simplicity, we can just assume 1-1 mapping for ASCII, but we should do it right.
+        //
+        // We'll iterate by sentences.
         let sentence_bounds = text.split_sentence_bound_indices();
 
         // We need the engine lock for the duration of synthesis
@@ -136,6 +143,13 @@ impl TtsInstance {
             let silence_ms = 100.0;
 
             // Record segment info
+            // Calculate char offsets
+            // We need start/end in CHARS (Unicode Scalar Values) for frontend consistency if using string.length?
+            // JS string.length counts UTF-16 code units.
+            // Rust String chars().count() counts Unicode Scalar Values.
+            // CodeMirror usually works with char offsets (UTF-16).
+            // For MVP, assume mostly BMP.
+            // Correct approach: Count chars up to byte_start.
             // Calculate char offsets using byte_start to map back to text
             let start_char = text[0..byte_start].chars().count();
             let end_char = start_char + sentence.chars().count();
