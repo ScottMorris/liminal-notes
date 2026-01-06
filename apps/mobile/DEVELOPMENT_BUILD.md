@@ -35,6 +35,35 @@ pnpm eas --version
 
     This will install `expo-dev-client` and `eas-cli`.
 
+## Host ADB Setup (Linux)
+
+To install the generated APK on your device, you need `adb` installed on your host machine.
+
+### Arch Linux
+
+```bash
+sudo pacman -S android-tools
+```
+
+### Linux Mint / Ubuntu / Debian
+
+```bash
+sudo apt-get update
+sudo apt-get install android-sdk-platform-tools-common
+# If that package is not found, try:
+# sudo apt-get install adb
+```
+
+### Wireless Debugging (Optional)
+
+If you don't want to use a USB cable:
+
+1.  Enable **Developer Options** on your phone.
+2.  Enable **Wireless Debugging**.
+3.  Tap **Wireless Debugging** to see pairing options.
+4.  On your host: `adb pair <ip>:<port>` (using the pairing code).
+5.  On your host: `adb connect <ip>:<port>` (using the connection port).
+
 ## Building Locally
 
 We use local builds to avoid dependency on Expo cloud services and queues.
