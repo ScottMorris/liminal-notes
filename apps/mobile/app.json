@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Liminal Notes",
+    "slug": "liminal-notes-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -22,7 +22,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.encodedream.liminalnotesmobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,8 +34,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "7c364e78-a446-488e-a0b5-d1f7748e2994"
+        "projectId": "476d1fb2-4753-4b58-9c19-3d0d92899e61"
       }
-    }
+    },
+    "owner": "encodedream"
   }
 }
