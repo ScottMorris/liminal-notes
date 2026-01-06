@@ -48,10 +48,10 @@ sudo pacman -S android-tools
 ### Linux Mint / Ubuntu / Debian
 
 ```bash
-sudo apt-get update
-sudo apt-get install android-sdk-platform-tools-common
+sudo apt update
+sudo apt install android-sdk-platform-tools-common
 # If that package is not found, try:
-# sudo apt-get install adb
+# sudo apt install adb
 ```
 
 ### Wireless Debugging (Optional)
