@@ -379,17 +379,20 @@ export default function NoteScreen() {
             // We can pass styles to inject theme vars but EditorView handles internal protocol theme
           />
 
-          <View style={{
-            backgroundColor: paperTheme.colors.elevation.level1,
-            paddingBottom: isKeyboardVisible ? 0 : insets.bottom
-          }}>
-            {/* Formatting Toolbar */}
-            <FormattingToolbar editorRef={editorRef} />
-
-            {/* Footer */}
-            <LastSavedFooter timestamp={lastSavedAt} />
-          </View>
+          {/* Formatting Toolbar - Only visible when keyboard is open */}
+          {isKeyboardVisible && (
+            <View style={{ backgroundColor: paperTheme.colors.elevation.level1 }}>
+              <FormattingToolbar editorRef={editorRef} />
+            </View>
+          )}
       </KeyboardAvoidingView>
+
+      {/* Footer - Only visible when keyboard is closed */}
+      {!isKeyboardVisible && (
+         <View style={{ paddingBottom: insets.bottom, backgroundColor: paperTheme.colors.elevation.level1 }}>
+            <LastSavedFooter timestamp={lastSavedAt} />
+         </View>
+      )}
     </SafeAreaView>
   );
 }
