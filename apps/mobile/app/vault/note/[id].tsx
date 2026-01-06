@@ -351,7 +351,8 @@ export default function NoteScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 80}
         style={{ flex: 1 }}
       >
           {/* Editor */}
@@ -367,10 +368,10 @@ export default function NoteScreen() {
 
           {/* Formatting Toolbar */}
           <FormattingToolbar editorRef={editorRef} />
-      </KeyboardAvoidingView>
 
-      {/* Footer */}
-      <LastSavedFooter timestamp={lastSavedAt} />
+          {/* Footer */}
+          <LastSavedFooter timestamp={lastSavedAt} />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
