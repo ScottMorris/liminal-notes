@@ -1,7 +1,7 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use tauri::{AppHandle, Runtime, State};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::Value;
 
 mod traits;
@@ -56,6 +56,7 @@ impl<R: Runtime> PluginRegistry<R> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn deactivate(&self, plugin_id: &str) -> Result<(), String> {
         let mut active = self.active_plugins.lock().map_err(|e| e.to_string())?;
 
