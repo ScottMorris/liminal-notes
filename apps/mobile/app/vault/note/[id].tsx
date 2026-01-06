@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert, KeyboardAvoidingView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useNavigation } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme as usePaperTheme, ActivityIndicator, Text } from 'react-native-paper';
 import { EditorView, EditorRef } from '../../../src/components/EditorView';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
@@ -54,8 +54,10 @@ export default function NoteScreen() {
   const { settings } = useSettings();
   const paperTheme = usePaperTheme();
   const { theme } = useTheme(); // Use custom theme context to get active theme vars
+  const insets = useSafeAreaInsets();
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [content, setContent] = useState<string>('');
 
@@ -73,6 +75,15 @@ export default function NoteScreen() {
   const pendingNavigationAction = useRef<any>(null);
 
   useEffect(() => {
+      const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+      const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+      const onShow = () => setKeyboardVisible(true);
+      const onHide = () => setKeyboardVisible(false);
+
+      const showSub = Keyboard.addListener(showEvent, onShow);
+      const hideSub = Keyboard.addListener(hideEvent, onHide);
+
       isMountedRef.current = true;
       loadNote();
 
@@ -95,6 +106,8 @@ export default function NoteScreen() {
       navigation.addListener('beforeRemove', onBeforeRemove);
 
       return () => {
+          showSub.remove();
+          hideSub.remove();
           isMountedRef.current = false;
           navigation.removeListener('beforeRemove', onBeforeRemove);
           if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -320,7 +333,7 @@ export default function NoteScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: paperTheme.colors.background }]}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, { backgroundColor: paperTheme.colors.background }]}>
       <Stack.Screen
           options={{
               headerShown: false // We use custom header inside SafeAreaView or could use Stack header
@@ -351,7 +364,7 @@ export default function NoteScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         style={{ flex: 1 }}
       >
@@ -366,11 +379,13 @@ export default function NoteScreen() {
             // We can pass styles to inject theme vars but EditorView handles internal protocol theme
           />
 
-          {/* Formatting Toolbar */}
-          <FormattingToolbar editorRef={editorRef} />
+          <View style={{ paddingBottom: isKeyboardVisible ? 0 : insets.bottom }}>
+            {/* Formatting Toolbar */}
+            <FormattingToolbar editorRef={editorRef} />
 
-          {/* Footer */}
-          <LastSavedFooter timestamp={lastSavedAt} />
+            {/* Footer */}
+            <LastSavedFooter timestamp={lastSavedAt} />
+          </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
