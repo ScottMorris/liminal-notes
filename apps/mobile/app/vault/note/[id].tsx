@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useNavigation } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme as usePaperTheme, ActivityIndicator, Text } from 'react-native-paper';
 import { EditorView, EditorRef } from '../../../src/components/EditorView';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
@@ -12,8 +12,9 @@ import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution';
 import { themes } from '@liminal-notes/core-shared/theme';
 import { useSettings } from '../../../src/context/SettingsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
+import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
 
-const DEBUG = true;
+const DEBUG = false;
 
 enum SaveStatus {
     Idle = 'idle',
@@ -53,8 +54,10 @@ export default function NoteScreen() {
   const { settings } = useSettings();
   const paperTheme = usePaperTheme();
   const { theme } = useTheme(); // Use custom theme context to get active theme vars
+  const insets = useSafeAreaInsets();
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [content, setContent] = useState<string>('');
 
@@ -72,6 +75,15 @@ export default function NoteScreen() {
   const pendingNavigationAction = useRef<any>(null);
 
   useEffect(() => {
+      const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+      const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+      const onShow = () => setKeyboardVisible(true);
+      const onHide = () => setKeyboardVisible(false);
+
+      const showSub = Keyboard.addListener(showEvent, onShow);
+      const hideSub = Keyboard.addListener(hideEvent, onHide);
+
       isMountedRef.current = true;
       loadNote();
 
@@ -94,6 +106,8 @@ export default function NoteScreen() {
       navigation.addListener('beforeRemove', onBeforeRemove);
 
       return () => {
+          showSub.remove();
+          hideSub.remove();
           isMountedRef.current = false;
           navigation.removeListener('beforeRemove', onBeforeRemove);
           if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -349,18 +363,28 @@ export default function NoteScreen() {
           </TouchableOpacity>
       </View>
 
-      {/* Editor */}
-      <EditorView
-        ref={editorRef}
-        onReady={handleEditorReady}
-        onDocChanged={handleDocChanged}
-        onRequestResponse={handleRequestResponse}
-        onError={(e) => console.error('Editor Error:', e)}
-        // We can pass styles to inject theme vars but EditorView handles internal protocol theme
-      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        style={{ flex: 1 }}
+      >
+          {/* Editor */}
+          <EditorView
+            ref={editorRef}
+            initialContent={content}
+            onReady={handleEditorReady}
+            onDocChanged={handleDocChanged}
+            onRequestResponse={handleRequestResponse}
+            onError={(e) => console.error('Editor Error:', e)}
+            // We can pass styles to inject theme vars but EditorView handles internal protocol theme
+          />
 
-      {/* Footer */}
-      <LastSavedFooter timestamp={lastSavedAt} />
+          {/* Formatting Toolbar */}
+          <FormattingToolbar editorRef={editorRef} />
+
+          {/* Footer */}
+          <LastSavedFooter timestamp={lastSavedAt} />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

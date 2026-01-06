@@ -59,3 +59,23 @@ export function resolveWikilinkTarget(targetRaw: string, opts: ResolveOptions): 
 
   return null;
 }
+
+/**
+ * Parses all wikilinks from the given text content.
+ * Returns an array of matches with the raw target (text inside brackets).
+ *
+ * @param content The markdown content to parse
+ * @returns Array of matches
+ */
+export function parseWikilinks(content: string): Array<{ targetRaw: string; index: number }> {
+  const regex = /\[\[([^\]]+)\]\]/g;
+  const matches = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    matches.push({
+      targetRaw: match[1],
+      index: match.index
+    });
+  }
+  return matches;
+}

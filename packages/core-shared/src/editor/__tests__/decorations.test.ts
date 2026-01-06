@@ -18,11 +18,8 @@ Content here`;
 
     expect(result).not.toBeNull();
     expect(result!.from).toBe(0);
-    // 3 dashes + newline + title line + tags line + 3 dashes = ...
-    // Let's rely on truthy check and range bounds sanity
     expect(result!.to).toBeGreaterThan(0);
     expect(state.doc.sliceString(result!.from, result!.to)).toContain('title: Test');
-    // Vitest (Chai) uses .match for regex or we can assert manually
     expect(state.doc.sliceString(result!.from, result!.to).endsWith('---')).toBe(true);
   });
 

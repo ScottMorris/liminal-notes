@@ -15,8 +15,17 @@ import {
   InitPayload
 } from '@liminal-notes/core-shared/mobile/editorProtocol';
 
+import { markdownDecorations } from '@liminal-notes/core-shared/editor/decorations';
+import { frontmatterHider } from '@liminal-notes/core-shared/editor/frontmatterHider';
+import { sharedEditingCommands } from '@liminal-notes/core-shared/editor/commands';
 import { createEditorTheme, fallbackThemeVars } from './theme';
 import { send, listen, waitForBridge } from './bridge';
+
+declare global {
+  interface Window {
+    LIMINAL_INITIAL_CONTENT?: string;
+  }
+}
 
 // -- Editor Initialization --
 
@@ -56,6 +65,8 @@ function initEditor(parent: HTMLElement, config?: InitPayload['settings']) {
     history(),
     closeBrackets(),
     markdown({ extensions: [GFM] }),
+    markdownDecorations,
+    frontmatterHider,
     createEditorTheme(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     EditorView.updateListener.of((update) => {
@@ -192,6 +203,14 @@ function handleCommand(msg: AnyMessage) {
         type: EditorEvent.RequestResponse,
         payload: response
       });
+      break;
+
+    case EditorCommand.Execute:
+      if (sharedEditingCommands[msg.payload.id]) {
+        sharedEditingCommands[msg.payload.id](editorView);
+      } else {
+        console.warn(`[Guest] Unknown execute command: ${msg.payload.id}`);
+      }
       break;
 
     default:
