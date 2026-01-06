@@ -53,7 +53,7 @@ export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
       position: 'absolute',
       left: 0,
       right: 0,
-      bottom: Platform.OS === 'ios' ? keyboardHeight : 0,
+      bottom: keyboardHeight,
       zIndex: 1000,
       elevation: 5 // For Android shadow/layering
     }]}>
