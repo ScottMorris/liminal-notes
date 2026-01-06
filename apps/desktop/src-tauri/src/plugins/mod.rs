@@ -56,7 +56,6 @@ impl<R: Runtime> PluginRegistry<R> {
         }
     }
 
-    #[allow(dead_code)]
     pub fn deactivate(&self, plugin_id: &str) -> Result<(), String> {
         let mut active = self.active_plugins.lock().map_err(|e| e.to_string())?;
 
@@ -68,6 +67,19 @@ impl<R: Runtime> PluginRegistry<R> {
             }
         } else {
             Ok(()) // Not active
+        }
+    }
+
+    pub fn deactivate_all(&self) {
+        let keys: Vec<&'static str> = {
+            let active = self.active_plugins.lock().unwrap();
+            active.keys().cloned().collect()
+        };
+
+        for key in keys {
+            if let Err(e) = self.deactivate(key) {
+                eprintln!("Failed to deactivate plugin {}: {}", key, e);
+            }
         }
     }
 

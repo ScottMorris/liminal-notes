@@ -108,6 +108,12 @@ pub fn run() {
             get_linux_accent_colour,
             plugins::native_plugin_invoke
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                let registry = app_handle.state::<PluginRegistry<tauri::Wry>>();
+                registry.deactivate_all();
+            }
+        });
 }
