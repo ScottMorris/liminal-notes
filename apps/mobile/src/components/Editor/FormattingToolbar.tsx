@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Keyboard, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Keyboard, Platform, KeyboardEvent } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { EditorCommand } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import type { EditorRef } from '../EditorView';
@@ -13,13 +13,21 @@ const TOOLBAR_HEIGHT = 44;
 export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
   const theme = useTheme();
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const onShow = () => setKeyboardVisible(true);
-    const onHide = () => setKeyboardVisible(false);
+    const onShow = (e: KeyboardEvent) => {
+      setKeyboardVisible(true);
+      setKeyboardHeight(e.endCoordinates.height);
+    };
+
+    const onHide = () => {
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+    };
 
     const showSub = Keyboard.addListener(showEvent, onShow);
     const hideSub = Keyboard.addListener(hideEvent, onHide);
@@ -41,7 +49,13 @@ export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
   return (
     <View style={[styles.container, {
       backgroundColor: theme.colors.elevation.level2,
-      borderTopColor: theme.colors.outlineVariant
+      borderTopColor: theme.colors.outlineVariant,
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: Platform.OS === 'ios' ? keyboardHeight : 0,
+      zIndex: 1000,
+      elevation: 5 // For Android shadow/layering
     }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
         <TouchableOpacity style={styles.button} onPress={() => handleCommand('editor.format.bold')}>
