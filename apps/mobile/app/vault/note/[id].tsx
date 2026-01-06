@@ -333,7 +333,7 @@ export default function NoteScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, { backgroundColor: paperTheme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: paperTheme.colors.background }]}>
       <Stack.Screen
           options={{
               headerShown: false // We use custom header inside SafeAreaView or could use Stack header
@@ -364,8 +364,8 @@ export default function NoteScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 80}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         style={{ flex: 1 }}
       >
           {/* Editor */}
@@ -379,20 +379,12 @@ export default function NoteScreen() {
             // We can pass styles to inject theme vars but EditorView handles internal protocol theme
           />
 
-          {/* Formatting Toolbar - Only visible when keyboard is open */}
-          {isKeyboardVisible && (
-            <View style={{ backgroundColor: paperTheme.colors.elevation.level1 }}>
-              <FormattingToolbar editorRef={editorRef} />
-            </View>
-          )}
-      </KeyboardAvoidingView>
+          {/* Formatting Toolbar */}
+          <FormattingToolbar editorRef={editorRef} />
 
-      {/* Footer - Only visible when keyboard is closed */}
-      {!isKeyboardVisible && (
-         <View style={{ paddingBottom: insets.bottom, backgroundColor: paperTheme.colors.elevation.level1 }}>
-            <LastSavedFooter timestamp={lastSavedAt} />
-         </View>
-      )}
+          {/* Footer */}
+          <LastSavedFooter timestamp={lastSavedAt} />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

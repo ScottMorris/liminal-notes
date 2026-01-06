@@ -174,3 +174,7 @@ This file tracks features that are present in the Desktop editor but currently m
 
 - [ ] **Command Registry**: Mobile does not use the shared `CommandRegistry` pattern, instead relying on ad-hoc handlers in `FormattingToolbar` and `EditorView`.
 - [ ] **Keyboard Shortcuts**: External keyboard support (Bluetooth keyboards) is minimal.
+
+## Known Issues
+
+- **Mobile Footer on Android:** The footer layout on Android with edge-to-edge enabled has a known bug where the footer floats above the bottom of the screen when the keyboard is closed. This is due to a conflict between `KeyboardAvoidingView` behavior and the edge-to-edge system insets. For now, the layout is functional (content is visible), but the visual glitch remains.
