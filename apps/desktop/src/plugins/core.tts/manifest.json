@@ -1,0 +1,17 @@
+{
+  "id": "core.tts",
+  "name": "Read Aloud (TTS)",
+  "version": "0.1.0",
+  "minAppVersion": "0.1.0",
+  "description": "Offline text-to-speech with playback controls and highlighting.",
+  "author": "Core Team",
+  "permissions": {
+    "vault": true,
+    "filesystem": { "read": ["."], "write": [] },
+    "network": { "allowed": false, "domains": [] }
+  },
+  "entrypoints": {
+    "backendNative": "core.tts",
+    "frontend": "index.ts"
+  }
+}
