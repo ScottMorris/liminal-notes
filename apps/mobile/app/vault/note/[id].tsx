@@ -14,7 +14,7 @@ import { useSettings } from '../../../src/context/SettingsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
 import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
 
-const DEBUG = true;
+const DEBUG = false;
 
 enum SaveStatus {
     Idle = 'idle',
@@ -351,7 +351,7 @@ export default function NoteScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         style={{ flex: 1 }}
       >
