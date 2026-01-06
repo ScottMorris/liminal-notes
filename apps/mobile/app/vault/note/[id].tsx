@@ -364,10 +364,10 @@ export default function NoteScreen() {
             onError={(e) => console.error('Editor Error:', e)}
             // We can pass styles to inject theme vars but EditorView handles internal protocol theme
           />
-      </KeyboardAvoidingView>
 
-      {/* Formatting Toolbar */}
-      <FormattingToolbar editorRef={editorRef} />
+          {/* Formatting Toolbar */}
+          <FormattingToolbar editorRef={editorRef} />
+      </KeyboardAvoidingView>
 
       {/* Footer */}
       <LastSavedFooter timestamp={lastSavedAt} />

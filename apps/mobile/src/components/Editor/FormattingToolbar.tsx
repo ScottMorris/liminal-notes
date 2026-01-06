@@ -13,21 +13,13 @@ const TOOLBAR_HEIGHT = 44;
 export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
   const theme = useTheme();
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const onShow = (e: KeyboardEvent) => {
-      setKeyboardVisible(true);
-      setKeyboardHeight(e.endCoordinates.height);
-    };
-
-    const onHide = () => {
-      setKeyboardVisible(false);
-      setKeyboardHeight(0);
-    };
+    const onShow = () => setKeyboardVisible(true);
+    const onHide = () => setKeyboardVisible(false);
 
     const showSub = Keyboard.addListener(showEvent, onShow);
     const hideSub = Keyboard.addListener(hideEvent, onHide);
@@ -49,13 +41,7 @@ export function FormattingToolbar({ editorRef }: FormattingToolbarProps) {
   return (
     <View style={[styles.container, {
       backgroundColor: theme.colors.elevation.level2,
-      borderTopColor: theme.colors.outlineVariant,
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: keyboardHeight,
-      zIndex: 1000,
-      elevation: 5 // For Android shadow/layering
+      borderTopColor: theme.colors.outlineVariant
     }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
         <TouchableOpacity style={styles.button} onPress={() => handleCommand('editor.format.bold')}>
