@@ -10,21 +10,10 @@ interface TtsPlayerProps {
 export const TtsPlayer: React.FC<TtsPlayerProps> = ({ onHighlight, getData }) => {
   const { settings } = useSettings();
   const { status, isSynthesizing, isPlaying, error, currentSegment, installModel, speak, stop, pause, resume } = useTts();
-  const [voice, setVoice] = useState(() => (settings['tts.defaultVoice'] as string) || 'af_sky');
-  const [speed, setSpeed] = useState(() => (settings['tts.defaultSpeed'] as number) || 1.0);
 
-  // Update defaults if settings change (optional, but good for consistency if user changes settings while player is open)
-  useEffect(() => {
-      if (settings['tts.defaultVoice']) setVoice(settings['tts.defaultVoice'] as string);
-      if (settings['tts.defaultSpeed']) setSpeed(settings['tts.defaultSpeed'] as number);
-  }, [settings]);
-
-  const voices = [
-    'af_sky', 'af_bella', 'af_nicole', 'af_sarah',
-    'am_adam', 'am_michael',
-    'bf_emma', 'bf_isabella',
-    'bm_george', 'bm_lewis'
-  ];
+  // Read defaults directly, no local state needed for controls as they are hidden
+  const voice = (settings['tts.defaultVoice'] as string) || 'af_sky';
+  const speed = (settings['tts.defaultSpeed'] as number) || 1.0;
 
   // Sync highlighting
   useEffect(() => {
@@ -85,27 +74,10 @@ export const TtsPlayer: React.FC<TtsPlayerProps> = ({ onHighlight, getData }) =>
               ⏹ Stop
           </button>
 
-          <div className="flex-1"></div>
-
-          <select
-            value={voice}
-            onChange={(e) => setVoice(e.target.value)}
-            className="border rounded p-1 bg-transparent"
-            style={{ borderColor: 'var(--ln-border)', color: 'var(--ln-fg)' }}
-          >
-            {voices.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-
-          <input
-            type="number"
-            value={speed}
-            onChange={(e) => setSpeed(parseFloat(e.target.value))}
-            step="0.1"
-            min="0.5"
-            max="2.0"
-            className="w-12 border rounded p-1 bg-transparent text-center"
-            style={{ borderColor: 'var(--ln-border)', color: 'var(--ln-fg)' }}
-          />
+          {/* Status info */}
+          <div className="flex-1 text-right opacity-50 truncate ml-2">
+              {voice} • {speed}x
+          </div>
        </div>
 
        {isSynthesizing && <div className="text-xs text-blue-500">Synthesizing...</div>}
