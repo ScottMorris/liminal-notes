@@ -352,7 +352,7 @@ export default function NoteScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 80}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         style={{ flex: 1 }}
       >
           {/* Editor */}

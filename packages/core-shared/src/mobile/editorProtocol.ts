@@ -197,6 +197,7 @@ export const ErrorPayloadSchema = z.object({
 export type CommandType =
   | { type: EditorCommand.Init; payload: InitPayload }
   | { type: EditorCommand.Set; payload: DocSetPayload }
+  | { type: EditorCommand.Execute; payload: ExecutePayload }
   | { type: EditorCommand.RequestState; payload: RequestStatePayload };
 
 export type EventType =
@@ -228,6 +229,12 @@ const RequestStateEnvelope = BaseEnvelope.extend({
   kind: z.literal(MessageKind.Cmd),
   type: z.literal(EditorCommand.RequestState),
   payload: RequestStatePayloadSchema
+});
+
+const ExecuteCommandEnvelope = BaseEnvelope.extend({
+  kind: z.literal(MessageKind.Cmd),
+  type: z.literal(EditorCommand.Execute),
+  payload: ExecutePayloadSchema
 });
 
 const ReadyEventEnvelope = BaseEnvelope.extend({
@@ -265,6 +272,7 @@ export const AnyMessageSchema = z.discriminatedUnion('type', [
   InitCommandEnvelope,
   SetCommandEnvelope,
   RequestStateEnvelope,
+  ExecuteCommandEnvelope,
   ReadyEventEnvelope,
   ChangedEventEnvelope,
   LinkClickedEnvelope,
