@@ -379,7 +379,10 @@ export default function NoteScreen() {
             // We can pass styles to inject theme vars but EditorView handles internal protocol theme
           />
 
-          <View style={{ paddingBottom: isKeyboardVisible ? 0 : insets.bottom }}>
+          <View style={{
+            backgroundColor: paperTheme.colors.elevation.level1,
+            paddingBottom: isKeyboardVisible ? 0 : insets.bottom
+          }}>
             {/* Formatting Toolbar */}
             <FormattingToolbar editorRef={editorRef} />
 
