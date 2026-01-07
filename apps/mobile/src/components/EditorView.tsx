@@ -1,5 +1,6 @@
-import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Asset } from 'expo-asset';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import {
   createCommand,
@@ -10,12 +11,7 @@ import {
   MessageKind
 } from '../editor/EditorProtocol';
 
-// Import the built HTML asset
-// @ts-ignore: Resolved by Metro via declarations.d.ts or assetExts configuration
-import editorHtml from '../../editor-web/dist/editor.html';
-
-// Cast for strict type checking until .html declaration is available
-const editorHtmlSource = editorHtml as any;
+const editorHtmlAsset = Asset.fromModule(require('../../editor-web/dist/editor.html'));
 
 // TODO: Control this via settings injection in the future
 const DEBUG = false;
@@ -35,6 +31,28 @@ export interface EditorViewRef {
 
 export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref) => {
   const webViewRef = useRef<WebView>(null);
+  const [editorUri, setEditorUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadEditorAsset = async () => {
+      try {
+        if (!editorHtmlAsset.localUri) {
+          await editorHtmlAsset.downloadAsync();
+        }
+        if (!isMounted) return;
+        setEditorUri(editorHtmlAsset.localUri ?? editorHtmlAsset.uri);
+      } catch (error) {
+        console.error('[EditorHost] Failed to load editor asset:', error);
+      }
+    };
+
+    loadEditorAsset();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useImperativeHandle(ref, () => ({
     sendCommand: (type, payload) => {
@@ -137,11 +155,19 @@ export const EditorView = forwardRef<EditorViewRef, EditorViewProps>((props, ref
     true;
   `;
 
+  if (!editorUri) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator style={styles.loading} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <WebView
         ref={webViewRef}
-        source={editorHtmlSource}
+        source={{ uri: editorUri }}
         style={styles.webview}
         onMessage={(event) => {
             if (DEBUG) console.log('[EditorHost] onMessage fired');

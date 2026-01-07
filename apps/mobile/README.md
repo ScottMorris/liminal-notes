@@ -12,6 +12,24 @@ The mobile client for Liminal Notes, built with React Native and Expo.
 
 ### Running the App
 
+We recommend using **Development Builds** (EAS Build) instead of Expo Go. This supports offline development and native modules.
+
+See [**Development Build Guide**](./DEVELOPMENT_BUILD.md) or [**Quick Start**](./QUICK_START.md).
+
+#### Quick Start (Development Build)
+
+1.  Build the APK (one-time):
+    ```bash
+    pnpm build:dev:android
+    ```
+2.  Install the APK on your device.
+3.  Start the server:
+    ```bash
+    pnpm start
+    ```
+
+### Legacy: Expo Go
+
 1.  Install dependencies (from the repo root):
     ```bash
     pnpm install
@@ -30,7 +48,10 @@ The mobile client for Liminal Notes, built with React Native and Expo.
 
 ## Scripts
 
-*   `pnpm start`: Start the Expo development server.
+*   `pnpm start`: Start the Expo development server (Dev Client mode).
+*   `pnpm build:dev`: Build development client locally.
+*   `pnpm build:dev:android`: Build Android APK locally.
+*   `pnpm build:dev:ios`: Build iOS simulator build locally.
 *   `pnpm android`: Open in Android emulator/device.
 *   `pnpm ios`: Open in iOS simulator (macOS only).
 *   `pnpm typecheck`: Run TypeScript type checking.
@@ -41,15 +62,13 @@ Since the Dev Container runs in a virtualized Linux environment, you cannot run 
 
 **To test on a physical device (Recommended):**
 
-1.  Navigate to the mobile app directory:
+1.  **Build the Development APK** (see above).
+2.  Install it on your device.
+3.  Start the bundler:
     ```bash
-    cd apps/mobile
+    pnpm start --tunnel
     ```
-2.  Start Expo with the `--tunnel` flag to bypass network isolation:
-    ```bash
-    pnpm expo start --tunnel
-    ```
-3.  Scan the QR code with Expo Go on your phone.
+    *Note: The `--tunnel` flag is useful if your device cannot reach the container directly, but Development Builds can often connect directly via local IP if the network is bridged.*
 
 **To test on a Host Emulator:**
 
