@@ -128,7 +128,7 @@ pub async fn native_plugin_invoke<R: Runtime>(
             result: Some(result),
             error: None,
         }),
-        Err(msg) => Err(InvokeResult {
+        Err(msg) => Ok(InvokeResult {
             ok: false,
             request_id,
             result: None,
