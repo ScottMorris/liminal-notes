@@ -12,6 +12,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libayatana-appindicator3-dev \
     librsvg2-dev \
     libwebkit2gtk-4.1-dev \
+    fonts-noto-color-emoji \
     pkg-config \
     unzip \
     git \

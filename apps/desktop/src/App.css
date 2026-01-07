@@ -21,12 +21,20 @@
 
 @font-face {
   font-family: 'Noto Color Emoji';
+  src: url('./assets/fonts/NotoColorEmoji.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Color Emoji';
   src: url('./assets/fonts/NotoColorEmoji-Compatible.ttf') format('truetype');
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'Noto Emoji';
   src: url('./assets/fonts/NotoEmoji-Regular.ttf') format('truetype');
+  font-display: swap;
 }
 
 body {
