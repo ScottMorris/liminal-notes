@@ -4,6 +4,7 @@ import { SearchIndex, LinkIndex } from '@liminal-notes/core-shared/indexing/type
 import { NoteId } from '@liminal-notes/core-shared/types';
 import { recentsStorage } from '../storage/recents';
 import { WikiLinkMatch } from '@liminal-notes/core-shared/types';
+import { FileExistsError, FileNotFoundError } from '../errors';
 
 interface RenameOptions {
   noteId: string;
@@ -38,10 +39,16 @@ export async function renameNote({
       // Check if target exists
       try {
         await adapter.readNote(newPath);
-        throw new Error('File already exists');
-      } catch (e: any) {
-        if (e.message !== 'File not found: ' + newPath) {
-             if (e.message === 'File already exists') throw e;
+        // If read succeeds, file exists
+        throw new FileExistsError(newPath);
+      } catch (e: unknown) {
+        if (e instanceof FileExistsError) {
+             throw e;
+        }
+        // If it's a FileNotFoundError, that's what we want (target shouldn't exist)
+        // If it's another error, rethrow
+        if (!(e instanceof FileNotFoundError)) {
+             throw e;
         }
       }
 
@@ -76,7 +83,7 @@ export async function renameNote({
       ignoreNextLoadRef.current = true;
       router.setParams({ id: encodeURIComponent(newPath) });
 
-    } catch (e: any) {
+    } catch (e: unknown) {
        console.error('Rename failed', e);
        throw e;
     }

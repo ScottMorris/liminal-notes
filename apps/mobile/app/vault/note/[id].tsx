@@ -189,9 +189,12 @@ export default function NoteScreen() {
             router,
             ignoreNextLoadRef
         });
-    } catch (e: any) {
+    } catch (e: unknown) {
        // Error handled in util but rethrown for UI alert
-       throw e;
+       if (e instanceof Error) {
+           throw e;
+       }
+       throw new Error(String(e));
     }
   };
 

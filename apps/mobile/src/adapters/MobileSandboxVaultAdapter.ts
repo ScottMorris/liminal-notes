@@ -10,6 +10,7 @@ import {
 import { NoteId } from '@liminal-notes/core-shared/types';
 import { assertSafeNotePath } from '@liminal-notes/vault-core/pathSafety';
 import { File, Directory, Paths } from 'expo-file-system';
+import { FileNotFoundError, FileExistsError } from '../errors';
 
 /**
  * Mobile implementation of the VaultAdapter using Expo FileSystem.
@@ -96,7 +97,7 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
 
     if (!file.exists) {
         console.warn(`[MobileSandboxVaultAdapter] File not found: ${id}`);
-        throw new Error(`File not found: ${id}`);
+        throw new FileNotFoundError(id);
     }
 
     const content = file.textSync(); // or await file.text()
@@ -157,6 +158,16 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
 
     // Move file
     // file.move() takes a Directory or File as destination.
+    // Check if target exists first to throw correct error
+    if (toFile.exists) {
+        throw new FileExistsError(to);
+    }
+
+    // Check if source exists
+    if (!fromFile.exists) {
+        throw new FileNotFoundError(from);
+    }
+
     fromFile.move(toFile);
   }
 
