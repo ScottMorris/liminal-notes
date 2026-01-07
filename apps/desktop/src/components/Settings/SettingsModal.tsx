@@ -3,6 +3,8 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useSettings } from '../../contexts/SettingsContext';
 import { getSections } from './schemas';
 import { SettingsSection } from './SettingsRenderer';
+import { SettingsActionHandler } from './types';
+import { useNotification } from '../NotificationContext';
 import { XMarkIcon } from '../Icons';
 import pkg from '../../../package.json';
 import { RemindersDebugModal } from '../../features/reminders/components/RemindersDebugModal';
@@ -17,7 +19,8 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVault }) => {
     const { availableThemes } = useTheme();
-    const { settings } = useSettings();
+    const { settings, updateSetting } = useSettings();
+    const { notify } = useNotification();
     // We need plugin context to pass to onSettingsAction.
     // Currently PluginHostProvider doesn't expose the full context object easily,
     // but it exposes 'log' and 'getCurrentNote' is internal state.
@@ -28,7 +31,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
     // We can construct a minimal context.
     const pluginCtx = {
         log: (msg: string) => console.log(`[PluginAction] ${msg}`),
-        getCurrentNote: () => null // Settings modal context doesn't have a note
+        getCurrentNote: () => null, // Settings modal context doesn't have a note
+        updateSetting,
+        notify
     };
 
     const appVersion = pkg.version;
@@ -51,7 +56,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
 
     const activeSection = sections.find(s => s.id === activeSectionId) || (activeSectionId === 'tags' ? tagSection : undefined);
 
-    const handleAction = (actionId: string) => {
+    const handleAction: SettingsActionHandler = async (actionId: string) => {
         if (actionId === 'switch-vault') {
             if (window.confirm("Are you sure you want to switch vaults?")) {
                 onResetVault();
@@ -60,11 +65,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
         }
 
         // Delegate to plugins
-        for (const plugin of builtInPlugins) {
-            if (plugin.onSettingsAction) {
-                plugin.onSettingsAction(pluginCtx, actionId, settings);
-            }
-        }
+        await Promise.all(
+            builtInPlugins.map(plugin => {
+                if (plugin.onSettingsAction) {
+                    return plugin.onSettingsAction(pluginCtx, actionId, settings);
+                }
+                return Promise.resolve();
+            })
+        );
     };
 
     // Close on Esc

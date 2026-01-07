@@ -53,3 +53,5 @@ export interface SettingsSectionDef {
   title: string;
   groups: SettingsGroupDef[];
 }
+
+export type SettingsActionHandler = (id: string) => void | Promise<void>;

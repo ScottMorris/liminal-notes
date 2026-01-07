@@ -52,6 +52,8 @@ export function PluginHostProvider({ children }: { children: ReactNode }) {
       console.log(`[PluginHost] ${msg}`, extra || '');
     },
     getCurrentNote: () => currentNote,
+    updateSetting: async () => {},
+    notify: () => {},
   }), [currentNote]);
 
   // Persist when enabledPlugins changes

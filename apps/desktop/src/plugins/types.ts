@@ -30,6 +30,10 @@ export interface PluginContext {
 
   // Access to current state (read-only for now)
   getCurrentNote: () => NoteSnapshot | null;
+
+  // Optional helpers (available in settings flows)
+  updateSetting?: (key: string, value: unknown) => Promise<void>;
+  notify?: (message: string, type?: 'info' | 'success' | 'error') => void;
 }
 
 export interface LiminalPlugin {

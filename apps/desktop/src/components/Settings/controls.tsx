@@ -194,10 +194,19 @@ export const Slider: React.FC<{ def: SettingControlDef }> = ({ def }) => {
     );
 };
 
-export const ActionButton: React.FC<{ def: SettingControlDef; onAction?: (id: string) => void }> = ({ def, onAction }) => {
-    const handleClick = () => {
+export const ActionButton: React.FC<{ def: SettingControlDef; onAction?: (id: string) => void | Promise<void> }> = ({ def, onAction }) => {
+    const [isRunning, setIsRunning] = useState(false);
+
+    const handleClick = async () => {
         if (def.actionId && onAction) {
-            onAction(def.actionId);
+            try {
+                setIsRunning(true);
+                await onAction(def.actionId);
+            } catch (e) {
+                console.error('Settings action failed', e);
+            } finally {
+                setIsRunning(false);
+            }
         }
     };
 
@@ -206,13 +215,21 @@ export const ActionButton: React.FC<{ def: SettingControlDef; onAction?: (id: st
     return (
         <button
             onClick={handleClick}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
+                }
+            }}
+            type="button"
+            disabled={isRunning}
             style={{
                 background: isDanger ? '#e74c3c' : 'var(--ln-bg)',
                 color: isDanger ? 'white' : 'var(--ln-fg)',
                 borderColor: isDanger ? '#c0392b' : 'var(--ln-border)',
             }}
         >
-            {def.label || "Action"}
+            {isRunning ? 'Working...' : def.label || "Action"}
         </button>
     );
 };

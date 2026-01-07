@@ -1,11 +1,11 @@
 import React from 'react';
-import { SettingsSectionDef, SettingsGroupDef, SettingRowDef, SettingControlDef } from './types';
+import { SettingsSectionDef, SettingsGroupDef, SettingRowDef, SettingControlDef, SettingsActionHandler } from './types';
 import { ToggleSwitch, SelectDropdown, TextInput, NumberInput, Slider, ActionButton, ComputedText } from './controls';
 import { CollectionList } from './CollectionList';
 
 interface RendererProps {
     section: SettingsSectionDef;
-    onAction: (id: string) => void;
+    onAction: SettingsActionHandler;
 }
 
 export const SettingsSection: React.FC<RendererProps> = ({ section, onAction }) => {
@@ -18,7 +18,7 @@ export const SettingsSection: React.FC<RendererProps> = ({ section, onAction }) 
     );
 };
 
-const SettingsGroup: React.FC<{ group: SettingsGroupDef; onAction: (id: string) => void }> = ({ group, onAction }) => {
+const SettingsGroup: React.FC<{ group: SettingsGroupDef; onAction: SettingsActionHandler }> = ({ group, onAction }) => {
     return (
         <div className="settings-group" style={{ marginBottom: '30px' }}>
             {group.title && (
@@ -33,7 +33,7 @@ const SettingsGroup: React.FC<{ group: SettingsGroupDef; onAction: (id: string) 
     );
 };
 
-const SettingRow: React.FC<{ row: SettingRowDef; onAction: (id: string) => void }> = ({ row, onAction }) => {
+const SettingRow: React.FC<{ row: SettingRowDef; onAction: SettingsActionHandler }> = ({ row, onAction }) => {
     // Check if this is a full-width collection row
     const isCollection = row.controls.length === 1 && row.controls[0].kind === 'collection';
 
@@ -60,7 +60,7 @@ const SettingRow: React.FC<{ row: SettingRowDef; onAction: (id: string) => void 
     );
 };
 
-const Control: React.FC<{ def: SettingControlDef; onAction: (id: string) => void }> = ({ def, onAction }) => {
+const Control: React.FC<{ def: SettingControlDef; onAction: SettingsActionHandler }> = ({ def, onAction }) => {
     switch (def.kind) {
         case 'boolean': return <ToggleSwitch def={def} />;
         case 'select': return <SelectDropdown def={def} />;
