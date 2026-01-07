@@ -14,6 +14,7 @@ import { useSettings } from '../../../src/context/SettingsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
 import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
 import { EditableHeaderTitle } from '../../../src/components/Editor/EditableHeaderTitle';
+import { renameNote } from '../../../src/utils/fileOperations';
 
 const DEBUG = false;
 
@@ -178,67 +179,19 @@ export default function NoteScreen() {
   const handleRename = async (newName: string) => {
     if (!noteId) return;
 
-    // Construct new path: dirname(noteId) + newName + .md
-    const segments = noteId.split('/');
-    const parent = segments.length > 1 ? segments.slice(0, -1).join('/') : '';
-    const newPath = parent ? `${parent}/${newName}.md` : `${newName}.md`;
-
-    if (newPath === noteId) return;
-
     try {
-      const adapter = new MobileSandboxVaultAdapter();
-      await adapter.init();
-
-      // Check if target exists (basic check via stat or read, assume rename handles overwrite protection or fails)
-      // The adapter.rename simply calls fs.move. We should check if exists to prevent overwrite if desired,
-      // but for now relying on user intent or FS error.
-      // Better UX: Check if exists.
-      try {
-        await adapter.readNote(newPath);
-        throw new Error('File already exists');
-      } catch (e: any) {
-        if (e.message !== 'File not found: ' + newPath) {
-             // If it's "File already exists", throw it.
-             // If readNote failed with something else, rethrow or proceed?
-             // MobileSandboxVaultAdapter throws "File not found: ..."
-             if (e.message === 'File already exists') throw e;
-        }
-      }
-
-      await adapter.rename(noteId, newPath);
-
-      // Update Indexes
-      if (searchIndex) {
-          await searchIndex.remove(noteId);
-          await searchIndex.upsert({
-              id: newPath,
-              title: newName,
-              content: content, // Use current content from state
-              mtimeMs: Date.now()
-          });
-      }
-
-      if (linkIndex) {
-          await linkIndex.removeSource(noteId);
-           const links = parseWikilinks(content).map((match: any) => ({
-               source: newPath,
-               targetRaw: match.targetRaw,
-               targetPath: match.targetRaw
-           }));
-          await linkIndex.upsertLinks(newPath, links);
-      }
-
-      // Update Recents
-      await recentsStorage.remove(noteId);
-      await recentsStorage.add(newPath);
-
-      // Seamless Transition
-      ignoreNextLoadRef.current = true;
-      router.setParams({ id: encodeURIComponent(newPath) });
-
+        await renameNote({
+            noteId,
+            newName,
+            content,
+            searchIndex,
+            linkIndex,
+            router,
+            ignoreNextLoadRef
+        });
     } catch (e: any) {
-       console.error('Rename failed', e);
-       throw e; // Propagate to component to show alert
+       // Error handled in util but rethrown for UI alert
+       throw e;
     }
   };
 
