@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { resolveAudioSrc } from './audio';
 
 const PLUGIN_ID = 'core.tts';
 
@@ -27,6 +27,7 @@ export const useTts = () => {
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [revokeAudioUrl, setRevokeAudioUrl] = useState<(() => void) | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [segments, setSegments] = useState<TtsSegment[]>([]);
@@ -56,15 +57,30 @@ export const useTts = () => {
     setIsSynthesizing(true);
     setError(null);
     try {
-      await invoke('native_plugin_invoke', {
+      const res = await invoke<any>('native_plugin_invoke', {
         pluginId: PLUGIN_ID,
         method: 'install',
         requestId: Math.random().toString(),
         payload: {}
       });
+      if (res?.ok === false) {
+        throw new Error(res.error?.message || 'Installation failed');
+      }
       await checkStatus();
     } catch (e: any) {
-      setError(e.message || 'Installation failed');
+      const message =
+        e instanceof Error
+          ? e.message
+          : typeof e === 'string'
+            ? e
+            : e?.message || 'Installation failed';
+      console.error('TTS installation failed', e);
+      if (message.includes('Model files appear corrupt')) {
+        setStatus({ installed: false, loaded: false });
+        setError('Something went wrong. Open Settings → Read Aloud.');
+      } else {
+        setError('Something went wrong. Check the console for details.');
+      }
     } finally {
       setIsSynthesizing(false);
     }
@@ -96,15 +112,19 @@ export const useTts = () => {
       const { path, segments: resSegments } = res.result as TtsResult;
       setSegments(resSegments || []);
 
-      const assetUrl = convertFileSrc(path);
+      const resolved = await resolveAudioSrc(path);
 
-      const audio = new Audio(assetUrl);
+      const audio = new Audio(resolved.url);
       audio.playbackRate = 1.0;
 
       audio.onended = () => {
         setIsPlaying(false);
         setCurrentAudio(null);
         setCurrentSegment(null);
+        if (resolved.revoke) {
+          resolved.revoke();
+        }
+        setRevokeAudioUrl(null);
       };
 
       audio.ontimeupdate = () => {
@@ -116,10 +136,23 @@ export const useTts = () => {
 
       audio.play();
       setCurrentAudio(audio);
+      setRevokeAudioUrl(resolved.revoke || null);
       setIsPlaying(true);
 
     } catch (e: any) {
-      setError(e.message || 'Synthesis failed');
+      const message =
+        e instanceof Error
+          ? e.message
+          : typeof e === 'string'
+            ? e
+            : e?.message || 'Synthesis failed';
+      console.error('TTS synthesis failed', e);
+      if (message.includes('Model files appear corrupt')) {
+        setStatus({ installed: false, loaded: false });
+        setError('Something went wrong. Open Settings → Read Aloud.');
+      } else {
+        setError('Something went wrong. Check the console for details.');
+      }
     } finally {
       setIsSynthesizing(false);
     }
@@ -133,7 +166,11 @@ export const useTts = () => {
       setIsPlaying(false);
       setCurrentSegment(null);
     }
-  }, [currentAudio]);
+    if (revokeAudioUrl) {
+      revokeAudioUrl();
+      setRevokeAudioUrl(null);
+    }
+  }, [currentAudio, revokeAudioUrl]);
 
   const pause = useCallback(() => {
     if (currentAudio) {

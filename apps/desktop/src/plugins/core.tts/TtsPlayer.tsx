@@ -9,7 +9,7 @@ interface TtsPlayerProps {
 
 export const TtsPlayer: React.FC<TtsPlayerProps> = ({ onHighlight, getData }) => {
   const { settings } = useSettings();
-  const { status, isSynthesizing, isPlaying, error, currentSegment, installModel, speak, stop, pause, resume } = useTts();
+  const { status, isSynthesizing, isPlaying, error, currentSegment, speak, stop, pause, resume } = useTts();
 
   // Read defaults directly, no local state needed for controls as they are hidden
   const voice = (settings['tts.defaultVoice'] as string) || 'af_sky';
@@ -36,16 +36,7 @@ export const TtsPlayer: React.FC<TtsPlayerProps> = ({ onHighlight, getData }) =>
   if (!status.installed) {
     return (
       <div className="p-2 border-t flex items-center justify-between text-xs" style={{ borderColor: 'var(--ln-border)', background: 'var(--ln-bg)', color: 'var(--ln-fg)' }}>
-          <span className="flex-1">TTS Model Required</span>
-          <button
-            onClick={installModel}
-            disabled={isSynthesizing}
-            className="px-2 py-1 rounded"
-            style={{ backgroundColor: 'var(--ln-accent)', color: 'var(--ln-bg)' }}
-          >
-            {isSynthesizing ? 'Installing...' : 'Install'}
-          </button>
-          {error && <div className="text-red-500 ml-2">{error}</div>}
+          <span className="flex-1">TTS not installed. Install from Settings → Read Aloud.</span>
       </div>
     );
   }
