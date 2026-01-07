@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, ScrollView, Keyboard, Platform, KeyboardEvent } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { EditorCommand } from '@liminal-notes/core-shared/mobile/editorProtocol';
-import type { EditorRef } from '../EditorView';
+import type { EditorViewRef } from '../EditorView';
 
 interface FormattingToolbarProps {
-  editorRef: React.RefObject<EditorRef>;
+  editorRef: React.RefObject<EditorViewRef>;
 }
 
 const TOOLBAR_HEIGHT = 44;

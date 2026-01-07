@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert, Keybo
 import { useLocalSearchParams, useRouter, Stack, useNavigation } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme as usePaperTheme, ActivityIndicator, Text } from 'react-native-paper';
-import { EditorView, EditorRef } from '../../../src/components/EditorView';
+import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
 import { recentsStorage } from '../../../src/storage/recents';
@@ -13,6 +13,7 @@ import { themes } from '@liminal-notes/core-shared/theme';
 import { useSettings } from '../../../src/context/SettingsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
 import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
+import { EditableHeaderTitle } from '../../../src/components/Editor/EditableHeaderTitle';
 
 const DEBUG = false;
 
@@ -66,10 +67,11 @@ export default function NoteScreen() {
   const [isDirty, setIsDirty] = useState(false);
   const [revision, setRevision] = useState(0);
 
-  const editorRef = useRef<EditorRef>(null);
+  const editorRef = useRef<EditorViewRef>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
   const lastRequestIdRef = useRef<string | null>(null);
+  const ignoreNextLoadRef = useRef(false);
 
   // To handle navigation blocking
   const pendingNavigationAction = useRef<any>(null);
@@ -121,6 +123,11 @@ export default function NoteScreen() {
         return;
     }
 
+    if (ignoreNextLoadRef.current) {
+      ignoreNextLoadRef.current = false;
+      return;
+    }
+
     try {
         setStatus('loading');
 
@@ -150,7 +157,7 @@ export default function NoteScreen() {
 
         if (linkIndex) {
              try {
-                 const links = parseWikilinks(result.content).map(match => ({
+                 const links = parseWikilinks(result.content).map((match: any) => ({
                      source: noteId,
                      targetRaw: match.targetRaw,
                      targetPath: match.targetRaw
@@ -165,6 +172,73 @@ export default function NoteScreen() {
     } catch (e: any) {
         setStatus('error');
         setErrorMsg(e.message || 'Failed to load note');
+    }
+  };
+
+  const handleRename = async (newName: string) => {
+    if (!noteId) return;
+
+    // Construct new path: dirname(noteId) + newName + .md
+    const segments = noteId.split('/');
+    const parent = segments.length > 1 ? segments.slice(0, -1).join('/') : '';
+    const newPath = parent ? `${parent}/${newName}.md` : `${newName}.md`;
+
+    if (newPath === noteId) return;
+
+    try {
+      const adapter = new MobileSandboxVaultAdapter();
+      await adapter.init();
+
+      // Check if target exists (basic check via stat or read, assume rename handles overwrite protection or fails)
+      // The adapter.rename simply calls fs.move. We should check if exists to prevent overwrite if desired,
+      // but for now relying on user intent or FS error.
+      // Better UX: Check if exists.
+      try {
+        await adapter.readNote(newPath);
+        throw new Error('File already exists');
+      } catch (e: any) {
+        if (e.message !== 'File not found: ' + newPath) {
+             // If it's "File already exists", throw it.
+             // If readNote failed with something else, rethrow or proceed?
+             // MobileSandboxVaultAdapter throws "File not found: ..."
+             if (e.message === 'File already exists') throw e;
+        }
+      }
+
+      await adapter.rename(noteId, newPath);
+
+      // Update Indexes
+      if (searchIndex) {
+          await searchIndex.remove(noteId);
+          await searchIndex.upsert({
+              id: newPath,
+              title: newName,
+              content: content, // Use current content from state
+              mtimeMs: Date.now()
+          });
+      }
+
+      if (linkIndex) {
+          await linkIndex.removeSource(noteId);
+           const links = parseWikilinks(content).map((match: any) => ({
+               source: newPath,
+               targetRaw: match.targetRaw,
+               targetPath: match.targetRaw
+           }));
+          await linkIndex.upsertLinks(newPath, links);
+      }
+
+      // Update Recents
+      await recentsStorage.remove(noteId);
+      await recentsStorage.add(newPath);
+
+      // Seamless Transition
+      ignoreNextLoadRef.current = true;
+      router.setParams({ id: encodeURIComponent(newPath) });
+
+    } catch (e: any) {
+       console.error('Rename failed', e);
+       throw e; // Propagate to component to show alert
     }
   };
 
@@ -272,7 +346,7 @@ export default function NoteScreen() {
 
           if (linkIndex) {
               try {
-                  const links = parseWikilinks(textToSave).map(match => ({
+                  const links = parseWikilinks(textToSave).map((match: any) => ({
                       source: noteId!,
                       targetRaw: match.targetRaw,
                       targetPath: match.targetRaw
@@ -346,7 +420,11 @@ export default function NoteScreen() {
              <Text style={{ fontSize: 24, color: paperTheme.colors.onSurface }}>←</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.title, { color: paperTheme.colors.onSurface }]} numberOfLines={1}>{noteId}</Text>
+          <EditableHeaderTitle
+             title={noteId?.split('/').pop()?.replace(/\.md$/i, '') || ''}
+             onRename={handleRename}
+             disabled={isDirty} // Disable rename while unsaved changes exist to prevent sync issues
+          />
 
           <View style={styles.badges}>
               {saveStatus !== SaveStatus.Idle && (
@@ -371,7 +449,6 @@ export default function NoteScreen() {
           {/* Editor */}
           <EditorView
             ref={editorRef}
-            initialContent={content}
             onReady={handleEditorReady}
             onDocChanged={handleDocChanged}
             onRequestResponse={handleRequestResponse}
@@ -380,7 +457,7 @@ export default function NoteScreen() {
           />
 
           {/* Formatting Toolbar */}
-          <FormattingToolbar editorRef={editorRef} />
+          <FormattingToolbar editorRef={editorRef as React.RefObject<EditorViewRef>} />
 
           {/* Footer */}
           <LastSavedFooter timestamp={lastSavedAt} />
@@ -416,11 +493,6 @@ const styles = StyleSheet.create({
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomWidth: 1,
-  },
-  title: {
-      fontSize: 18,
-      fontWeight: '600',
-      flex: 1,
   },
   badges: {
       flexDirection: 'row',
