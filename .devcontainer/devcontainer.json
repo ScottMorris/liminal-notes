@@ -3,6 +3,12 @@
   "dockerFile": "Dockerfile",
   "workspaceFolder": "/workspaces/liminal-notes",
   "forwardPorts": [5173, 1420],
+  "runArgs": [
+    "--device=/dev/snd",
+    "--group-add=audio",
+    "--env=PULSE_SERVER=unix:/run/user/1000/pulse/native",
+    "--volume=/run/user/1000/pulse/native:/run/user/1000/pulse/native"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
