@@ -13,6 +13,7 @@ export function EditableHeaderTitle({ title, onRename, disabled }: EditableHeade
   const [isEditing, setIsEditing] = useState(false);
   const [tempTitle, setTempTitle] = useState(title);
   const inputRef = useRef<TextInput>(null);
+  const isCommittingRef = useRef(false);
 
   useEffect(() => {
     // Reset temp title if external title changes (e.g. navigation)
@@ -33,9 +34,13 @@ export function EditableHeaderTitle({ title, onRename, disabled }: EditableHeade
   };
 
   const handleCommit = async () => {
+    if (isCommittingRef.current) return;
+    isCommittingRef.current = true;
+
     const trimmed = tempTitle.trim();
     if (!trimmed || trimmed === title) {
       cancelEditing();
+      isCommittingRef.current = false;
       return;
     }
 
@@ -46,6 +51,8 @@ export function EditableHeaderTitle({ title, onRename, disabled }: EditableHeade
       Alert.alert('Rename Failed', e.message || 'Unknown error');
       // Keep editing state so user can fix it
       inputRef.current?.focus();
+    } finally {
+      isCommittingRef.current = false;
     }
   };
 

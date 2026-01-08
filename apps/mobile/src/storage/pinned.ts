@@ -47,5 +47,16 @@ export const pinnedStorage = {
           await this.pin(id, type);
           return true;
       }
+  },
+
+  async update(oldId: string, newId: string): Promise<void> {
+    const items = await this.getAll();
+    const updated = items.map((i) => {
+        if (i.id === oldId) {
+            return { ...i, id: newId };
+        }
+        return i;
+    });
+    await kv.setJSON(STORAGE_KEYS.PINNED_ITEMS, updated);
   }
 };

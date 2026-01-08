@@ -3,6 +3,7 @@ import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution';
 import { SearchIndex, LinkIndex } from '@liminal-notes/core-shared/indexing/types';
 import { NoteId } from '@liminal-notes/core-shared/types';
 import { recentsStorage } from '../storage/recents';
+import { pinnedStorage } from '../storage/pinned';
 import { WikiLinkMatch } from '@liminal-notes/core-shared/types';
 import { FileExistsError, FileNotFoundError } from '../errors';
 
@@ -78,6 +79,9 @@ export async function renameNote({
       // Update Recents
       await recentsStorage.remove(noteId);
       await recentsStorage.add(newPath);
+
+      // Update Pinned Items
+      await pinnedStorage.update(noteId, newPath);
 
       // Seamless Transition
       ignoreNextLoadRef.current = true;
