@@ -304,6 +304,17 @@ Navigation logic is centralized in `apps/mobile/src/navigation/router.ts` to abs
 * `openNote(id: string)`
 * `openPath(path: string)`
 
+### 12.4 Seamless Renaming
+
+To support renaming the current note without a disruptive reload:
+
+1. The `EditableHeaderTitle` component provides a tap-to-edit interface in the navigation bar.
+2. The rename operation updates the file system, indexes (Search, Link), and persistent storage (Recents, Pinned) atomically.
+3. The router's route parameters (`id` or `folder`) are updated in-place via `router.setParams`.
+4. The `NoteScreen` uses a `ignoreNextLoadRef` mechanism to prevent the `useEffect` that loads content from firing when the ID changes. This ensures the editor state (cursor, history) is preserved seamlessly.
+
+For folder renaming, the same pattern applies: files are moved, the search index is healed via a scan of the new location, and the `folder` parameter is updated in the explorer view.
+
 ---
 
 ## 13. Documentation & Evolution
