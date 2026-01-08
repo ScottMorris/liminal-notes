@@ -1,6 +1,6 @@
 import React from 'react';
 import { SettingsSectionDef, SettingsGroupDef, SettingRowDef, SettingControlDef, SettingsActionHandler } from './types';
-import { ToggleSwitch, SelectDropdown, TextInput, NumberInput, Slider, ActionButton, ComputedText } from './controls';
+import { ToggleSwitch, SelectDropdown, TextInput, NumberInput, Slider, ActionButton, ComputedText, ProgressBar } from './controls';
 import { CollectionList } from './CollectionList';
 
 interface RendererProps {
@@ -69,6 +69,7 @@ const Control: React.FC<{ def: SettingControlDef; onAction: SettingsActionHandle
         case 'slider': return <Slider def={def} />;
         case 'action': return <ActionButton def={def} onAction={onAction} />;
         case 'computed': return <ComputedText def={def} />;
+        case 'progress': return <ProgressBar def={def} />;
         case 'collection': return <CollectionList def={def} />;
         default: return null;
     }

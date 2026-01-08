@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useTts } from './useTts';
 import { useSettings } from '../../contexts/SettingsContext';
 
@@ -9,7 +9,7 @@ interface TtsPlayerProps {
 
 export const TtsPlayer: React.FC<TtsPlayerProps> = ({ onHighlight, getData }) => {
   const { settings } = useSettings();
-  const { status, isSynthesizing, isPlaying, error, currentSegment, speak, stop, pause, resume } = useTts();
+  const { status, isSynthesizing, isPlaying, error, currentSegment, synthProgress, speak, stop, pause, resume } = useTts();
 
   // Read defaults directly, no local state needed for controls as they are hidden
   const voice = (settings['tts.defaultVoice'] as string) || 'af_sky';
@@ -62,7 +62,7 @@ export const TtsPlayer: React.FC<TtsPlayerProps> = ({ onHighlight, getData }) =>
           )}
 
           <button onClick={stop} disabled={!isPlaying && !isSynthesizing && !currentSegment} className="hover:opacity-80 disabled:opacity-30">
-              ⏹ Stop
+              ⏹ {isSynthesizing ? 'Cancel' : 'Stop'}
           </button>
 
           {/* Status info */}
@@ -71,7 +71,11 @@ export const TtsPlayer: React.FC<TtsPlayerProps> = ({ onHighlight, getData }) =>
           </div>
        </div>
 
-       {isSynthesizing && <div className="text-xs text-blue-500">Synthesizing...</div>}
+       {isSynthesizing && (
+         <div className="text-xs text-blue-500">
+           {synthProgress ? `Synthesising ${synthProgress.current}/${synthProgress.total}...` : 'Synthesising...'}
+         </div>
+       )}
        {error && <div className="text-red-500 text-xs">{error}</div>}
     </div>
   );

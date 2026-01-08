@@ -6,6 +6,7 @@ export type SettingKind =
   | "slider"
   | "action"
   | "computed"
+  | "progress"
   | "collection"
   | "search";
 

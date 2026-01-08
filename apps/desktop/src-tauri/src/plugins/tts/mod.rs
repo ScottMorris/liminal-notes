@@ -1,6 +1,7 @@
 use super::traits::{NativeBackendPlugin, NativePluginContext, ActivePlugin, Invocable};
 use serde_json::Value;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::sync::Mutex;
 use std::future::Future;
 use std::pin::Pin;
@@ -39,10 +40,34 @@ impl<R: Runtime> NativeBackendPlugin<R> for TtsPlugin {
 pub struct TtsInstance {
     tts_dir: PathBuf,
     engine: Arc<Mutex<Option<KokoroTts>>>,
+    cancel_flag: Arc<AtomicBool>,
+    install_progress: Arc<Mutex<InstallProgress>>,
 }
 
-const MODEL_FILENAME: &str = "kokoro-v1.0.int8.onnx";
+const MODEL_FILENAME: &str = "kokoro-v1.0.onnx";
 const VOICES_FILENAME: &str = "voices.bin";
+
+#[derive(Clone, Default)]
+struct InstallProgress {
+    status: String,
+    phase: String,
+    downloaded_bytes: u64,
+    total_bytes: u64,
+}
+
+async fn set_install_progress(
+    progress: &Arc<Mutex<InstallProgress>>,
+    status: &str,
+    phase: &str,
+    downloaded_bytes: u64,
+    total_bytes: u64,
+) {
+    let mut guard = progress.lock().await;
+    guard.status = status.to_string();
+    guard.phase = phase.to_string();
+    guard.downloaded_bytes = downloaded_bytes;
+    guard.total_bytes = total_bytes;
+}
 
 fn check_model_files(tts_dir: &Path) -> Result<(), String> {
     let model_path = tts_dir.join("models").join(MODEL_FILENAME);
@@ -53,7 +78,7 @@ fn check_model_files(tts_dir: &Path) -> Result<(), String> {
         .map_err(|_| "Voices file missing".to_string())?;
 
     // Guard against partial or HTML downloads.
-    if model_meta.len() < 80_000_000 {
+    if model_meta.len() < 200_000_000 {
         return Err("Model file looks incomplete; please reinstall the TTS model.".to_string());
     }
     if voices_meta.len() < 20_000_000 {
@@ -85,13 +110,13 @@ fn import_local_files(tts_dir: &Path, source_dir: &Path) -> Result<Value, String
 
     let source_model = source_dir.join(MODEL_FILENAME);
     let source_voices = source_dir.join(VOICES_FILENAME);
-    let fallback_model = source_dir.join("kokoro-v1.0.onnx");
+    let fallback_model = source_dir.join("kokoro-v1.0.int8.onnx");
     let fallback_voices = source_dir.join("voices-v1.0.bin");
 
     let model_source = if source_model.exists() {
         source_model
     } else if fallback_model.exists() {
-        return Err("Found kokoro-v1.0.onnx, but this build requires kokoro-v1.0.int8.onnx. Please download the V1.0 int8 model.".to_string());
+        return Err("Found kokoro-v1.0.int8.onnx, but this build requires kokoro-v1.0.onnx for higher quality speech.".to_string());
     } else {
         return Err("Local model file not found in the provided folder.".to_string());
     };
@@ -99,7 +124,7 @@ fn import_local_files(tts_dir: &Path, source_dir: &Path) -> Result<Value, String
     let voices_source = if source_voices.exists() {
         source_voices
     } else if fallback_voices.exists() {
-        return Err("Found voices-v1.0.bin, but this build requires voices.bin from the V1.0 release.".to_string());
+        fallback_voices
     } else {
         return Err("Local voices file not found in the provided folder.".to_string());
     };
@@ -127,30 +152,82 @@ fn read_audio_file(tts_dir: &Path, path: &Path) -> Result<Value, String> {
     Ok(serde_json::json!({ "base64": encoded }))
 }
 
+fn dir_stats(path: &Path) -> Result<(u64, u64), String> {
+    if !path.exists() {
+        return Ok((0, 0));
+    }
+
+    let mut total_bytes = 0u64;
+    let mut total_files = 0u64;
+    let mut stack = vec![path.to_path_buf()];
+
+    while let Some(current) = stack.pop() {
+        let entries = std::fs::read_dir(&current).map_err(|e| e.to_string())?;
+        for entry in entries {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let meta = entry.metadata().map_err(|e| e.to_string())?;
+            if meta.is_dir() {
+                stack.push(entry.path());
+            } else if meta.is_file() {
+                total_files += 1;
+                total_bytes += meta.len();
+            }
+        }
+    }
+
+    Ok((total_bytes, total_files))
+}
+
+fn cache_stats(tts_dir: &Path) -> Result<Value, String> {
+    let model_dir = tts_dir.join("models");
+    let cache_dir = tts_dir.join("cache");
+    let (model_bytes, model_files) = dir_stats(&model_dir)?;
+    let (cache_bytes, cache_files) = dir_stats(&cache_dir)?;
+
+    Ok(serde_json::json!({
+        "model_bytes": model_bytes,
+        "model_files": model_files,
+        "cache_bytes": cache_bytes,
+        "cache_files": cache_files,
+        "model_dir": model_dir.to_string_lossy(),
+        "cache_dir": cache_dir.to_string_lossy()
+    }))
+}
+
 impl TtsInstance {
     pub fn new(tts_dir: PathBuf) -> Self {
         Self {
             tts_dir,
             engine: Arc::new(Mutex::new(None)),
+            cancel_flag: Arc::new(AtomicBool::new(false)),
+            install_progress: Arc::new(Mutex::new(InstallProgress::default())),
         }
     }
 
     // Helper to run installation logic (async)
-    async fn install_logic(tts_dir: PathBuf, engine: Arc<Mutex<Option<KokoroTts>>>) -> Result<Value, String> {
+    async fn install_logic(
+        tts_dir: PathBuf,
+        engine: Arc<Mutex<Option<KokoroTts>>>,
+        install_progress: Arc<Mutex<InstallProgress>>,
+    ) -> Result<Value, String> {
         let model_dir = tts_dir.join("models");
         if model_dir.exists() {
             std::fs::remove_dir_all(&model_dir).map_err(|e| e.to_string())?;
         }
         std::fs::create_dir_all(&model_dir).map_err(|e| e.to_string())?;
 
-        let model_url = "https://github.com/mzdk100/kokoro/releases/download/V1.0/kokoro-v1.0.int8.onnx";
+        let model_url = "https://github.com/mzdk100/kokoro/releases/download/V1.0/kokoro-v1.0.onnx";
         let voices_url = "https://github.com/mzdk100/kokoro/releases/download/V1.0/voices.bin";
 
         let model_path = model_dir.join(MODEL_FILENAME);
         let voices_path = model_dir.join(VOICES_FILENAME);
 
-        download_file(model_url, &model_path).await?;
-        download_file(voices_url, &voices_path).await?;
+        set_install_progress(&install_progress, "downloading", "Model", 0, 0).await;
+        let model_size = download_file(model_url, &model_path, install_progress.clone(), 0, "Model").await?;
+        set_install_progress(&install_progress, "downloading", "Voices", model_size, model_size).await;
+        let voices_size = download_file(voices_url, &voices_path, install_progress.clone(), model_size, "Voices").await?;
+        let total_size = model_size + voices_size;
+        set_install_progress(&install_progress, "verifying", "Checking files", total_size, total_size).await;
         check_model_files(&tts_dir)?;
 
         // Initialise engine
@@ -171,10 +248,34 @@ impl TtsInstance {
             *engine_guard = Some(tts);
         }
 
+        let total_size = model_size + voices_size;
+        set_install_progress(&install_progress, "complete", "Done", total_size, total_size).await;
         Ok(serde_json::json!({ "status": "installed" }))
     }
 
-    async fn synthesize_logic(tts_dir: PathBuf, engine: Arc<Mutex<Option<KokoroTts>>>, text: String, voice: String, speed: f32) -> Result<Value, String> {
+    fn sanitise_sentence(sentence: &str) -> String {
+        sentence
+            .replace('‘', "'")
+            .replace('’', "'")
+            .replace('“', "\"")
+            .replace('”', "\"")
+            .replace('—', "-")
+            .replace('–', "-")
+            .replace("…", "...")
+            .replace('«', "(")
+            .replace('»', ")")
+            .replace('，', ",")
+            .replace('。', ".")
+            .replace('！', "!")
+            .replace('？', "?")
+            .replace('：', ":")
+            .replace('；', ";")
+            .trim()
+            .to_string()
+    }
+
+    async fn synthesize_logic(tts_dir: PathBuf, engine: Arc<Mutex<Option<KokoroTts>>>, cancel_flag: Arc<AtomicBool>, text: String, voice: String, speed: f32) -> Result<Value, String> {
+        cancel_flag.store(false, Ordering::SeqCst);
         // Ensure loaded
         {
             let mut guard = engine.lock().await;
@@ -225,13 +326,19 @@ impl TtsInstance {
         let tts = guard.as_ref().unwrap();
 
         for (byte_start, sentence) in sentence_bounds {
+            if cancel_flag.load(Ordering::SeqCst) {
+                return Err("Synthesis cancelled.".to_string());
+            }
+
             let sentence_trimmed = sentence.trim();
             if sentence_trimmed.is_empty() {
                 continue;
             }
 
+            let cleaned = Self::sanitise_sentence(sentence_trimmed);
+
             // Synthesize segment
-            let (samples, _) = tts.synth(sentence_trimmed, selected_voice).await
+            let (samples, _) = tts.synth(&cleaned, selected_voice).await
                 .map_err(|e| {
                     let message = e.to_string();
                     if message.contains("Utf8") {
@@ -304,7 +411,13 @@ impl TtsInstance {
     }
 }
 
-async fn download_file(url: &str, path: &Path) -> Result<(), String> {
+async fn download_file(
+    url: &str,
+    path: &Path,
+    install_progress: Arc<Mutex<InstallProgress>>,
+    base_downloaded: u64,
+    phase: &str,
+) -> Result<u64, String> {
     let client = reqwest::Client::builder()
         .user_agent("Liminal Notes TTS Installer")
         .build()
@@ -317,16 +430,36 @@ async fn download_file(url: &str, path: &Path) -> Result<(), String> {
         return Err(format!("Download failed ({}): {}", status, snippet));
     }
 
+    let total_bytes = response.content_length().unwrap_or(0);
+    set_install_progress(
+        &install_progress,
+        "downloading",
+        phase,
+        base_downloaded,
+        base_downloaded + total_bytes,
+    ).await;
+
     let tmp_path = path.with_extension("download");
     let mut file = tokio::fs::File::create(&tmp_path).await.map_err(|e| e.to_string())?;
     let mut stream = response.bytes_stream();
+    let mut downloaded = 0u64;
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| e.to_string())?;
         file.write_all(&chunk).await.map_err(|e| e.to_string())?;
+        downloaded += chunk.len() as u64;
+        if total_bytes > 0 {
+            set_install_progress(
+                &install_progress,
+                "downloading",
+                phase,
+                base_downloaded + downloaded,
+                base_downloaded + total_bytes,
+            ).await;
+        }
     }
     file.flush().await.map_err(|e| e.to_string())?;
     tokio::fs::rename(&tmp_path, path).await.map_err(|e| e.to_string())?;
-    Ok(())
+    Ok(downloaded)
 }
 
 impl Invocable for TtsInstance {
@@ -334,6 +467,8 @@ impl Invocable for TtsInstance {
         let method = method.to_string();
         let tts_dir = self.tts_dir.clone();
         let engine = self.engine.clone();
+        let cancel_flag = self.cancel_flag.clone();
+        let install_progress = self.install_progress.clone();
 
         Box::pin(async move {
             match method.as_str() {
@@ -346,7 +481,19 @@ impl Invocable for TtsInstance {
                     }))
                 }
                 "install" => {
-                    TtsInstance::install_logic(tts_dir, engine).await
+                    TtsInstance::install_logic(tts_dir, engine, install_progress).await
+                }
+                "install_progress" => {
+                    let progress = install_progress.lock().await.clone();
+                    Ok(serde_json::json!({
+                        "status": progress.status,
+                        "phase": progress.phase,
+                        "downloaded_bytes": progress.downloaded_bytes,
+                        "total_bytes": progress.total_bytes,
+                    }))
+                }
+                "cache_stats" => {
+                    cache_stats(&tts_dir)
                 }
                 "clear_cache" => {
                     clear_cache_files(&tts_dir)
@@ -374,7 +521,13 @@ impl Invocable for TtsInstance {
                     let text = payload["text"].as_str().ok_or("Missing text")?.to_string();
                     let voice = payload.get("voice").and_then(|v| v.as_str()).unwrap_or("af_sky").to_string();
                     let speed = payload.get("speed").and_then(|v| v.as_f64()).unwrap_or(1.0) as f32;
-                    TtsInstance::synthesize_logic(tts_dir, engine, text, voice, speed).await
+                    TtsInstance::synthesize_logic(tts_dir, engine, cancel_flag, text, voice, speed).await
+                }
+                "cancel" => {
+                    cancel_flag.store(true, Ordering::SeqCst);
+                    Ok(serde_json::json!({
+                        "status": "cancelled"
+                    }))
                 }
                 _ => Err(format!("Method {} not found", method)),
             }

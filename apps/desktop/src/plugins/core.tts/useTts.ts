@@ -1,37 +1,87 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { resolveAudioSrc } from './audio';
+import { useSettings } from '../../contexts/SettingsContext';
+import { synthesiseChunk } from './ttsEngines';
+import { TtsSegment } from './types';
 
 const PLUGIN_ID = 'core.tts';
+const DEFAULT_CHUNK_SIZE = 1200;
+
+interface TtsChunk {
+  text: string;
+  startChar: number;
+  endChar: number;
+}
 
 export interface TtsStatus {
   installed: boolean;
   loaded: boolean;
 }
 
-export interface TtsSegment {
-  startChar: number;
-  endChar: number;
-  startMs: number;
-  endMs: number;
-}
+const buildChunks = (text: string, maxChars: number = DEFAULT_CHUNK_SIZE): TtsChunk[] => {
+  if (!text) return [];
 
-export interface TtsResult {
-  path: string;
-  duration_ms: number;
-  segments: TtsSegment[];
-}
+  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+    const segmenter = new Intl.Segmenter('en', { granularity: 'sentence' });
+    const chunks: TtsChunk[] = [];
+    let chunkStart = 0;
+    let chunkLength = 0;
+    let lastEnd = 0;
+
+    for (const { segment, index } of segmenter.segment(text)) {
+      const segStart = index;
+      const segEnd = index + segment.length;
+      const segLength = segEnd - segStart;
+      lastEnd = segEnd;
+
+      if (chunkLength > 0 && chunkLength + segLength > maxChars) {
+        chunks.push({
+          text: text.slice(chunkStart, segStart),
+          startChar: chunkStart,
+          endChar: segStart
+        });
+        chunkStart = segStart;
+        chunkLength = segLength;
+      } else {
+        chunkLength += segLength;
+      }
+    }
+
+    if (chunkLength > 0) {
+      chunks.push({
+        text: text.slice(chunkStart, lastEnd),
+        startChar: chunkStart,
+        endChar: lastEnd
+      });
+    }
+
+    return chunks;
+  }
+
+  const chunks: TtsChunk[] = [];
+  for (let start = 0; start < text.length; start += maxChars) {
+    const end = Math.min(text.length, start + maxChars);
+    chunks.push({ text: text.slice(start, end), startChar: start, endChar: end });
+  }
+  return chunks;
+};
 
 export const useTts = () => {
+  const { settings } = useSettings();
   const [status, setStatus] = useState<TtsStatus>({ installed: false, loaded: false });
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [revokeAudioUrl, setRevokeAudioUrl] = useState<(() => void) | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [synthProgress, setSynthProgress] = useState<{ current: number; total: number } | null>(null);
 
   const [segments, setSegments] = useState<TtsSegment[]>([]);
   const [currentSegment, setCurrentSegment] = useState<TtsSegment | null>(null);
+  const runIdRef = useRef(0);
+  const cancelRequestedRef = useRef(false);
+  const cancelResolversRef = useRef<Set<() => void>>(new Set());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const checkStatus = useCallback(async () => {
     try {
@@ -86,11 +136,51 @@ export const useTts = () => {
     }
   };
 
+  const stopAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.removeAttribute('src');
+      audio.load();
+    }
+    if (revokeAudioUrl) {
+      revokeAudioUrl();
+    }
+    setCurrentAudio(null);
+    setRevokeAudioUrl(null);
+    setIsPlaying(false);
+    setCurrentSegment(null);
+  }, [revokeAudioUrl]);
+
+  const cancelSynthesis = useCallback(async () => {
+    cancelRequestedRef.current = true;
+    runIdRef.current += 1;
+    cancelResolversRef.current.forEach(resolve => resolve());
+    cancelResolversRef.current.clear();
+    stopAudio();
+    setIsSynthesizing(false);
+    setSynthProgress(null);
+    setSegments([]);
+    try {
+      await invoke<any>('native_plugin_invoke', {
+        pluginId: PLUGIN_ID,
+        method: 'cancel',
+        requestId: Math.random().toString(),
+        payload: {}
+      });
+    } catch (e) {
+      console.error('TTS cancel failed', e);
+    }
+  }, [stopAudio]);
+
   const speak = async (text: string, voice: string = 'af_sky', speed: number = 1.0) => {
     if (!text) return;
 
     // Stop previous
-    stop();
+    await cancelSynthesis();
+    cancelRequestedRef.current = false;
+    const runId = runIdRef.current;
 
     setIsSynthesizing(true);
     setError(null);
@@ -98,47 +188,115 @@ export const useTts = () => {
     setCurrentSegment(null);
 
     try {
-      const res = await invoke<any>('native_plugin_invoke', {
-        pluginId: PLUGIN_ID,
-        method: 'synthesize',
-        requestId: Math.random().toString(),
-        payload: { text, voice, speed }
-      });
-
-      if (!res.ok) {
-        throw new Error(res.error?.message || 'Synthesis failed');
+      const chunks = buildChunks(text);
+      if (chunks.length === 0) {
+        setIsSynthesizing(false);
+        return;
       }
 
-      const { path, segments: resSegments } = res.result as TtsResult;
-      setSegments(resSegments || []);
+      setSynthProgress({ current: 0, total: chunks.length });
 
-      const resolved = await resolveAudioSrc(path);
+      if (!audioRef.current) {
+        const audio = document.createElement('audio');
+        audio.preload = 'auto';
+        audio.style.display = 'none';
+        document.body.appendChild(audio);
+        audioRef.current = audio;
+      }
 
-      const audio = new Audio(resolved.url);
-      audio.playbackRate = 1.0;
-
-      audio.onended = () => {
-        setIsPlaying(false);
-        setCurrentAudio(null);
-        setCurrentSegment(null);
-        if (resolved.revoke) {
-          resolved.revoke();
+      for (let index = 0; index < chunks.length; index += 1) {
+        if (cancelRequestedRef.current || runIdRef.current !== runId) {
+          return;
         }
-        setRevokeAudioUrl(null);
-      };
 
-      audio.ontimeupdate = () => {
-          const currentTimeMs = audio.currentTime * 1000;
-          // Find segment
-          const seg = resSegments?.find(s => currentTimeMs >= s.startMs && currentTimeMs < s.endMs);
-          setCurrentSegment(seg || null);
-      };
+        const chunk = chunks[index];
+        setSynthProgress({ current: index + 1, total: chunks.length });
+        setIsSynthesizing(true);
 
-      audio.play();
-      setCurrentAudio(audio);
-      setRevokeAudioUrl(resolved.revoke || null);
-      setIsPlaying(true);
+        const { url, revoke, segments: resSegments } = await synthesiseChunk(chunk.text, voice, speed);
 
+        if (runIdRef.current !== runId) {
+          if (revoke) {
+            revoke();
+          }
+          return;
+        }
+
+        const adjustedSegments = (resSegments || []).map(segment => ({
+          ...segment,
+          startChar: segment.startChar + chunk.startChar,
+          endChar: segment.endChar + chunk.startChar
+        }));
+        setSegments(adjustedSegments);
+
+        if (runIdRef.current !== runId) {
+          if (revoke) {
+            revoke();
+          }
+          return;
+        }
+
+        await new Promise<void>((resolve, reject) => {
+          const audio = audioRef.current!;
+          audio.pause();
+          audio.currentTime = 0;
+          audio.playbackRate = 1.0;
+          audio.src = url;
+          audio.load();
+
+          const cancelResolver = () => {
+            cleanup();
+            resolve();
+          };
+
+          const cleanup = () => {
+            cancelResolversRef.current.delete(cancelResolver);
+            audio.onended = null;
+            audio.onerror = null;
+            audio.ontimeupdate = null;
+          };
+
+          cancelResolversRef.current.add(cancelResolver);
+
+          audio.onended = () => {
+            cleanup();
+            if (runIdRef.current === runId) {
+              setIsPlaying(false);
+              setCurrentAudio(null);
+              setCurrentSegment(null);
+              if (revoke) {
+                revoke();
+              }
+              setRevokeAudioUrl(null);
+            }
+            resolve();
+          };
+
+          audio.onerror = () => {
+            cleanup();
+            reject(new Error('Audio playback failed'));
+          };
+
+          audio.ontimeupdate = () => {
+            if (runIdRef.current !== runId) {
+              return;
+            }
+            const currentTimeMs = audio.currentTime * 1000;
+            const seg = adjustedSegments.find(s => currentTimeMs >= s.startMs && currentTimeMs < s.endMs);
+            setCurrentSegment(seg || null);
+          };
+
+          audio
+            .play()
+            .then(() => {
+              setCurrentAudio(audio);
+              setRevokeAudioUrl(revoke || null);
+              setIsPlaying(true);
+              setIsSynthesizing(false);
+            })
+            .catch(reject);
+        });
+      }
     } catch (e: any) {
       const message =
         e instanceof Error
@@ -147,7 +305,9 @@ export const useTts = () => {
             ? e
             : e?.message || 'Synthesis failed';
       console.error('TTS synthesis failed', e);
-      if (message.includes('Model files appear corrupt')) {
+      if (message.toLowerCase().includes('cancelled')) {
+        setError(null);
+      } else if (message.includes('Model files appear corrupt')) {
         setStatus({ installed: false, loaded: false });
         setError('Something went wrong. Open Settings → Read Aloud.');
       } else {
@@ -155,22 +315,13 @@ export const useTts = () => {
       }
     } finally {
       setIsSynthesizing(false);
+      setSynthProgress(null);
     }
   };
 
   const stop = useCallback(() => {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-      setCurrentAudio(null);
-      setIsPlaying(false);
-      setCurrentSegment(null);
-    }
-    if (revokeAudioUrl) {
-      revokeAudioUrl();
-      setRevokeAudioUrl(null);
-    }
-  }, [currentAudio, revokeAudioUrl]);
+    void cancelSynthesis();
+  }, [cancelSynthesis]);
 
   const pause = useCallback(() => {
     if (currentAudio) {
@@ -192,6 +343,7 @@ export const useTts = () => {
     isPlaying,
     error,
     currentSegment,
+    synthProgress,
     checkStatus,
     installModel,
     speak,

@@ -244,3 +244,22 @@ export const ComputedText: React.FC<{ def: SettingControlDef }> = ({ def }) => {
         </span>
     );
 };
+
+export const ProgressBar: React.FC<{ def: SettingControlDef }> = ({ def }) => {
+    const [value] = useSettingValue<number>(def.key);
+    const safeValue = typeof value === 'number' && Number.isFinite(value) ? Math.min(Math.max(value, 0), 100) : 0;
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px' }}>
+            <progress
+                max={100}
+                value={safeValue}
+                aria-label={def.label || 'Download progress'}
+                style={{ width: '140px', height: '8px' }}
+            />
+            <span style={{ color: 'var(--ln-muted)', fontSize: '0.85rem', width: '36px', textAlign: 'right' }}>
+                {safeValue.toFixed(0)}%
+            </span>
+        </div>
+    );
+};
