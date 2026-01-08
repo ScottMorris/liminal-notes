@@ -4,7 +4,8 @@ import { builtInPlugins } from '../../plugins/registry';
 
 export const getSections = (
     availableThemes: Theme[],
-    appVersion: string
+    appVersion: string,
+    enabledPlugins: Set<string>
 ): SettingsSectionDef[] => {
     // Sort themes: System, then Light themes, then Dark themes
     const lightThemes = availableThemes
@@ -199,7 +200,7 @@ export const getSections = (
     // Inject plugin settings
     const pluginSections: SettingsSectionDef[] = [];
     builtInPlugins.forEach(p => {
-        if (p.settings) {
+        if (p.settings && enabledPlugins.has(p.meta.id)) {
             pluginSections.push(p.settings);
         }
     });

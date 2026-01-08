@@ -21,6 +21,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
     const { availableThemes } = useTheme();
     const { settings, updateSetting } = useSettings();
     const { notify } = useNotification();
+    const { enabledPlugins } = usePluginHost();
     // We need plugin context to pass to onSettingsAction.
     // Currently PluginHostProvider doesn't expose the full context object easily,
     // but it exposes 'log' and 'getCurrentNote' is internal state.
@@ -38,7 +39,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
 
     const appVersion = pkg.version;
 
-    const sections = useMemo(() => getSections(availableThemes, appVersion), [availableThemes, appVersion]);
+    const sections = useMemo(
+        () => getSections(availableThemes, appVersion, enabledPlugins),
+        [availableThemes, appVersion, enabledPlugins]
+    );
 
     const tagSection = { id: 'tags', title: 'Tag Management', settings: [], groups: [] };
 
