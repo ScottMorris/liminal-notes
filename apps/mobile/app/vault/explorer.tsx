@@ -7,6 +7,9 @@ import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 import { FAB, FABAction } from '../../src/components/FAB';
 import { PromptModal } from '../../src/components/PromptModal';
 import { useTheme, Text, List, ActivityIndicator, Divider } from 'react-native-paper';
+import { EditableHeaderTitle } from '../../src/components/Editor/EditableHeaderTitle';
+import { renameFolder } from '../../src/utils/fileOperations';
+import { useIndex } from '../../src/context/IndexContext';
 
 export default function ExplorerScreen() {
   const router = useRouter();
@@ -14,6 +17,7 @@ export default function ExplorerScreen() {
   const { folder } = useLocalSearchParams<{ folder?: string }>();
   const currentPath = folder || '';
   const theme = useTheme();
+  const { searchIndex, linkIndex } = useIndex();
 
   const [items, setItems] = useState<VaultFileEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,6 +117,24 @@ export default function ExplorerScreen() {
       }
   };
 
+  const handleRename = async (newName: string) => {
+      if (!currentPath) return; // Cannot rename root
+
+      try {
+          await renameFolder({
+              oldPath: currentPath,
+              newName,
+              searchIndex,
+              linkIndex,
+              router
+          });
+      } catch (e: unknown) {
+          if (e instanceof Error) {
+               Alert.alert('Rename failed', e.message);
+          }
+      }
+  };
+
   const fabActions: FABAction[] = [
       { id: 'note', label: 'New Note', icon: 'file-document-outline', onPress: handleCreateNote },
       { id: 'folder', label: 'New Folder', icon: 'folder-outline', onPress: () => setIsFolderPromptVisible(true) },
@@ -130,7 +152,9 @@ export default function ExplorerScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen
         options={{
-            title: currentPath ? currentPath.split('/').pop() : 'Documents',
+            headerTitle: currentPath
+                ? () => <EditableHeaderTitle title={currentPath.split('/').pop() || ''} onRename={handleRename} />
+                : 'Documents',
             headerRight: currentPath === '' ? () => (
                 <TouchableOpacity onPress={() => router.push('/vault/sandbox')} style={{ marginRight: 8 }}>
                     <Text style={{ color: theme.colors.primary, fontSize: 16 }}>Sandbox Tools</Text>
