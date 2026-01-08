@@ -25,6 +25,8 @@ export function EditableHeaderTitle({ title, onRename, disabled }: EditableHeade
 
   const handleStartEditing = () => {
     if (disabled) return;
+    // Reset commit lock when starting new edit
+    isCommittingRef.current = false;
     setTempTitle(title);
     setIsEditing(true);
     // Timeout to allow render to switch to TextInput before focusing
@@ -47,11 +49,19 @@ export function EditableHeaderTitle({ title, onRename, disabled }: EditableHeade
     try {
       await onRename(trimmed);
       setIsEditing(false);
+      // Do NOT reset isCommittingRef here.
+      // Successful rename will likely trigger unmount or navigation.
+      // If we reset, a pending onBlur might fire and cause a double-rename error.
+      // We rely on the component unmounting or re-initializing to reset the ref.
+      // Or if we stay mounted, handleStartEditing will re-enable it (if we were to add logic there,
+      // but actually since we set isEditing(false), the input is removed, so onBlur/onSubmit won't fire again on THAT input).
+      // However, onBlur fires *before* the state update processes sometimes.
+      // Letting the Ref stay true prevents the second event.
+      // We only reset on error.
     } catch (e: any) {
       Alert.alert('Rename Failed', e.message || 'Unknown error');
       // Keep editing state so user can fix it
       inputRef.current?.focus();
-    } finally {
       isCommittingRef.current = false;
     }
   };

@@ -145,6 +145,7 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
     const toSegments = to.split('/');
 
     const fromFile = new File(this.rootDir, ...fromSegments);
+    const fromDir = new Directory(this.rootDir, ...fromSegments);
     const toFile = new File(this.rootDir, ...toSegments);
 
     // Check parent of destination
@@ -159,16 +160,22 @@ export class MobileSandboxVaultAdapter implements VaultAdapter {
     // Move file
     // file.move() takes a Directory or File as destination.
     // Check if target exists first to throw correct error
-    if (toFile.exists) {
+    // Note: for directories, toFile.exists might check file existence only, but let's trust underlying check or add dir check if needed.
+    // However, toFile is a File instance.
+    const toDir = new Directory(this.rootDir, ...toSegments);
+    if (toFile.exists || toDir.exists) {
         throw new FileExistsError(to);
     }
 
-    // Check if source exists
-    if (!fromFile.exists) {
+    // Check if source exists and move
+    if (fromFile.exists) {
+        fromFile.move(toFile);
+    } else if (fromDir.exists) {
+        // Directory move
+        fromDir.move(toDir);
+    } else {
         throw new FileNotFoundError(from);
     }
-
-    fromFile.move(toFile);
   }
 
   async stat(id: string): Promise<VaultStat> {

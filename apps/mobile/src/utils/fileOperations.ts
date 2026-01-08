@@ -100,7 +100,7 @@ export async function renameFolder({
         await pinnedStorage.update(oldPath, newPath);
 
         // Update Router
-        router.setParams({ id: encodeURIComponent(newPath) });
+        router.setParams({ folder: encodeURIComponent(newPath) });
 
     } catch (e: unknown) {
         console.error('Folder rename failed', e);

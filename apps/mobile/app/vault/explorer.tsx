@@ -129,9 +129,17 @@ export default function ExplorerScreen() {
               router
           });
       } catch (e: unknown) {
+          // Alert is handled here, but we rethrow so EditableHeaderTitle keeps the input open
           if (e instanceof Error) {
-               Alert.alert('Rename failed', e.message);
+               // We might rely on EditableHeaderTitle's alert, but for now let's throw.
+               // EditableHeaderTitle catches and Alerts too.
+               // To avoid double alerts, we can just throw.
+               // But wait, the previous code caught it and alerted.
+               // If we throw, EditableHeaderTitle will Alert.
+               // So we should remove the Alert here or let EditableHeaderTitle handle it.
+               throw e;
           }
+          throw new Error('Rename failed');
       }
   };
 

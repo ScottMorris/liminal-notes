@@ -371,7 +371,7 @@ export default function NoteScreen() {
       />
 
       {/* Header / Debug Bar */}
-      <View style={[styles.header, { borderBottomColor: paperTheme.colors.outlineVariant }]}>
+      <View style={[styles.header, { borderBottomColor: paperTheme.colors.outlineVariant, backgroundColor: paperTheme.colors.surface }]}>
           <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
              <Text style={{ fontSize: 24, color: paperTheme.colors.onSurface }}>←</Text>
           </TouchableOpacity>
