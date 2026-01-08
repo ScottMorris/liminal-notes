@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, BackHandler, Platform, Alert, Keybo
 import { useLocalSearchParams, useRouter, Stack, useNavigation } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme as usePaperTheme, ActivityIndicator, Text } from 'react-native-paper';
-import { EditorView, EditorRef } from '../../../src/components/EditorView';
+import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
 import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
 import { recentsStorage } from '../../../src/storage/recents';
@@ -13,6 +13,8 @@ import { themes } from '@liminal-notes/core-shared/theme';
 import { useSettings } from '../../../src/context/SettingsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
 import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
+import { EditableHeaderTitle } from '../../../src/components/EditableHeaderTitle';
+import { renameNote } from '../../../src/utils/fileOperations';
 
 const DEBUG = false;
 
@@ -66,10 +68,11 @@ export default function NoteScreen() {
   const [isDirty, setIsDirty] = useState(false);
   const [revision, setRevision] = useState(0);
 
-  const editorRef = useRef<EditorRef>(null);
+  const editorRef = useRef<EditorViewRef>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
   const lastRequestIdRef = useRef<string | null>(null);
+  const ignoreNextLoadRef = useRef(false);
 
   // To handle navigation blocking
   const pendingNavigationAction = useRef<any>(null);
@@ -121,6 +124,11 @@ export default function NoteScreen() {
         return;
     }
 
+    if (ignoreNextLoadRef.current) {
+      ignoreNextLoadRef.current = false;
+      return;
+    }
+
     try {
         setStatus('loading');
 
@@ -150,7 +158,7 @@ export default function NoteScreen() {
 
         if (linkIndex) {
              try {
-                 const links = parseWikilinks(result.content).map(match => ({
+                 const links = parseWikilinks(result.content).map((match: any) => ({
                      source: noteId,
                      targetRaw: match.targetRaw,
                      targetPath: match.targetRaw
@@ -165,6 +173,28 @@ export default function NoteScreen() {
     } catch (e: any) {
         setStatus('error');
         setErrorMsg(e.message || 'Failed to load note');
+    }
+  };
+
+  const handleRename = async (newName: string) => {
+    if (!noteId) return;
+
+    try {
+        await renameNote({
+            noteId,
+            newName,
+            content,
+            searchIndex,
+            linkIndex,
+            router,
+            ignoreNextLoadRef
+        });
+    } catch (e: unknown) {
+       // Error handled in util but rethrown for UI alert
+       if (e instanceof Error) {
+           throw e;
+       }
+       throw new Error(String(e));
     }
   };
 
@@ -272,7 +302,7 @@ export default function NoteScreen() {
 
           if (linkIndex) {
               try {
-                  const links = parseWikilinks(textToSave).map(match => ({
+                  const links = parseWikilinks(textToSave).map((match: any) => ({
                       source: noteId!,
                       targetRaw: match.targetRaw,
                       targetPath: match.targetRaw
@@ -341,12 +371,16 @@ export default function NoteScreen() {
       />
 
       {/* Header / Debug Bar */}
-      <View style={[styles.header, { borderBottomColor: paperTheme.colors.outlineVariant }]}>
+      <View style={[styles.header, { borderBottomColor: paperTheme.colors.outlineVariant, backgroundColor: paperTheme.colors.surface }]}>
           <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
              <Text style={{ fontSize: 24, color: paperTheme.colors.onSurface }}>←</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.title, { color: paperTheme.colors.onSurface }]} numberOfLines={1}>{noteId}</Text>
+          <EditableHeaderTitle
+             title={noteId?.split('/').pop()?.replace(/\.md$/i, '') || ''}
+             onRename={handleRename}
+             disabled={isDirty} // Disable rename while unsaved changes exist to prevent sync issues
+          />
 
           <View style={styles.badges}>
               {saveStatus !== SaveStatus.Idle && (
@@ -371,7 +405,6 @@ export default function NoteScreen() {
           {/* Editor */}
           <EditorView
             ref={editorRef}
-            initialContent={content}
             onReady={handleEditorReady}
             onDocChanged={handleDocChanged}
             onRequestResponse={handleRequestResponse}
@@ -380,7 +413,7 @@ export default function NoteScreen() {
           />
 
           {/* Formatting Toolbar */}
-          <FormattingToolbar editorRef={editorRef} />
+          <FormattingToolbar editorRef={editorRef as React.RefObject<EditorViewRef>} />
 
           {/* Footer */}
           <LastSavedFooter timestamp={lastSavedAt} />
@@ -416,11 +449,6 @@ const styles = StyleSheet.create({
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomWidth: 1,
-  },
-  title: {
-      fontSize: 18,
-      fontWeight: '600',
-      flex: 1,
   },
   badges: {
       flexDirection: 'row',
