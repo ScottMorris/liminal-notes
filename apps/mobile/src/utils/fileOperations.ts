@@ -88,6 +88,33 @@ export async function renameFolder({
             if (searchIndex) await searchIndex.remove(oldId);
             if (linkIndex) await linkIndex.removeSource(oldId);
 
+            // Re-index the new file
+            // We need to read content to properly index it.
+            // This is "best effort" - if reading fails, we skip.
+            try {
+                const { content, mtimeMs } = await adapter.readNote(file.id);
+                if (searchIndex) {
+                    await searchIndex.upsert({
+                        id: file.id,
+                        title: file.id.split('/').pop()?.replace(/\.md$/i, '') || '',
+                        content,
+                        mtimeMs: mtimeMs ?? Date.now()
+                    });
+                }
+                // We could also update link index here if we wanted perfect consistency,
+                // but search index is what drives the "count" in home view.
+                if (linkIndex) {
+                    const links = parseWikilinks(content).map((match: WikiLinkMatch) => ({
+                       source: file.id,
+                       targetRaw: match.targetRaw,
+                       targetPath: match.targetRaw
+                   }));
+                   await linkIndex.upsertLinks(file.id, links);
+                }
+            } catch (err) {
+                console.warn('Failed to re-index moved file', file.id, err);
+            }
+
             // Recents & Pinned
             // We can explicitly update them here if we iterate, or do a bulk pass.
             // Let's do explicit update here for safety.

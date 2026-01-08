@@ -13,7 +13,7 @@ import { themes } from '@liminal-notes/core-shared/theme';
 import { useSettings } from '../../../src/context/SettingsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
 import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
-import { EditableHeaderTitle } from '../../../src/components/Editor/EditableHeaderTitle';
+import { EditableHeaderTitle } from '../../../src/components/EditableHeaderTitle';
 import { renameNote } from '../../../src/utils/fileOperations';
 
 const DEBUG = false;

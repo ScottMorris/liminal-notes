@@ -7,7 +7,7 @@ import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 import { FAB, FABAction } from '../../src/components/FAB';
 import { PromptModal } from '../../src/components/PromptModal';
 import { useTheme, Text, List, ActivityIndicator, Divider } from 'react-native-paper';
-import { EditableHeaderTitle } from '../../src/components/Editor/EditableHeaderTitle';
+import { EditableHeaderTitle } from '../../src/components/EditableHeaderTitle';
 import { renameFolder } from '../../src/utils/fileOperations';
 import { useIndex } from '../../src/context/IndexContext';
 
