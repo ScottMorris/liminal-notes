@@ -1,0 +1,57 @@
+app-id: ca.liminalnotes.desktop
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.node20
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: liminal-notes
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --share=network
+  - --talk-name=org.freedesktop.Notifications
+  - --filesystem=home
+modules:
+  - name: liminal-notes
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/node20/bin:/usr/lib/sdk/rust-stable/bin:/app/pnpm/bin:$PATH
+      env:
+        PNPM_HOME: /app/pnpm
+        NODE_ENV: production
+    sources:
+      - type: dir
+        path: ../../..
+    build-commands:
+      - mkdir -p "$PNPM_HOME"
+      - corepack enable
+      - pnpm install --frozen-lockfile
+      - pnpm --filter @liminal-notes/desktop tauri build --bundles appimage
+      - APPDIR="apps/desktop/src-tauri/target/release/bundle/appimage/Liminal Notes.AppDir"
+      - install -Dm755 "$APPDIR/usr/bin/appsdesktop" /app/bin/liminal-notes
+      - >
+        cat > /app/share/applications/ca.liminalnotes.desktop.desktop <<'EOF'
+        [Desktop Entry]
+        Name=Liminal Notes
+        Comment=Local-first Markdown notebook
+        Exec=liminal-notes
+        Icon=ca.liminalnotes.desktop
+        Terminal=false
+        Type=Application
+        Categories=Utility;Office;
+        EOF
+      - |
+        for size in 32 128 256; do
+          icon_src="$APPDIR/usr/share/icons/hicolor/${size}x${size}/apps/appsdesktop.png"
+          if [ -f "$icon_src" ]; then
+            install -Dm644 "$icon_src" "/app/share/icons/hicolor/${size}x${size}/apps/ca.liminalnotes.desktop.png"
+          fi
+        done
+      - |
+        icon_src="$APPDIR/usr/share/icons/hicolor/256x256@2/apps/appsdesktop.png"
+        if [ -f "$icon_src" ]; then
+          install -Dm644 "$icon_src" "/app/share/icons/hicolor/256x256@2/apps/ca.liminalnotes.desktop.png"
+        fi
