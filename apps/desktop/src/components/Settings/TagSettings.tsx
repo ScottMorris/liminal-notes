@@ -1,7 +1,7 @@
 import { useTags } from '../../contexts/TagsContext';
 import { usePluginHost } from '../../plugins/PluginHostProvider';
 import { useState } from 'react';
-import { Tag } from '../../types/tags';
+import { Tag } from '@liminal-notes/core-shared/tags';
 import { HashtagIcon, XMarkIcon, PencilSquareIcon } from '../Icons';
 import { confirm } from '@tauri-apps/plugin-dialog';
 

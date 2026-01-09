@@ -206,6 +206,7 @@ function handleCommand(msg: AnyMessage) {
       break;
 
     case EditorCommand.Execute:
+      if (!editorView) return;
       if (sharedEditingCommands[msg.payload.id]) {
         sharedEditingCommands[msg.payload.id](editorView);
       } else {

@@ -30,6 +30,10 @@ export default function SettingsSectionScreen() {
   }
 
   const handleAction = async (actionId: string) => {
+      if (actionId === 'manage-tags') {
+          router.push('/settings/tags');
+          return;
+      }
       if (actionId === 'switch-vault') {
           Alert.alert(
               'Switch Vault',

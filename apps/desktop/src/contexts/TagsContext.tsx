@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
-import { Tag, TagId, TagIndex, TagCatalogue, TagIndexEntry } from '../types/tags';
+import { Tag, TagId, TagIndex, TagCatalogue, TagIndexEntry } from '@liminal-notes/core-shared/tags';
 import { listMarkdownFiles } from '../ipc';
 import { desktopVault } from '../adapters/DesktopVaultAdapter';
-import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '../utils/tags';
-import { parseFrontmatter, updateFrontmatter } from '../utils/frontmatter';
+import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-notes/core-shared/tags';
+import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 import { FileEntry } from '../types';
 
 interface TagsContextProps {
