@@ -3,14 +3,18 @@ import * as SQLite from 'expo-sqlite';
 import { SearchIndex, LinkIndex } from '@liminal-notes/core-shared/indexing/types';
 import { SQLiteSearchIndex } from '../indexing/sqlite/SQLiteSearchIndex';
 import { SQLiteLinkIndex } from '../indexing/sqlite/SQLiteLinkIndex';
+import { SQLiteTagIndex } from '../indexing/sqlite/SQLiteTagIndex';
 import { openDatabase, initDatabase } from '../indexing/sqlite/database';
 import { useVault } from './VaultContext';
 import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
-import { parseWikilinks } from '@liminal-notes/core-shared/wikilinks';
+import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution'; // Fixed import path from previous knowledge
+import { parseFrontmatter } from '@liminal-notes/core-shared/frontmatter';
+import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-notes/core-shared/tags';
 
 interface IndexContextType {
   searchIndex: SearchIndex | null;
   linkIndex: LinkIndex | null;
+  tagIndex: SQLiteTagIndex | null;
   isIndexing: boolean;
   db: SQLite.SQLiteDatabase | null;
 }
@@ -22,6 +26,7 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [linkIndex, setLinkIndex] = useState<LinkIndex | null>(null);
+  const [tagIndex, setTagIndex] = useState<SQLiteTagIndex | null>(null);
   const [isIndexing, setIsIndexing] = useState(false);
 
   // Ref to track if we've already started the background scan for this vault session
@@ -41,6 +46,7 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
         setDb(database);
         setSearchIndex(new SQLiteSearchIndex(database));
         setLinkIndex(new SQLiteLinkIndex(database));
+        setTagIndex(new SQLiteTagIndex(database));
       } catch (e) {
         console.error('Failed to init index db', e);
       }
@@ -58,7 +64,7 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
 
   // 2. Background Scan Logic (Lazy)
   useEffect(() => {
-    if (!db || !activeVault || !searchIndex || scanStartedRef.current) return;
+    if (!db || !activeVault || !searchIndex || !tagIndex || scanStartedRef.current) return;
 
     const runBackgroundScan = async () => {
         scanStartedRef.current = true;
@@ -128,6 +134,35 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
                         }));
                         await linkIndex.upsertLinks(noteId, links);
                     }
+
+                    // Upsert Tags
+                    if (tagIndex) {
+                        const { data } = parseFrontmatter(note.content);
+                        let fileTags: string[] = [];
+                        if (data.tags && Array.isArray(data.tags)) {
+                            fileTags = data.tags.map((t: any) => normalizeTagId(String(t)));
+                        } else if (data.tags && typeof data.tags === 'string') {
+                            fileTags = [normalizeTagId(data.tags)];
+                        }
+
+                        // Derived
+                        const folderTags = deriveTagsFromPath(noteId);
+                        const uniqueTags = Array.from(new Set([...fileTags, ...folderTags]));
+
+                        // Auto-discovery of tags
+                        for (const tagId of uniqueTags) {
+                            const existing = await tagIndex.getTag(tagId);
+                            if (!existing) {
+                                await tagIndex.upsertTag({
+                                    id: tagId,
+                                    displayName: humanizeTagId(tagId),
+                                    createdAt: Date.now()
+                                });
+                            }
+                        }
+
+                        await tagIndex.setNoteTags(noteId, uniqueTags);
+                    }
                 } catch (e) {
                     console.warn(`[Index] Failed to index ${noteId}`, e);
                 }
@@ -148,7 +183,7 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
   }, [db, activeVault, searchIndex]);
 
   return (
-    <IndexContext.Provider value={{ searchIndex, linkIndex, isIndexing, db }}>
+    <IndexContext.Provider value={{ searchIndex, linkIndex, tagIndex, isIndexing, db }}>
       {children}
     </IndexContext.Provider>
   );

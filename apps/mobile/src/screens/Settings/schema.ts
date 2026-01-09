@@ -97,6 +97,18 @@ export const getSections = (appVersion: string, vaultName: string): SettingsSect
         title: 'Editor',
         groups: [
             {
+                id: 'content',
+                title: 'Content',
+                rows: [
+                     {
+                        id: 'manage-tags',
+                        label: 'Manage Tags',
+                        description: 'Edit tag names and colors.',
+                        controls: [{ kind: 'action', label: 'Edit', actionId: 'manage-tags' }]
+                    }
+                ]
+            },
+            {
                 id: 'behaviour',
                 title: 'Behaviour',
                 rows: [

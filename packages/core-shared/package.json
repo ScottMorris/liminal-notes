@@ -55,6 +55,10 @@
     "./editor/wikiLinkParser": {
       "types": "./dist/editor/wikiLinkParser.d.mts",
       "default": "./dist/editor/wikiLinkParser.mjs"
+    },
+    "./tags": {
+      "types": "./dist/tags.d.mts",
+      "default": "./dist/tags.mjs"
     }
   },
   "scripts": {
