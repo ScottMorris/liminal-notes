@@ -1,7 +1,7 @@
 import { useTags } from '../../contexts/TagsContext';
 import { TagRow } from './TagRow';
 import { useState, useMemo } from 'react';
-import { Tag } from '../../types/tags';
+import { Tag } from '@liminal-notes/core-shared/tags';
 import { confirm } from '@tauri-apps/plugin-dialog';
 
 interface TagBrowserProps {

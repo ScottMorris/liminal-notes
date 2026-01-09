@@ -11,10 +11,14 @@ import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution';
 import { themes } from '@liminal-notes/core-shared/theme';
 import { useSettings } from '../../../src/context/SettingsContext';
+import { useTags } from '../../../src/context/TagsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
 import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
 import { EditableHeaderTitle } from '../../../src/components/EditableHeaderTitle';
 import { renameNote } from '../../../src/utils/fileOperations';
+import { NoteTags } from '../../../src/components/NoteTags';
+import { normalizeTagId, deriveTagsFromPath } from '@liminal-notes/core-shared/tags';
+import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 
 const DEBUG = false;
 
@@ -54,6 +58,7 @@ export default function NoteScreen() {
   const navigation = useNavigation();
   const { searchIndex, linkIndex } = useIndex();
   const { settings } = useSettings();
+  const { addTag } = useTags();
   const paperTheme = usePaperTheme();
   const { theme } = useTheme(); // Use custom theme context to get active theme vars
   const insets = useSafeAreaInsets();
@@ -67,6 +72,9 @@ export default function NoteScreen() {
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [revision, setRevision] = useState(0);
+
+  // Tags
+  const [tags, setTags] = useState<string[]>([]);
 
   const editorRef = useRef<EditorViewRef>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -140,7 +148,16 @@ export default function NoteScreen() {
 
         const result = await adapter.readNote(noteId);
         setContent(result.content);
-        setLastSavedAt(result.mtimeMs);
+        setLastSavedAt(result.mtimeMs || null);
+
+        // Tags
+        const { data } = parseFrontmatter(result.content);
+        let fileTags: string[] = [];
+        if (data.tags && Array.isArray(data.tags)) fileTags = data.tags.map(String);
+        else if (typeof data.tags === 'string') fileTags = [data.tags];
+        const folderTags = deriveTagsFromPath(noteId);
+        const uniqueTags = Array.from(new Set([...fileTags.map(normalizeTagId), ...folderTags]));
+        setTags(uniqueTags.sort());
 
         // Lazy Indexing: Upsert on open
         if (searchIndex) {
@@ -256,6 +273,8 @@ export default function NoteScreen() {
       if (DEBUG) console.log('[NoteScreen] DocChanged:', payload);
       setRevision(payload.revision);
       setIsDirty(true);
+      // We don't update tags state here to avoid parsing every keystroke.
+      // Tags update on save or explicit action.
       if (saveStatus !== SaveStatus.Error) {
         setSaveStatus(SaveStatus.Idle);
       }
@@ -286,6 +305,15 @@ export default function NoteScreen() {
           const adapter = new MobileSandboxVaultAdapter();
           await adapter.writeNote(noteId!, textToSave);
           const saveTime = Date.now();
+
+          // Update tags state from saved text
+          const { data } = parseFrontmatter(textToSave);
+          let fileTags: string[] = [];
+          if (data.tags && Array.isArray(data.tags)) fileTags = data.tags.map(String);
+          else if (typeof data.tags === 'string') fileTags = [data.tags];
+          const folderTags = deriveTagsFromPath(noteId!);
+          const uniqueTags = Array.from(new Set([...fileTags.map(normalizeTagId), ...folderTags]));
+          setTags(uniqueTags.sort());
 
           if (searchIndex) {
               try {
@@ -396,6 +424,60 @@ export default function NoteScreen() {
              <Text style={[styles.saveButtonText, { color: paperTheme.colors.onPrimary }]}>Save</Text>
           </TouchableOpacity>
       </View>
+
+      <NoteTags
+        tags={tags}
+        onAdd={() => {
+            Alert.prompt('Add Tag', 'Enter tag name', (text) => {
+                if(!text) return;
+                // Add definition immediately
+                addTag(text).catch(e => console.error('Failed to add tag def', e));
+
+                const newContent = updateFrontmatter(content, (d) => {
+                    let cTags = d.tags || [];
+                    if(typeof cTags === 'string') cTags = [cTags];
+                    cTags.push(text);
+                    d.tags = cTags;
+                    // Add to metadata
+                    const tid = normalizeTagId(text);
+                     if (!d.liminal) d.liminal = {};
+                     if (!d.liminal.tagMeta) d.liminal.tagMeta = {};
+                     d.liminal.tagMeta[tid] = { source: 'human' };
+                });
+                // Update editor
+                if (editorRef.current) {
+                    editorRef.current.sendCommand(EditorCommand.Set, {
+                        docId: noteId!,
+                        text: newContent
+                    });
+                    // Trigger save flow?
+                    // setContent(newContent); // this happens via docChanged
+                }
+            });
+        }}
+        onRemove={(tagId) => {
+             const folderTags = deriveTagsFromPath(noteId!);
+             if (folderTags.includes(tagId)) {
+                 Alert.alert('Cannot remove', 'This tag is derived from the folder structure.');
+                 return;
+             }
+             const newContent = updateFrontmatter(content, (d) => {
+                 let cTags = d.tags || [];
+                 if(typeof cTags === 'string') cTags = [cTags];
+                 d.tags = cTags.filter((t: any) => normalizeTagId(String(t)) !== tagId);
+
+                 if (d.liminal?.tagMeta?.[tagId]) {
+                    delete d.liminal.tagMeta[tagId];
+                }
+             });
+              if (editorRef.current) {
+                    editorRef.current.sendCommand(EditorCommand.Set, {
+                        docId: noteId!,
+                        text: newContent
+                    });
+              }
+        }}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}

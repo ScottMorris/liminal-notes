@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTags } from '../../../contexts/TagsContext';
 import { usePluginHost } from '../../../plugins/PluginHostProvider';
-import { TagId } from '../../../types/tags';
-import { normalizeTagId } from '../../../utils/tags';
+import { TagId, normalizeTagId } from '@liminal-notes/core-shared/tags';
 import { suggestTags } from '../../../features/ai/tagSuggestions';
 
 interface AddTagPopoverProps {

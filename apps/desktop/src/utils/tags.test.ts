@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { normalizeTagId, deriveTagsFromPath } from './tags';
+import { normalizeTagId, deriveTagsFromPath } from '@liminal-notes/core-shared/tags';
 
 test('normalizeTagId', () => {
     expect(normalizeTagId('Foo Bar')).toBe('foo-bar');

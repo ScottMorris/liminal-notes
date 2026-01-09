@@ -1,4 +1,4 @@
-import { TagId } from '../../../types/tags';
+import { TagId } from '@liminal-notes/core-shared/tags';
 import { useTags } from '../../../contexts/TagsContext';
 import { XMarkIcon } from '../../Icons';
 

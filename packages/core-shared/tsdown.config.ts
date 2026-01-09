@@ -14,6 +14,7 @@ export default defineConfig({
     'editor/commands': 'src/editor/commands.ts',
     'editor/frontmatterHider': 'src/editor/frontmatterHider.ts',
     'editor/wikiLinkParser': 'src/editor/wikiLinkParser.ts',
+    'tags': 'src/tags.ts',
   },
   format: ['esm'],
   dts: true,
