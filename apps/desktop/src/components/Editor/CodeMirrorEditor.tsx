@@ -1,5 +1,5 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
-import { EditorState, Compartment } from '@codemirror/state';
+import { EditorState, Compartment, Extension } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
@@ -37,10 +37,11 @@ interface CodeMirrorEditorProps {
   showLineNumbers?: boolean;
   readableLineLength?: boolean;
   wordWrap?: boolean;
+  extensions?: Extension[];
 }
 
 export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
-  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick, showLineNumbers = true, readableLineLength = false, wordWrap = false }, ref) => {
+  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick, showLineNumbers = true, readableLineLength = false, wordWrap = false, extensions: propExtensions = [] }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const onSaveRef = useRef(onSave);
@@ -51,6 +52,7 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
 
     const lineNumbersCompartment = useRef(new Compartment()).current;
     const wordWrapCompartment = useRef(new Compartment()).current;
+    const propExtensionsCompartment = useRef(new Compartment()).current;
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{
@@ -183,7 +185,8 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
                      }
                 }
             }
-        })
+        }),
+        propExtensionsCompartment.of(propExtensions)
       ];
 
       if (initialState) {
@@ -236,11 +239,12 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
                             return (n - frontmatterOffset).toString();
                         }
                     }) : []),
-                    wordWrapCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : [])
+                    wordWrapCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : []),
+                    propExtensionsCompartment.reconfigure(propExtensions)
                 ]
             });
         }
-    }, [showLineNumbers, wordWrap, frontmatterOffset]);
+    }, [showLineNumbers, wordWrap, frontmatterOffset, propExtensions]);
 
     // Handle incoming value changes
     useEffect(() => {

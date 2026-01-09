@@ -15,6 +15,7 @@ export const lightTheme: Theme = {
     '--ln-sidebar-fg': '#333333',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#e0e0e0',
+    '--ln-tts-highlight': 'rgba(255, 255, 0, 0.3)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -71,6 +72,7 @@ export const darkTheme: Theme = {
     '--ln-sidebar-fg': '#cccccc',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#2a2d2e',
+    '--ln-tts-highlight': 'rgba(255, 255, 0, 0.3)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -127,6 +129,7 @@ export const draculaTheme: Theme = {
     '--ln-sidebar-fg': '#f8f8f2',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#44475a',
+    '--ln-tts-highlight': 'rgba(189, 147, 249, 0.3)', // Purple tint
 
     // Editor Core (Dracula specifics)
     '--ln-editor-bg': '#282a36',
@@ -184,6 +187,7 @@ export const claudeLightTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(60, 2.6%, 7.6%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 93%)',
+    '--ln-tts-highlight': 'hsla(15, 63.1%, 59.6%, 0.3)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -241,6 +245,7 @@ export const claudeDarkTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(48, 33.3%, 97.1%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(60, 2.5%, 23%)',
+    '--ln-tts-highlight': 'hsla(15, 63.1%, 59.6%, 0.3)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -298,6 +303,7 @@ export const julesDarkTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(240, 67%, 99%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(250, 7%, 16%)',
+    '--ln-tts-highlight': 'hsla(250, 60%, 60%, 0.3)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -355,6 +361,7 @@ export const chatgptLightTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(0, 0%, 5%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 93%)',
+    '--ln-tts-highlight': 'hsla(209, 100%, 50%, 0.3)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -412,6 +419,7 @@ export const chatgptDarkTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(0, 0%, 100%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 19%)',
+    '--ln-tts-highlight': 'hsla(209, 100%, 50%, 0.3)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',

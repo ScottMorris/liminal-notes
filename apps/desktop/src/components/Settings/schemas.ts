@@ -1,5 +1,6 @@
 import { SettingsSectionDef } from './types';
 import { Theme } from '../../theme/types';
+import { builtInPlugins } from '../../plugins/registry';
 
 export const getSections = (
     availableThemes: Theme[],
@@ -29,7 +30,7 @@ export const getSections = (
         }
     ];
 
-    return [
+    const baseSections: SettingsSectionDef[] = [
     {
         id: 'general',
         title: 'General',
@@ -192,22 +193,35 @@ export const getSections = (
                 ]
             }
         ]
-    },
-    {
-        id: 'hotkeys',
-        title: 'Hotkeys',
-        groups: [
-            {
-                id: 'hotkeys-list',
-                rows: [
-                    {
-                        id: 'hotkeys-collection',
-                        label: '',
-                        controls: [{ kind: 'collection', collectionId: 'hotkeys' }]
-                    }
-                ]
-            }
-        ]
     }
-];
+    ];
+
+    // Inject plugin settings
+    const pluginSections: SettingsSectionDef[] = [];
+    builtInPlugins.forEach(p => {
+        if (p.settings) {
+            pluginSections.push(p.settings);
+        }
+    });
+
+    return [
+        ...baseSections,
+        ...pluginSections,
+        {
+            id: 'hotkeys',
+            title: 'Hotkeys',
+            groups: [
+                {
+                    id: 'hotkeys-list',
+                    rows: [
+                        {
+                            id: 'hotkeys-collection',
+                            label: '',
+                            controls: [{ kind: 'collection', collectionId: 'hotkeys' }]
+                        }
+                    ]
+                }
+            ]
+        }
+    ];
 };

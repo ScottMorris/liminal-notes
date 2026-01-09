@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useSettings } from '../../contexts/SettingsContext';
 import { getSections } from './schemas';
 import { SettingsSection } from './SettingsRenderer';
 import { XMarkIcon } from '../Icons';
 import pkg from '../../../package.json';
 import { RemindersDebugModal } from '../../features/reminders/components/RemindersDebugModal';
 import { TagSettings } from './TagSettings';
+import { builtInPlugins } from '../../plugins/registry';
+import { usePluginHost } from '../../plugins/PluginHostProvider';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -14,6 +17,20 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVault }) => {
     const { availableThemes } = useTheme();
+    const { settings } = useSettings();
+    // We need plugin context to pass to onSettingsAction.
+    // Currently PluginHostProvider doesn't expose the full context object easily,
+    // but it exposes 'log' and 'getCurrentNote' is internal state.
+    // Ideally we'd use usePluginHost() to get capabilities.
+    // For now, we'll mock the context or improve PluginHostProvider later.
+    // Let's rely on the fact that onSettingsAction in tts plugin only needs 'log' potentially.
+
+    // We can construct a minimal context.
+    const pluginCtx = {
+        log: (msg: string) => console.log(`[PluginAction] ${msg}`),
+        getCurrentNote: () => null // Settings modal context doesn't have a note
+    };
+
     const appVersion = pkg.version;
 
     const sections = useMemo(() => getSections(availableThemes, appVersion), [availableThemes, appVersion]);
@@ -26,7 +43,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
         tagSection,
         ...sections.filter(s => ['appearance', 'hotkeys'].includes(s.id))
     ];
-    const pluginsGroups = sections.filter(s => ['core-plugins', 'community-plugins'].includes(s.id));
+    // Dynamic plugin groups
+    const pluginsGroups = sections.filter(s => s.id === 'core-plugins' || s.id === 'community-plugins' || builtInPlugins.some(p => p.settings && p.settings.id === s.id));
 
     const [activeSectionId, setActiveSectionId] = useState(optionsGroups[0]?.id || sections[0]?.id);
     const [isDebugOpen, setIsDebugOpen] = useState(false);
@@ -37,6 +55,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
         if (actionId === 'switch-vault') {
             if (window.confirm("Are you sure you want to switch vaults?")) {
                 onResetVault();
+            }
+            return;
+        }
+
+        // Delegate to plugins
+        for (const plugin of builtInPlugins) {
+            if (plugin.onSettingsAction) {
+                plugin.onSettingsAction(pluginCtx, actionId, settings);
             }
         }
     };

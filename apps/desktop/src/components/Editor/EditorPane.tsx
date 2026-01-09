@@ -24,6 +24,8 @@ import { commandRegistry } from '../../commands/CommandRegistry';
 import { EditorContext } from '../../commands/types';
 import { EditorView } from '@codemirror/view';
 import { EditableTitle } from './EditableTitle';
+import { TtsPlayer } from '../../plugins/core.tts/TtsPlayer';
+import { ttsHighlightField, setTtsHighlight } from '../../plugins/core.tts/highlight';
 
 interface EditorPaneProps {
   onRefreshFiles?: () => Promise<void>;
@@ -612,6 +614,42 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   // Ensure we don't render the editor until the content state matches the active tab
   const isReady = activeTab && activeTab.id === loadedTabId;
 
+  const ttsExtensions = useMemo(() => [ttsHighlightField], []);
+
+  const handleTtsHighlight = useCallback((range: { from: number; to: number } | null) => {
+      if (editorRef.current && editorRef.current.view) {
+          editorRef.current.view.dispatch({
+              effects: setTtsHighlight.of(range)
+          });
+      }
+  }, []);
+
+  const getTtsData = useCallback(() => {
+      // Return content or selection
+      if (editorRef.current) {
+          try {
+              const state = JSON.parse(editorRef.current.getEditorState());
+              const doc = state.doc || '';
+              const anchor = state.selection?.anchor || 0;
+              const head = state.selection?.head || 0;
+
+              if (anchor !== head) {
+                  const start = Math.min(anchor, head);
+                  const end = Math.max(anchor, head);
+                  const selection = doc.slice(start, end);
+                  if (selection.trim().length > 0) {
+                      return { text: selection };
+                  }
+              }
+              return { text: doc };
+          } catch (e) {
+              console.error("Failed to parse editor state for TTS", e);
+              return { text: content };
+          }
+      }
+      return { text: content };
+  }, [content]);
+
   return (
     <div className="editor-container">
        <TabBar
@@ -736,6 +774,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                             showLineNumbers={settings['editor.showLineNumbers'] !== false}
                             readableLineLength={settings['editor.readableLineLength'] === true}
                             wordWrap={settings['editor.wordWrap'] === true}
+                            extensions={ttsExtensions}
                             />
                         )}
                         </div>
@@ -756,6 +795,12 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                         currentFile={activeTab.path || null}
                         onNavigate={handleNavigate}
                     />
+                    {enabledPlugins.has('core.tts') && (
+                        <TtsPlayer
+                            onHighlight={handleTtsHighlight}
+                            getData={getTtsData}
+                        />
+                    )}
                 </div>
 
                 {enabledPlugins.has('ai-assistant') && isAiSidebarOpen && activeTab && (

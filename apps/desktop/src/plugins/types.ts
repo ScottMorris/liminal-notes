@@ -1,3 +1,5 @@
+import { SettingsSectionDef } from '../components/Settings/types';
+
 export type PluginId = string;
 
 export interface PluginMeta {
@@ -32,6 +34,10 @@ export interface PluginContext {
 
 export interface LiminalPlugin {
   meta: PluginMeta;
+
+  // Settings
+  settings?: SettingsSectionDef;
+  onSettingsAction?: (ctx: PluginContext, actionId: string, settings: Record<string, any>) => void;
 
   // Lifecycle
   onActivate?: (ctx: PluginContext) => void;

@@ -2,6 +2,9 @@ use tauri::Manager;
 
 mod vault;
 mod settings;
+mod plugins;
+
+use plugins::{PluginRegistry, tts::TtsPlugin};
 
 #[tauri::command]
 fn get_linux_accent_colour() -> String {
@@ -70,6 +73,16 @@ pub fn run() {
     configure_linux_env();
 
     tauri::Builder::default()
+        .setup(|app| {
+            let mut registry = PluginRegistry::<tauri::Wry>::new();
+            registry.register(Box::new(TtsPlugin));
+
+            // Auto-activate for now, eventually this will be driven by settings
+            registry.activate(app.handle().clone(), "core.tts").unwrap();
+
+            app.manage(registry);
+            Ok(())
+        })
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app
                 .get_webview_window("main")
@@ -92,8 +105,15 @@ pub fn run() {
             vault::delete_item,
             settings::get_settings,
             settings::set_setting,
-            get_linux_accent_colour
+            get_linux_accent_colour,
+            plugins::native_plugin_invoke
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                let registry = app_handle.state::<PluginRegistry<tauri::Wry>>();
+                registry.deactivate_all();
+            }
+        });
 }
