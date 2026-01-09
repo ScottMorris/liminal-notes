@@ -6,6 +6,7 @@ export type SettingKind =
   | "slider"
   | "action"
   | "computed"
+  | "progress"
   | "collection"
   | "search";
 
@@ -53,3 +54,5 @@ export interface SettingsSectionDef {
   title: string;
   groups: SettingsGroupDef[];
 }
+
+export type SettingsActionHandler = (id: string) => void | Promise<void>;

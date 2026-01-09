@@ -1,9 +1,11 @@
 import { SettingsSectionDef } from './types';
 import { Theme } from '../../theme/types';
+import { builtInPlugins } from '../../plugins/registry';
 
 export const getSections = (
     availableThemes: Theme[],
-    appVersion: string
+    appVersion: string,
+    enabledPlugins: Set<string>
 ): SettingsSectionDef[] => {
     // Sort themes: System, then Light themes, then Dark themes
     const lightThemes = availableThemes
@@ -29,7 +31,7 @@ export const getSections = (
         }
     ];
 
-    return [
+    const baseSections: SettingsSectionDef[] = [
     {
         id: 'general',
         title: 'General',
@@ -192,22 +194,35 @@ export const getSections = (
                 ]
             }
         ]
-    },
-    {
-        id: 'hotkeys',
-        title: 'Hotkeys',
-        groups: [
-            {
-                id: 'hotkeys-list',
-                rows: [
-                    {
-                        id: 'hotkeys-collection',
-                        label: '',
-                        controls: [{ kind: 'collection', collectionId: 'hotkeys' }]
-                    }
-                ]
-            }
-        ]
     }
-];
+    ];
+
+    // Inject plugin settings
+    const pluginSections: SettingsSectionDef[] = [];
+    builtInPlugins.forEach(p => {
+        if (p.settings && enabledPlugins.has(p.meta.id)) {
+            pluginSections.push(p.settings);
+        }
+    });
+
+    return [
+        ...baseSections,
+        ...pluginSections,
+        {
+            id: 'hotkeys',
+            title: 'Hotkeys',
+            groups: [
+                {
+                    id: 'hotkeys-list',
+                    rows: [
+                        {
+                            id: 'hotkeys-collection',
+                            label: '',
+                            controls: [{ kind: 'collection', collectionId: 'hotkeys' }]
+                        }
+                    ]
+                }
+            ]
+        }
+    ];
 };

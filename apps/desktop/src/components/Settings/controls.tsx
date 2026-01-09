@@ -194,10 +194,19 @@ export const Slider: React.FC<{ def: SettingControlDef }> = ({ def }) => {
     );
 };
 
-export const ActionButton: React.FC<{ def: SettingControlDef; onAction?: (id: string) => void }> = ({ def, onAction }) => {
-    const handleClick = () => {
+export const ActionButton: React.FC<{ def: SettingControlDef; onAction?: (id: string) => void | Promise<void> }> = ({ def, onAction }) => {
+    const [isRunning, setIsRunning] = useState(false);
+
+    const handleClick = async () => {
         if (def.actionId && onAction) {
-            onAction(def.actionId);
+            try {
+                setIsRunning(true);
+                await onAction(def.actionId);
+            } catch (e) {
+                console.error('Settings action failed', e);
+            } finally {
+                setIsRunning(false);
+            }
         }
     };
 
@@ -206,13 +215,21 @@ export const ActionButton: React.FC<{ def: SettingControlDef; onAction?: (id: st
     return (
         <button
             onClick={handleClick}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
+                }
+            }}
+            type="button"
+            disabled={isRunning}
             style={{
                 background: isDanger ? '#e74c3c' : 'var(--ln-bg)',
                 color: isDanger ? 'white' : 'var(--ln-fg)',
                 borderColor: isDanger ? '#c0392b' : 'var(--ln-border)',
             }}
         >
-            {def.label || "Action"}
+            {isRunning ? 'Working...' : def.label || "Action"}
         </button>
     );
 };
@@ -225,5 +242,24 @@ export const ComputedText: React.FC<{ def: SettingControlDef }> = ({ def }) => {
         <span style={{ color: 'var(--ln-muted)', fontSize: '0.9rem' }}>
             {display}
         </span>
+    );
+};
+
+export const ProgressBar: React.FC<{ def: SettingControlDef }> = ({ def }) => {
+    const [value] = useSettingValue<number>(def.key);
+    const safeValue = typeof value === 'number' && Number.isFinite(value) ? Math.min(Math.max(value, 0), 100) : 0;
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px' }}>
+            <progress
+                max={100}
+                value={safeValue}
+                aria-label={def.label || 'Download progress'}
+                style={{ width: '140px', height: '8px' }}
+            />
+            <span style={{ color: 'var(--ln-muted)', fontSize: '0.85rem', width: '36px', textAlign: 'right' }}>
+                {safeValue.toFixed(0)}%
+            </span>
+        </div>
     );
 };
