@@ -15,9 +15,11 @@
     "build:desktop": "pnpm --filter @liminal-notes/desktop tauri build",
     "build:packages": "pnpm -r --filter \"./packages/**\" --filter \"./apps/mobile/editor-web\" run build",
     "dev:packages": "pnpm -r --filter \"./packages/**\" --filter \"./apps/mobile/editor-web\" run dev",
-    "postinstall": "pnpm build:packages"
+    "postinstall": "pnpm build:packages",
+    "generate:icons": "node scripts/generate-icons.mjs"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "typescript": "^5.8.3"
   }
 }
