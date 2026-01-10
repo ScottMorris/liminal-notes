@@ -13,7 +13,7 @@
     "tauri": "pnpm --filter @liminal-notes/desktop tauri",
     "dev:desktop": "pnpm --filter @liminal-notes/desktop tauri dev",
     "build:desktop": "pnpm --filter @liminal-notes/desktop tauri build",
-    "build:appimage:portable": "cd apps/desktop && TAURI_BUNDLER_NEW_APPIMAGE_FORMAT=${TAURI_BUNDLER_NEW_APPIMAGE_FORMAT:-true} TAURI_BUNDLE_TARGETS=appimage ~/.cargo/bin/tauri build",
+    "build:appimage:portable": "cd apps/desktop && TAURI_BUNDLER_NEW_APPIMAGE_FORMAT=${TAURI_BUNDLER_NEW_APPIMAGE_FORMAT:-true} TAURI_BUNDLE_TARGETS=appimage cargo tauri build",
     "build:packages": "pnpm -r --filter \"./packages/**\" --filter \"./apps/mobile/editor-web\" run build",
     "dev:packages": "pnpm -r --filter \"./packages/**\" --filter \"./apps/mobile/editor-web\" run dev",
     "postinstall": "pnpm build:packages",

@@ -70,7 +70,7 @@ cargo install tauri-cli \
 
 export TAURI_BUNDLER_NEW_APPIMAGE_FORMAT="true"
 cd apps/desktop
-cargo tauri build
+cargo tauri build --bundles appimage
 
 # or just build the AppImage via pnpm using the installed cargo CLI
 cd /workspaces/liminal-notes
