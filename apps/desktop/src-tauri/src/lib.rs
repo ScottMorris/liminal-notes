@@ -1,4 +1,4 @@
-use tauri::Manager;
+use tauri::{Manager, webview::WebviewExt};
 
 mod vault;
 mod settings;
