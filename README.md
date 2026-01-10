@@ -57,6 +57,23 @@ The built artifacts will be available in `apps/desktop/src-tauri/target/release/
 
 **Note:** Binaries are currently unsigned. You may see OS warnings when installing.
 
+### Linux AppImage (portable format)
+
+To fix `EGL_BAD_PARAMETER` blank-screen failures on Arch/Fedora/Steam Deck, build with Tauri’s experimental portable AppImage runtime:
+
+```bash
+cargo install tauri-cli \
+  --git https://github.com/tauri-apps/tauri \
+  --branch feat/truly-portable-appimage \
+  --force
+
+export TAURI_BUNDLER_NEW_APPIMAGE_FORMAT="true"
+cd apps/desktop
+cargo tauri build
+```
+
+The AppImage will be in `apps/desktop/src-tauri/target/release/bundle/appimage/`. This matches the CI configuration until the upstream runtime merges and becomes the default.
+
 ## Status & Roadmap
 
 Current Version: **0.1.0** (Milestone 8 - Polish & Packaging)

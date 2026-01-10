@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
 
 # Install Tauri system dependencies and build tools
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -12,6 +12,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libayatana-appindicator3-dev \
     librsvg2-dev \
     libwebkit2gtk-4.1-dev \
+    patchelf \
     gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-bad \
     fonts-noto-color-emoji \
@@ -72,6 +73,15 @@ RUN yes | sdkmanager --licenses && \
 # Install Rust toolchain (stable)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
     && rustup component add clippy rustfmt
+
+# Install experimental Tauri CLI for portable AppImage builds
+RUN cargo install tauri-cli \
+    --git https://github.com/tauri-apps/tauri \
+    --branch feat/truly-portable-appimage \
+    --force
+
+# Default to portable AppImage format to avoid EGL issues on modern distros
+ENV TAURI_BUNDLER_NEW_APPIMAGE_FORMAT=true
 
 # Create pnpm home directory to ensure permissions are correct
 RUN mkdir -p $PNPM_HOME
