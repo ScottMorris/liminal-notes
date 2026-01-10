@@ -62,6 +62,7 @@ The built artifacts will be available in `apps/desktop/src-tauri/target/release/
 To fix `EGL_BAD_PARAMETER` blank-screen failures on Arch/Fedora/Steam Deck, build with Tauri’s experimental portable AppImage runtime:
 
 ```bash
+# install the experimental CLI once per machine
 cargo install tauri-cli \
   --git https://github.com/tauri-apps/tauri \
   --branch feat/truly-portable-appimage \
@@ -70,6 +71,10 @@ cargo install tauri-cli \
 export TAURI_BUNDLER_NEW_APPIMAGE_FORMAT="true"
 cd apps/desktop
 cargo tauri build
+
+# or just build the AppImage via pnpm using the installed cargo CLI
+cd /workspaces/liminal-notes
+pnpm build:appimage:portable
 ```
 
 The AppImage will be in `apps/desktop/src-tauri/target/release/bundle/appimage/`. This matches the CI configuration until the upstream runtime merges and becomes the default.
