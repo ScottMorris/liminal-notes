@@ -1,4 +1,4 @@
-use tauri::{Manager, webview::WebviewExt};
+use tauri::Manager;
 
 mod vault;
 mod settings;
@@ -84,9 +84,7 @@ pub fn run() {
 
             if std::env::var("TAURI_FORCE_DEVTOOLS").is_ok() {
                 if let Some(main) = app.get_webview_window("main") {
-                    let _ = main.with_webview(|webview| {
-                        webview.open_devtools();
-                    });
+                    main.open_devtools();
                 }
             }
             Ok(())
