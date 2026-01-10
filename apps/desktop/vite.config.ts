@@ -34,4 +34,15 @@ export default defineConfig(async () => ({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
   },
+
+  resolve: {
+    dedupe: [
+      "@codemirror/state",
+      "@codemirror/view",
+      "@codemirror/language",
+      "@codemirror/commands",
+      "@codemirror/autocomplete",
+      "@codemirror/lint",
+    ],
+  },
 }));

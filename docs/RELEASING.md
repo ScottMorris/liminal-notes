@@ -44,6 +44,11 @@ This document describes the process for creating a new release of the desktop ap
 6.  **Publish**
     - When satisfied, click "Edit" on the release and "Publish release" to make it public.
 
+## Linux AppImage runtime
+
+- CI installs `tauri-cli` from `feat/truly-portable-appimage` and sets `TAURI_BUNDLER_NEW_APPIMAGE_FORMAT=true` to avoid the `EGL_BAD_PARAMETER` blank-screen bug on Arch/Fedora/Steam Deck.
+- Keep this flow until the upstream Tauri PR merges and the portable AppImage runtime becomes the default.
+
 ## Current CI Limitations
 
 - **Windows & macOS**: Currently skipped in the CI pipeline pending research on code signing and notarization.

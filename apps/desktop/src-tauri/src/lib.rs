@@ -81,6 +81,12 @@ pub fn run() {
             registry.activate(app.handle().clone(), "core.tts").unwrap();
 
             app.manage(registry);
+
+            if std::env::var("TAURI_FORCE_DEVTOOLS").is_ok() {
+                if let Some(main) = app.get_webview_window("main") {
+                    main.open_devtools();
+                }
+            }
             Ok(())
         })
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {

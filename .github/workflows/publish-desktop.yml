@@ -51,7 +51,14 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - name: Install experimental Tauri CLI (portable AppImage)
+        run: |
+          cargo install tauri-cli \
+            --git https://github.com/tauri-apps/tauri \
+            --branch feat/truly-portable-appimage \
+            --force
 
       - name: Install JS deps
         run: pnpm install --frozen-lockfile
@@ -60,6 +67,7 @@ jobs:
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: "true"
         with:
           projectPath: apps/desktop
           tagName: ${{ github.ref_name }}
@@ -70,4 +78,5 @@ jobs:
           releaseDraft: true
           prerelease: false
           uploadUpdaterJson: false
+          tauriScript: "~/.cargo/bin/tauri"
           args: ${{ matrix.args }}
