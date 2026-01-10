@@ -30,6 +30,7 @@ export interface SettingControlDef {
   max?: number;
   step?: number;
   intent?: "normal" | "danger";
+  disabled?: boolean;
   actionId?: string; // identifier for action handlers
   collectionId?: string; // identifier for collection source
   // For collection items or specific logic

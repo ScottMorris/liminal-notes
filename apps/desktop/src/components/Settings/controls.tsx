@@ -161,6 +161,7 @@ export const NumberInput: React.FC<{ def: SettingControlDef }> = ({ def }) => {
             onChange={(e) => setLocalValue(e.target.value)}
             onBlur={commit}
             onKeyDown={(e) => e.key === 'Enter' && commit()}
+            disabled={def.disabled}
             style={{
                 background: 'var(--ln-bg)',
                 border: '1px solid var(--ln-border)',
