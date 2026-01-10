@@ -13,6 +13,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     librsvg2-dev \
     libwebkit2gtk-4.1-dev \
     patchelf \
+    xdg-utils \
     gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-bad \
     fonts-noto-color-emoji \
