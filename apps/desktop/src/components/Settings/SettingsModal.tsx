@@ -11,6 +11,7 @@ import { RemindersDebugModal } from '../../features/reminders/components/Reminde
 import { TagSettings } from './TagSettings';
 import { builtInPlugins } from '../../plugins/registry';
 import { usePluginHost } from '../../plugins/PluginHostProvider';
+import { DeveloperWindowSettings } from './DeveloperWindowSettings';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -45,6 +46,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
     );
 
     const tagSection = { id: 'tags', title: 'Tag Management', settings: [], groups: [] };
+    const developerSections = [{ id: 'developer-window', title: 'Window sizing' }];
 
     // Group sections for sidebar
     const optionsGroups = [
@@ -59,6 +61,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
     const [isDebugOpen, setIsDebugOpen] = useState(false);
 
     const activeSection = sections.find(s => s.id === activeSectionId) || (activeSectionId === 'tags' ? tagSection : undefined);
+    const activeDeveloperSection = developerSections.find(section => section.id === activeSectionId);
+    const activeSectionTitle = activeSection?.title || activeDeveloperSection?.title || (activeSectionId === 'tags' ? tagSection.title : undefined);
 
     const handleAction: SettingsActionHandler = async (actionId: string) => {
         if (actionId === 'switch-vault') {
@@ -185,6 +189,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
                             }}>
                                 Developer
                             </div>
+                            {developerSections.map(section => (
+                                <div
+                                    key={section.id}
+                                    className={`sidebar-item ${activeSectionId === section.id ? 'active' : ''}`}
+                                    onClick={() => setActiveSectionId(section.id)}
+                                    style={{
+                                        padding: '8px 20px',
+                                        cursor: 'pointer',
+                                        backgroundColor: activeSectionId === section.id ? 'var(--ln-item-hover-bg)' : 'transparent',
+                                        borderLeft: activeSectionId === section.id ? '3px solid var(--ln-accent)' : '3px solid transparent',
+                                        color: activeSectionId === section.id ? 'var(--ln-fg)' : 'var(--ln-sidebar-fg)'
+                                    }}
+                                >
+                                    {section.title}
+                                </div>
+                            ))}
                             <div
                                 className="sidebar-item"
                                 onClick={() => setIsDebugOpen(true)}
@@ -210,12 +230,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
                         alignItems: 'center',
                         flexShrink: 0
                     }}>
-                        <h2 style={{ margin: 0 }}>{activeSection?.title}</h2>
+                        <h2 style={{ margin: 0 }}>{activeSectionTitle || 'Settings'}</h2>
                         <button className="close-btn" onClick={onClose}><XMarkIcon size={24} /></button>
                     </div>
                     <div className="settings-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '20px 40px' }}>
                         {activeSectionId === 'tags' ? (
                             <TagSettings />
+                        ) : activeSectionId === 'developer-window' ? (
+                            <DeveloperWindowSettings />
                         ) : activeSection && (
                             <SettingsSection section={activeSection} onAction={handleAction} />
                         )}
