@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liminal Notes | Local-First Knowledge Management</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo-container">
+        <div class="logo-placeholder">
+          <img
+            src="liminal-notes-icon.png"
+            alt="Liminal Icon"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
+          />
+          <div class="fallback-icon">L</div>
+        </div>
+        <span class="brand-name">Liminal Notes</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#philosophy">Philosophy</a>
+        <a href="#roadmap">Roadmap</a>
+        <a
+          href="https://github.com/ScottMorris/liminal-notes"
+          class="btn-secondary"
+          >GitHub</a
+        >
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          The Threshold of <br /><span class="gradient-text">Your Mind.</span>
+        </h1>
+        <p class="hero-subtitle">
+          A local-first, graph-based notebook. <br />
+          Your data is the source of truth. No proprietary databases. No clouds
+          required.
+        </p>
+        <div class="cta-group">
+          <button class="btn-primary">Download v0.1.0</button>
+          <button class="btn-secondary">Read the Docs</button>
+        </div>
+
+        <div class="hero-image-container">
+          <div class="screenshot-placeholder main-shot">
+            <div class="shot-inner">
+              <img
+                src="desktop-app.png"
+                alt="App Main Window"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
+              />
+            </div>
+            <div class="glare"></div>
+            <div class="hero-cat" aria-hidden="true">
+              <div class="cat">
+                <div class="ears"></div>
+                <div class="head">
+                  <div class="eyes">
+                    <div class="pupil"></div>
+                    <div class="pupil"></div>
+                  </div>
+                </div>
+                <div class="body"></div>
+                <div class="tail"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="features" class="features-section">
+      <div class="container">
+        <h2>Built for Longevity</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>📂 Local-First Vaults</h3>
+            <p>
+              Your notes live in standard folders on your disk. We treat your
+              filesystem as the database.
+            </p>
+          </div>
+          <div class="card">
+            <h3>🕸️ Graph & Wikilinks</h3>
+            <p>
+              Connect thoughts using <code>[[wikilinks]]</code>. Visualise your
+              knowledge graph and discover unexpected connections.
+            </p>
+          </div>
+          <div class="card">
+            <h3>⚡ Blazing Fast</h3>
+            <p>
+              Built with <strong>Rust</strong> and <strong>Tauri</strong>. A
+              native application footprint with the flexibility of web tech.
+            </p>
+          </div>
+          <div class="card">
+            <h3>📝 Plain Markdown</h3>
+            <p>
+              Standard <code>.md</code> files. Your data remains readable by any
+              text editor, forever.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="philosophy" class="philosophy-section">
+      <div class="container split-layout">
+        <div class="text-block">
+          <h2>The Vault Guardian</h2>
+          <p>
+            We believe in the <strong>"Guardian" principle</strong>: software
+            should protect your data, not exploit it.
+          </p>
+          <ul class="feature-list">
+            <li>No mandatory accounts.</li>
+            <li>No telemetry by default.</li>
+            <li>End-to-end encryption capable.</li>
+          </ul>
+          <p class="quote">
+            "Decisions here bias toward shared abstractions and long-term
+            maintainability."
+          </p>
+        </div>
+        <div class="visual-block">
+          <div class="screenshot-placeholder mobile-shot">
+            <span class="placeholder-text">[ Screenshot: Mobile View ]</span>
+          </div>
+
+          <div class="guardian-cat-container">
+            <div class="cat">
+              <div class="ears"></div>
+              <div class="head">
+                <div class="eyes">
+                  <div class="pupil"></div>
+                  <div class="pupil"></div>
+                </div>
+              </div>
+              <div class="body"></div>
+              <div class="tail"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap" class="roadmap-section">
+      <div class="container">
+        <h2>Roadmap</h2>
+        <div class="timeline">
+          <div class="milestone complete">
+            <span class="date">Done</span>
+            <h4>Core Engine</h4>
+            <p>Markdown editing, linking, search, graph view.</p>
+          </div>
+          <div class="milestone current">
+            <span class="date">Now</span>
+            <h4>Polish & Packaging</h4>
+            <p>Desktop packaging (.deb, .msi) and theming.</p>
+          </div>
+          <div class="milestone future">
+            <span class="date">Next</span>
+            <h4>Mobile & Sync</h4>
+            <p>Android (React Native) support and encrypted sync modules.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="container footer-content">
+        <div class="footer-col">
+          <h5>Liminal Notes</h5>
+          <p>Copyright © 2026. Scott Morris</p>
+        </div>
+        <div class="footer-col">
+          <h5>Resources</h5>
+          <a href="#">Documentation</a>
+          <a href="#">Contribution Guide</a>
+          <a href="#">Privacy Policy</a>
+        </div>
+        <div class="footer-col">
+          <h5>Connect</h5>
+          <a href="https://github.com/ScottMorris/liminal-notes">GitHub</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

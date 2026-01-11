@@ -17,7 +17,8 @@
     "build:packages": "pnpm -r --filter \"./packages/**\" --filter \"./apps/mobile/editor-web\" run build",
     "dev:packages": "pnpm -r --filter \"./packages/**\" --filter \"./apps/mobile/editor-web\" run dev",
     "postinstall": "pnpm build:packages",
-    "generate:icons": "node scripts/generate-icons.mjs"
+    "generate:icons": "node scripts/generate-icons.mjs",
+    "site:prepare": "node scripts/prepare-site.mjs"
   },
   "devDependencies": {
     "sharp": "^0.34.5",
