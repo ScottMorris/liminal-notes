@@ -36,6 +36,12 @@ We recommend using the VS Code **Dev Container** for a zero-config setup.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
+## Marketing Site
+
+- Static files live in `apps/site/public`.
+- Shared branding assets live in `assets/branding`. Run `pnpm site:prepare` to copy them into `apps/site/public` before serving or deploying.
+- Preview locally with `pnpm dlx serve apps/site/public`.
+
 ## Building a Release
 
 To create an installable package for your platform (Linux .deb/.AppImage, Windows .msi, macOS .app/.dmg):
