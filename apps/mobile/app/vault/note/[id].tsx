@@ -19,6 +19,7 @@ import { renameNote } from '../../../src/utils/fileOperations';
 import { NoteTags } from '../../../src/components/NoteTags';
 import { normalizeTagId, deriveTagsFromPath } from '@liminal-notes/core-shared/tags';
 import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
+import { PromptDialog } from '../../../src/components/PromptDialog';
 
 const DEBUG = false;
 
@@ -75,6 +76,7 @@ export default function NoteScreen() {
 
   // Tags
   const [tags, setTags] = useState<string[]>([]);
+  const [isTagPromptVisible, setTagPromptVisible] = useState(false);
 
   const editorRef = useRef<EditorViewRef>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -425,59 +427,34 @@ export default function NoteScreen() {
           </TouchableOpacity>
       </View>
 
-      <NoteTags
-        tags={tags}
-        onAdd={() => {
-            Alert.prompt('Add Tag', 'Enter tag name', (text) => {
-                if(!text) return;
-                // Add definition immediately
-                addTag(text).catch(e => console.error('Failed to add tag def', e));
-
+      <View style={{ borderBottomWidth: 1, borderBottomColor: paperTheme.colors.outlineVariant, backgroundColor: paperTheme.colors.surface }}>
+        <NoteTags
+            tags={tags}
+            onAdd={() => setTagPromptVisible(true)}
+            onRemove={(tagId) => {
+                const folderTags = deriveTagsFromPath(noteId!);
+                if (folderTags.includes(tagId)) {
+                    Alert.alert('Cannot remove', 'This tag is derived from the folder structure.');
+                    return;
+                }
                 const newContent = updateFrontmatter(content, (d) => {
                     let cTags = d.tags || [];
                     if(typeof cTags === 'string') cTags = [cTags];
-                    cTags.push(text);
-                    d.tags = cTags;
-                    // Add to metadata
-                    const tid = normalizeTagId(text);
-                     if (!d.liminal) d.liminal = {};
-                     if (!d.liminal.tagMeta) d.liminal.tagMeta = {};
-                     d.liminal.tagMeta[tid] = { source: 'human' };
-                });
-                // Update editor
-                if (editorRef.current) {
-                    editorRef.current.sendCommand(EditorCommand.Set, {
-                        docId: noteId!,
-                        text: newContent
-                    });
-                    // Trigger save flow?
-                    // setContent(newContent); // this happens via docChanged
-                }
-            });
-        }}
-        onRemove={(tagId) => {
-             const folderTags = deriveTagsFromPath(noteId!);
-             if (folderTags.includes(tagId)) {
-                 Alert.alert('Cannot remove', 'This tag is derived from the folder structure.');
-                 return;
-             }
-             const newContent = updateFrontmatter(content, (d) => {
-                 let cTags = d.tags || [];
-                 if(typeof cTags === 'string') cTags = [cTags];
-                 d.tags = cTags.filter((t: any) => normalizeTagId(String(t)) !== tagId);
+                    d.tags = cTags.filter((t: any) => normalizeTagId(String(t)) !== tagId);
 
-                 if (d.liminal?.tagMeta?.[tagId]) {
-                    delete d.liminal.tagMeta[tagId];
+                    if (d.liminal?.tagMeta?.[tagId]) {
+                        delete d.liminal.tagMeta[tagId];
+                    }
+                });
+                if (editorRef.current) {
+                        editorRef.current.sendCommand(EditorCommand.Set, {
+                            docId: noteId!,
+                            text: newContent
+                        });
                 }
-             });
-              if (editorRef.current) {
-                    editorRef.current.sendCommand(EditorCommand.Set, {
-                        docId: noteId!,
-                        text: newContent
-                    });
-              }
-        }}
-      />
+            }}
+        />
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
@@ -500,6 +477,37 @@ export default function NoteScreen() {
           {/* Footer */}
           <LastSavedFooter timestamp={lastSavedAt} />
       </KeyboardAvoidingView>
+
+      <PromptDialog
+        visible={isTagPromptVisible}
+        title="Add Tag"
+        placeholder="Enter tag name"
+        onClose={() => setTagPromptVisible(false)}
+        onSubmit={(text) => {
+            if(!text) return;
+            // Add definition immediately
+            addTag(text).catch(e => console.error('Failed to add tag def', e));
+
+            const newContent = updateFrontmatter(content, (d) => {
+                let cTags = d.tags || [];
+                if(typeof cTags === 'string') cTags = [cTags];
+                cTags.push(text);
+                d.tags = cTags;
+                // Add to metadata
+                const tid = normalizeTagId(text);
+                    if (!d.liminal) d.liminal = {};
+                    if (!d.liminal.tagMeta) d.liminal.tagMeta = {};
+                    d.liminal.tagMeta[tid] = { source: 'human' };
+            });
+            // Update editor
+            if (editorRef.current) {
+                editorRef.current.sendCommand(EditorCommand.Set, {
+                    docId: noteId!,
+                    text: newContent
+                });
+            }
+        }}
+      />
     </SafeAreaView>
   );
 }

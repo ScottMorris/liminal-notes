@@ -6,6 +6,7 @@ import { useTheme } from '../../src/context/ThemeContext';
 import { useTags } from '../../src/context/TagsContext';
 import { useTheme as usePaperTheme } from 'react-native-paper';
 import { Tag } from '@liminal-notes/core-shared/tags';
+import { PromptDialog } from '../../src/components/PromptDialog';
 // Icons removed to avoid dependency issues if not installed. Using Text buttons for MVP.
 
 export default function TagSettingsScreen() {
@@ -15,6 +16,10 @@ export default function TagSettingsScreen() {
     const router = useRouter();
     const [filter, setFilter] = useState('');
 
+    // Dialog State
+    const [editDialog, setEditDialog] = useState<{ visible: boolean; tag: Tag | null }>({ visible: false, tag: null });
+    const [colorDialog, setColorDialog] = useState<{ visible: boolean; tag: Tag | null }>({ visible: false, tag: null });
+
     const sortedTags = useMemo(() => {
         return Object.values(tags)
             .filter(t => t.displayName.toLowerCase().includes(filter.toLowerCase()))
@@ -22,49 +27,11 @@ export default function TagSettingsScreen() {
     }, [tags, filter]);
 
     const handleEdit = (tag: Tag) => {
-        Alert.prompt(
-            'Rename Tag',
-            `Enter new display name for #${tag.id}`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Save',
-                    onPress: (newName: string | undefined) => {
-                        const name = newName || '';
-                        if (name && name.trim()) {
-                            updateTag({ ...tag, displayName: name.trim() });
-                        }
-                    }
-                }
-            ],
-            'plain-text',
-            tag.displayName
-        );
+        setEditDialog({ visible: true, tag });
     };
 
     const handleChangeColor = (tag: Tag) => {
-        // Simple prompt for hex code for MVP
-        // A full color picker is better but requires external lib
-        Alert.prompt(
-            'Change Color',
-            'Enter hex color (e.g. #FF0000)',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Save',
-                    onPress: (colorInput: string | undefined) => {
-                        const color = colorInput || '';
-                        if (color && /^#[0-9A-Fa-f]{6}$/.test(color)) {
-                            updateTag({ ...tag, color });
-                        } else if (color) {
-                            Alert.alert('Invalid Color', 'Please use hex format like #RRGGBB');
-                        }
-                    }
-                }
-            ],
-            'plain-text',
-            tag.color || ''
-        );
+        setColorDialog({ visible: true, tag });
     };
 
     const handleDelete = (tagId: string) => {
@@ -99,6 +66,8 @@ export default function TagSettingsScreen() {
                     placeholderTextColor={paperTheme.colors.onSurfaceVariant}
                     value={filter}
                     onChangeText={setFilter}
+                    selectionColor={paperTheme.colors.primary}
+                    cursorColor={paperTheme.colors.primary}
                 />
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -124,6 +93,35 @@ export default function TagSettingsScreen() {
                     <Text style={{ padding: 20, textAlign: 'center', color: paperTheme.colors.onSurfaceVariant }}>No tags found.</Text>
                 )}
             </ScrollView>
+
+            <PromptDialog
+                visible={editDialog.visible}
+                title="Rename Tag"
+                message={`Enter new display name for #${editDialog.tag?.id}`}
+                defaultValue={editDialog.tag?.displayName}
+                onClose={() => setEditDialog({ visible: false, tag: null })}
+                onSubmit={(newName) => {
+                    if (newName && newName.trim() && editDialog.tag) {
+                        updateTag({ ...editDialog.tag, displayName: newName.trim() });
+                    }
+                }}
+            />
+
+            <PromptDialog
+                visible={colorDialog.visible}
+                title="Change Color"
+                message="Enter hex color (e.g. #FF0000)"
+                defaultValue={colorDialog.tag?.color || ''}
+                placeholder="#RRGGBB"
+                onClose={() => setColorDialog({ visible: false, tag: null })}
+                onSubmit={(colorInput) => {
+                    if (colorInput && /^#[0-9A-Fa-f]{6}$/.test(colorInput) && colorDialog.tag) {
+                        updateTag({ ...colorDialog.tag, color: colorInput });
+                    } else if (colorInput) {
+                        Alert.alert('Invalid Color', 'Please use hex format like #RRGGBB');
+                    }
+                }}
+            />
         </SafeAreaView>
     );
 }
