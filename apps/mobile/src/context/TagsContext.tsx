@@ -79,7 +79,7 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
         isWritingRef.current = true;
         try {
             const adapter = new MobileSandboxVaultAdapter();
-            await adapter.writeNote(TAGS_FILE, JSON.stringify(newTags, null, 2));
+            await adapter.writeNote(TAGS_FILE, JSON.stringify(newTags, null, 2), { createParents: true });
             setTags(newTags);
 
             // Update DB
