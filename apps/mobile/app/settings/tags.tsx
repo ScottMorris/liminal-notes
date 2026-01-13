@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useTags } from '../../src/context/TagsContext';
-import { useTheme as usePaperTheme } from 'react-native-paper';
+import { useTheme as usePaperTheme, TextInput, List, IconButton, Text, Surface } from 'react-native-paper';
 import { Tag } from '@liminal-notes/core-shared/tags';
 import { PromptDialog } from '../../src/components/PromptDialog';
-// Icons removed to avoid dependency issues if not installed. Using Text buttons for MVP.
 
 export default function TagSettingsScreen() {
     const { resolveColor } = useTheme();
@@ -59,35 +58,43 @@ export default function TagSettingsScreen() {
                     headerStyle: { backgroundColor: resolveColor('--ln-bg') }
                 }}
             />
-            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: resolveColor('--ln-border') }}>
+            <View style={{ padding: 16 }}>
                 <TextInput
-                    style={[styles.input, { color: resolveColor('--ln-fg'), borderColor: resolveColor('--ln-border'), backgroundColor: resolveColor('--ln-surface') }]}
-                    placeholder="Filter tags..."
-                    placeholderTextColor={paperTheme.colors.onSurfaceVariant}
+                    mode="outlined"
+                    label="Filter tags..."
                     value={filter}
                     onChangeText={setFilter}
-                    selectionColor={paperTheme.colors.primary}
-                    cursorColor={paperTheme.colors.primary}
+                    style={{ backgroundColor: resolveColor('--ln-surface') }}
+                    textColor={resolveColor('--ln-fg')}
+                    theme={{ colors: { primary: resolveColor('--ln-accent') } }}
                 />
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
                 {sortedTags.map(tag => (
-                    <View key={tag.id} style={[styles.row, { borderBottomColor: resolveColor('--ln-border') }]}>
-                        <TouchableOpacity
-                            style={[styles.colorDot, { backgroundColor: tag.color || resolveColor('--ln-accent') }]}
-                            onPress={() => handleChangeColor(tag)}
-                        />
-                        <View style={{ flex: 1, marginLeft: 12 }}>
-                            <Text style={[styles.tagName, { color: resolveColor('--ln-fg') }]}>{tag.displayName}</Text>
-                            <Text style={{ fontSize: 12, color: paperTheme.colors.onSurfaceVariant }}>{tag.id}</Text>
-                        </View>
-                        <TouchableOpacity onPress={() => handleEdit(tag)} style={{ padding: 8 }}>
-                            <Text style={{ color: resolveColor('--ln-accent') }}>Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDelete(tag.id)} style={{ padding: 8 }}>
-                            <Text style={{ color: paperTheme.colors.error }}>Delete</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <List.Item
+                        key={tag.id}
+                        title={tag.displayName}
+                        description={`#${tag.id}`}
+                        left={props => (
+                            <TouchableOpacity onPress={() => handleChangeColor(tag)}>
+                                <View
+                                    style={[
+                                        styles.colorDot,
+                                        { backgroundColor: tag.color || resolveColor('--ln-accent'), margin: 8 }
+                                    ]}
+                                />
+                            </TouchableOpacity>
+                        )}
+                        right={props => (
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <IconButton icon="pencil" size={20} onPress={() => handleEdit(tag)} iconColor={resolveColor('--ln-accent')} />
+                                <IconButton icon="delete" size={20} onPress={() => handleDelete(tag.id)} iconColor={paperTheme.colors.error} />
+                            </View>
+                        )}
+                        style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: resolveColor('--ln-border') }}
+                        titleStyle={{ color: resolveColor('--ln-fg') }}
+                        descriptionStyle={{ color: paperTheme.colors.onSurfaceVariant }}
+                    />
                 ))}
                 {sortedTags.length === 0 && (
                     <Text style={{ padding: 20, textAlign: 'center', color: paperTheme.colors.onSurfaceVariant }}>No tags found.</Text>
@@ -130,25 +137,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    input: {
-        height: 40,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-    },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-    },
     colorDot: {
         width: 24,
         height: 24,
         borderRadius: 12,
     },
-    tagName: {
-        fontSize: 16,
-        fontWeight: '500',
-    }
 });

@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { TagId, Tag } from '@liminal-notes/core-shared/tags';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Chip, useTheme } from 'react-native-paper';
+import { TagId } from '@liminal-notes/core-shared/tags';
 import { useTags } from '../context/TagsContext';
-import { useTheme } from '../context/ThemeContext';
-// import { XMarkIcon } from 'react-native-heroicons/outline'; // Need to check if available or use text 'x'
 
 interface NoteTagsProps {
     tags: TagId[];
@@ -13,7 +12,7 @@ interface NoteTagsProps {
 
 export function NoteTags({ tags, onRemove, onAdd }: NoteTagsProps) {
     const { tags: tagDefs } = useTags();
-    const { resolveColor } = useTheme();
+    const theme = useTheme();
 
     if (tags.length === 0 && !onAdd) return null;
 
@@ -22,35 +21,35 @@ export function NoteTags({ tags, onRemove, onAdd }: NoteTagsProps) {
             {tags.map(tagId => {
                 const def = tagDefs[tagId];
                 const displayName = def ? def.displayName : tagId;
-                const color = def?.color || resolveColor('--ln-accent');
-
-                // Color mix approximation for React Native
-                // We'll use the color for text/border and a low opacity background if possible,
-                // or just the border style similar to desktop.
-                // React Native doesn't support 'color-mix' directly in styles efficiently without worklets/reanimated or parsing.
-                // We'll just set border and text color for MVP cleanliness.
+                const color = def?.color || theme.colors.primary;
 
                 return (
-                    <TouchableOpacity
+                    <Chip
                         key={tagId}
-                        style={[styles.tag, { borderColor: color }]}
-                        onPress={() => { /* Navigate or show info? */ }}
+                        mode="outlined"
+                        onClose={onRemove ? () => onRemove(tagId) : undefined}
+                        style={[styles.chip, { borderColor: color }]}
+                        textStyle={{ color: theme.colors.onSurface }}
+                        // Chip doesn't support custom dot easily without 'icon'
+                        // We can use the 'icon' prop to show the dot color
+                        icon={() => <View style={[styles.dot, { backgroundColor: color }]} />}
+                        onPress={() => { /* Navigate or filter? */ }}
                     >
-                        <View style={[styles.dot, { backgroundColor: color }]} />
-                        <Text style={[styles.text, { color: resolveColor('--ln-fg') }]}>{displayName}</Text>
-                        {onRemove && (
-                             <TouchableOpacity onPress={() => onRemove(tagId)} style={styles.removeBtn}>
-                                <Text style={{ color: resolveColor('--ln-muted'), fontSize: 12 }}>×</Text>
-                             </TouchableOpacity>
-                        )}
-                    </TouchableOpacity>
+                        {displayName}
+                    </Chip>
                 );
             })}
 
             {onAdd && (
-                <TouchableOpacity onPress={onAdd} style={[styles.tag, { borderColor: resolveColor('--ln-muted'), borderStyle: 'dashed' }]}>
-                    <Text style={[styles.text, { color: resolveColor('--ln-muted') }]}>+ Tag</Text>
-                </TouchableOpacity>
+                <Chip
+                    mode="outlined"
+                    onPress={onAdd}
+                    style={[styles.chip, { borderStyle: 'dashed', borderColor: theme.colors.onSurfaceDisabled }]}
+                    textStyle={{ color: theme.colors.onSurfaceVariant }}
+                    icon="plus"
+                >
+                    Tag
+                </Chip>
             )}
         </ScrollView>
     );
@@ -58,36 +57,23 @@ export function NoteTags({ tags, onRemove, onAdd }: NoteTagsProps) {
 
 const styles = StyleSheet.create({
     container: {
-        maxHeight: 40,
+        maxHeight: 50,
         marginBottom: 8,
         flexGrow: 0,
     },
     contentContainer: {
         paddingHorizontal: 16,
         alignItems: 'center',
-        gap: 8
+        gap: 8,
+        paddingVertical: 4
     },
-    tag: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderRadius: 12,
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        height: 24,
-        marginRight: 4,
+    chip: {
+        height: 32, // Standard chip height
+        backgroundColor: 'transparent'
     },
     dot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        marginRight: 6,
-    },
-    text: {
-        fontSize: 12,
-    },
-    removeBtn: {
-        marginLeft: 6,
-        padding: 2,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
     }
 });
