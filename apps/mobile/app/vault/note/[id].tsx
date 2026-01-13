@@ -87,6 +87,9 @@ export default function NoteScreen() {
   // To handle navigation blocking
   const pendingNavigationAction = useRef<any>(null);
 
+  // Pending tag operation to be applied after getting state
+  const pendingTagAction = useRef<{ type: 'add' | 'remove'; tag: string } | null>(null);
+
   useEffect(() => {
       const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
       const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
@@ -301,7 +304,49 @@ export default function NoteScreen() {
           return;
       }
 
-      const textToSave = payload.state.text ?? '';
+      const receivedText = payload.state.text ?? '';
+
+      // Handle Pending Tag Action (Add/Remove) using LATEST text
+      if (pendingTagAction.current) {
+          const action = pendingTagAction.current;
+          pendingTagAction.current = null;
+
+          const updatedText = updateFrontmatter(receivedText, (d) => {
+              let cTags = d.tags || [];
+              if (typeof cTags === 'string') cTags = [cTags];
+
+              if (action.type === 'add') {
+                  if (!cTags.includes(action.tag)) {
+                      cTags.push(action.tag);
+                  }
+                  d.tags = cTags;
+                  // Metadata
+                  const tid = normalizeTagId(action.tag);
+                  if (!d.liminal) d.liminal = {};
+                  if (!d.liminal.tagMeta) d.liminal.tagMeta = {};
+                  d.liminal.tagMeta[tid] = { source: 'human' };
+              } else if (action.type === 'remove') {
+                  d.tags = cTags.filter((t: any) => normalizeTagId(String(t)) !== action.tag);
+                  if (d.liminal?.tagMeta?.[action.tag]) {
+                      delete d.liminal.tagMeta[action.tag];
+                  }
+              }
+          });
+
+          // Send updated text back to editor
+          if (editorRef.current) {
+              editorRef.current.sendCommand(EditorCommand.Set, {
+                  docId: noteId!,
+                  text: updatedText
+              });
+          }
+
+          // We don't save to disk here; setting text in editor will trigger docChanged -> autoSave
+          return;
+      }
+
+      // Normal Save Flow
+      const textToSave = receivedText;
 
       try {
           const adapter = new MobileSandboxVaultAdapter();
@@ -438,23 +483,12 @@ export default function NoteScreen() {
                     return;
                 }
                 // Optimistic update
-                setTags(prev => prev.filter(t => normalizeTagId(t) !== tagId));
+                const normalizedId = normalizeTagId(tagId);
+                setTags(prev => prev.filter(t => normalizeTagId(t) !== normalizedId));
 
-                const newContent = updateFrontmatter(content, (d) => {
-                    let cTags = d.tags || [];
-                    if(typeof cTags === 'string') cTags = [cTags];
-                    d.tags = cTags.filter((t: any) => normalizeTagId(String(t)) !== tagId);
-
-                    if (d.liminal?.tagMeta?.[tagId]) {
-                        delete d.liminal.tagMeta[tagId];
-                    }
-                });
-                if (editorRef.current) {
-                        editorRef.current.sendCommand(EditorCommand.Set, {
-                            docId: noteId!,
-                            text: newContent
-                        });
-                }
+                // Request state to apply update safely
+                pendingTagAction.current = { type: 'remove', tag: normalizedId };
+                requestSave();
             }}
         />
       </View>
@@ -493,32 +527,9 @@ export default function NoteScreen() {
             // Optimistic update
             setTags(prev => [...prev, text].sort());
 
-            const newContent = updateFrontmatter(content, (d) => {
-                let cTags = d.tags || [];
-                if(typeof cTags === 'string') cTags = [cTags];
-                // Check dupes again just in case
-                if (!cTags.includes(text)) {
-                    cTags.push(text);
-                }
-                d.tags = cTags;
-                // Add to metadata
-                const tid = normalizeTagId(text);
-                    if (!d.liminal) d.liminal = {};
-                    if (!d.liminal.tagMeta) d.liminal.tagMeta = {};
-                    d.liminal.tagMeta[tid] = { source: 'human' };
-            });
-
-            // Update editor
-            // We use EditorCommand.Set to update the full text.
-            // Note: This might reset cursor position if not handled carefully by editor,
-            // but for frontmatter updates it's usually fine or we should use insert?
-            // updateFrontmatter returns full text.
-            if (editorRef.current) {
-                editorRef.current.sendCommand(EditorCommand.Set, {
-                    docId: noteId!,
-                    text: newContent
-                });
-            }
+            // Request state to apply update safely
+            pendingTagAction.current = { type: 'add', tag: text };
+            requestSave();
         }}
       />
     </SafeAreaView>
