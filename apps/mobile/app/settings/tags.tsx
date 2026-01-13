@@ -66,7 +66,9 @@ export default function TagSettingsScreen() {
                     onChangeText={setFilter}
                     style={{ backgroundColor: resolveColor('--ln-surface') }}
                     textColor={resolveColor('--ln-fg')}
-                    theme={{ colors: { primary: resolveColor('--ln-accent') } }}
+                    theme={{ colors: { primary: resolveColor('--ln-accent'), onSurfaceVariant: resolveColor('--ln-muted') } }}
+                    activeOutlineColor={resolveColor('--ln-accent')}
+                    outlineColor={resolveColor('--ln-border')}
                 />
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>

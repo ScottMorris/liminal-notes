@@ -57,7 +57,7 @@ export function NoteTags({ tags, onRemove, onAdd }: NoteTagsProps) {
 
 const styles = StyleSheet.create({
     container: {
-        maxHeight: 50,
+        maxHeight: 60, // Increased to prevent cutoff
         marginBottom: 8,
         flexGrow: 0,
     },
@@ -65,10 +65,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         alignItems: 'center',
         gap: 8,
-        paddingVertical: 4
+        paddingVertical: 8 // Increased padding
     },
     chip: {
-        height: 32, // Standard chip height
+        // height: 32, // Let it size naturally or increase if needed
         backgroundColor: 'transparent'
     },
     dot: {

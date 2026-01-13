@@ -19,7 +19,7 @@ import { renameNote } from '../../../src/utils/fileOperations';
 import { NoteTags } from '../../../src/components/NoteTags';
 import { normalizeTagId, deriveTagsFromPath } from '@liminal-notes/core-shared/tags';
 import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
-import { PromptDialog } from '../../../src/components/PromptDialog';
+import { AddTagDialog } from '../../../src/components/AddTagDialog';
 
 const DEBUG = false;
 
@@ -437,6 +437,9 @@ export default function NoteScreen() {
                     Alert.alert('Cannot remove', 'This tag is derived from the folder structure.');
                     return;
                 }
+                // Optimistic update
+                setTags(prev => prev.filter(t => normalizeTagId(t) !== tagId));
+
                 const newContent = updateFrontmatter(content, (d) => {
                     let cTags = d.tags || [];
                     if(typeof cTags === 'string') cTags = [cTags];
@@ -478,20 +481,25 @@ export default function NoteScreen() {
           <LastSavedFooter timestamp={lastSavedAt} />
       </KeyboardAvoidingView>
 
-      <PromptDialog
+      <AddTagDialog
         visible={isTagPromptVisible}
-        title="Add Tag"
-        placeholder="Enter tag name"
         onClose={() => setTagPromptVisible(false)}
-        onSubmit={(text) => {
+        excludeTags={tags}
+        onSelect={(text) => {
             if(!text) return;
             // Add definition immediately
             addTag(text).catch(e => console.error('Failed to add tag def', e));
 
+            // Optimistic update
+            setTags(prev => [...prev, text].sort());
+
             const newContent = updateFrontmatter(content, (d) => {
                 let cTags = d.tags || [];
                 if(typeof cTags === 'string') cTags = [cTags];
-                cTags.push(text);
+                // Check dupes again just in case
+                if (!cTags.includes(text)) {
+                    cTags.push(text);
+                }
                 d.tags = cTags;
                 // Add to metadata
                 const tid = normalizeTagId(text);
@@ -499,7 +507,12 @@ export default function NoteScreen() {
                     if (!d.liminal.tagMeta) d.liminal.tagMeta = {};
                     d.liminal.tagMeta[tid] = { source: 'human' };
             });
+
             // Update editor
+            // We use EditorCommand.Set to update the full text.
+            // Note: This might reset cursor position if not handled carefully by editor,
+            // but for frontmatter updates it's usually fine or we should use insert?
+            // updateFrontmatter returns full text.
             if (editorRef.current) {
                 editorRef.current.sendCommand(EditorCommand.Set, {
                     docId: noteId!,
