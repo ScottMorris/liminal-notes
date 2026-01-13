@@ -69,6 +69,8 @@ export default function TagSettingsScreen() {
                     theme={{ colors: { primary: resolveColor('--ln-accent'), onSurfaceVariant: resolveColor('--ln-muted') } }}
                     activeOutlineColor={resolveColor('--ln-accent')}
                     outlineColor={resolveColor('--ln-border')}
+                    selectionColor={resolveColor('--ln-accent')}
+                    cursorColor={resolveColor('--ln-accent')}
                 />
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
