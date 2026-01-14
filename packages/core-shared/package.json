@@ -56,6 +56,10 @@
       "types": "./dist/editor/wikiLinkParser.d.mts",
       "default": "./dist/editor/wikiLinkParser.mjs"
     },
+    "./vault/types": {
+      "types": "./dist/vault/types.d.mts",
+      "default": "./dist/vault/types.mjs"
+    },
     "./tags": {
       "types": "./dist/tags.d.mts",
       "default": "./dist/tags.mjs"
