@@ -15,6 +15,9 @@ export const lightTheme: Theme = {
     '--ln-sidebar-fg': '#333333',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#e0e0e0',
+    '--ln-warning-bg': '#fff3cd',
+    '--ln-warning-border': '#ffeeba',
+    '--ln-warning-text': '#856404',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -71,6 +74,9 @@ export const darkTheme: Theme = {
     '--ln-sidebar-fg': '#cccccc',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#2a2d2e',
+    '--ln-warning-bg': '#332701',
+    '--ln-warning-border': '#664d03',
+    '--ln-warning-text': '#ffc107',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -127,6 +133,9 @@ export const draculaTheme: Theme = {
     '--ln-sidebar-fg': '#f8f8f2',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': '#44475a',
+    '--ln-warning-bg': '#ff555533', // Red/Orange tint
+    '--ln-warning-border': '#ff5555',
+    '--ln-warning-text': '#ffb86c', // Orange
 
     // Editor Core (Dracula specifics)
     '--ln-editor-bg': '#282a36',
@@ -184,6 +193,9 @@ export const claudeLightTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(60, 2.6%, 7.6%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 93%)',
+    '--ln-warning-bg': 'hsl(35, 90%, 95%)',
+    '--ln-warning-border': 'hsl(35, 90%, 80%)',
+    '--ln-warning-text': 'hsl(35, 90%, 30%)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -241,6 +253,9 @@ export const claudeDarkTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(48, 33.3%, 97.1%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(60, 2.5%, 23%)',
+    '--ln-warning-bg': 'hsl(35, 30%, 20%)',
+    '--ln-warning-border': 'hsl(35, 30%, 30%)',
+    '--ln-warning-text': 'hsl(35, 80%, 70%)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -298,6 +313,9 @@ export const julesDarkTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(240, 67%, 99%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(250, 7%, 16%)',
+    '--ln-warning-bg': 'hsl(35, 30%, 20%)',
+    '--ln-warning-border': 'hsl(35, 30%, 30%)',
+    '--ln-warning-text': 'hsl(35, 80%, 70%)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -355,6 +373,9 @@ export const chatgptLightTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(0, 0%, 5%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 93%)',
+    '--ln-warning-bg': 'hsl(35, 90%, 95%)',
+    '--ln-warning-border': 'hsl(35, 90%, 80%)',
+    '--ln-warning-text': 'hsl(35, 90%, 30%)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',
@@ -412,6 +433,9 @@ export const chatgptDarkTheme: Theme = {
     '--ln-sidebar-fg': 'hsl(0, 0%, 100%)',
     '--ln-control-close-hover': '#e81123',
     '--ln-item-hover-bg': 'hsl(0, 0%, 19%)',
+    '--ln-warning-bg': 'hsl(35, 30%, 20%)',
+    '--ln-warning-border': 'hsl(35, 30%, 30%)',
+    '--ln-warning-text': 'hsl(35, 80%, 70%)',
 
     // Editor Core
     '--ln-editor-bg': 'var(--ln-bg)',

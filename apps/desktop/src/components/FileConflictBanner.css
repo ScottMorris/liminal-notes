@@ -1,7 +1,7 @@
 .file-conflict-banner {
-  background-color: var(--ln-warning-bg, #fff3cd);
-  border-bottom: 1px solid var(--ln-warning-border, #ffeeba);
-  color: var(--ln-warning-text, #856404);
+  background-color: var(--ln-warning-bg);
+  border-bottom: 1px solid var(--ln-warning-border);
+  color: var(--ln-warning-text);
   padding: 8px 16px;
   display: flex;
   align-items: center;
@@ -55,13 +55,4 @@
 
 .btn-conflict-action.primary:active {
   background-color: rgba(0, 0, 0, 0.2);
-}
-
-/* Dark mode overrides if needed - assuming CSS vars handle most, but fallback: */
-@media (prefers-color-scheme: dark) {
-  .file-conflict-banner {
-    background-color: var(--ln-warning-bg, #332701);
-    border-bottom-color: var(--ln-warning-border, #664d03);
-    color: var(--ln-warning-text, #ffc107);
-  }
 }
