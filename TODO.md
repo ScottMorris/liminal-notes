@@ -163,6 +163,10 @@ Currently, unsaved tabs are stored in `localStorage` which means:
 - **Linux Accent Color (Pro Mode):** The "Pro Mode" accent colour detection using `libadwaita` crate features (`v1_6`) requires system libraries (`libadwaita-1 >= 1.6`) which are not available in Ubuntu 24.04 (Noble). Currently, we use a `gsettings` CLI fallback.
   - **Task:** Upgrade the dev container and CI environment to a newer base image (e.g., Ubuntu 24.10+) once stable/available, or install updated libraries, to enable the `libadwaita` crate dependency for robust, native accent colour detection.
 
+## Architecture & Code Quality
+
+- [ ] Refactor `Command` interface: Change `context` property to `contexts` (array) to allow commands to belong to multiple contexts natively, replacing the `additionalContexts` workaround.
+
 # Mobile Editor Parity TODOs
 
 This file tracks features that are present in the Desktop editor but currently missing or incomplete in the Mobile editor.

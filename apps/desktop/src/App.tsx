@@ -12,7 +12,8 @@ import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
 import { desktopVault } from "./adapters/DesktopVaultAdapter";
 import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon, BellIcon } from "./components/Icons";
-import { TabsProvider, useTabs } from "./contexts/TabsContext";
+import { useTabs } from "./contexts/TabsContext";
+import { useNavigation } from "./contexts/NavigationContext";
 import { EditorPane } from "./components/Editor/EditorPane";
 import { commandRegistry } from "./commands/CommandRegistry";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
@@ -60,6 +61,8 @@ function AppContent() {
 
   // Use Tabs Context
   const { openTab, switchTab, openTabs, closeTab, activeTabId, dispatch } = useTabs();
+  // Use Navigation Context
+  const { goBack, goForward } = useNavigation();
   // Use Settings Context
   const { settings } = useSettings();
   const { resolvePath } = useLinkIndex();
@@ -312,6 +315,18 @@ function AppContent() {
   }, [openTabs, switchTab, openTab, dispatch]);
 
   useEffect(() => {
+    const handleMouseUp = (e: MouseEvent) => {
+      if (e.button === 3) {
+        e.preventDefault();
+        goBack();
+      } else if (e.button === 4) {
+        e.preventDefault();
+        goForward();
+      }
+    };
+
+    window.addEventListener('mouseup', handleMouseUp);
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target) {
@@ -347,8 +362,11 @@ function AppContent() {
 
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleStartCreate, selectedFile]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleStartCreate, selectedFile, goBack, goForward]);
 
   // Listen for view change events
   useEffect(() => {
@@ -508,11 +526,7 @@ function AppContent() {
 
 function App() {
     return (
-        <TabsProvider>
-            <RemindersProvider>
-              <AppContent />
-            </RemindersProvider>
-        </TabsProvider>
+        <AppContent />
     );
 }
 

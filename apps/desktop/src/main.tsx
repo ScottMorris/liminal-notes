@@ -15,6 +15,9 @@ import { TagsProvider } from "./contexts/TagsContext";
 import { PluginHostProvider } from "./plugins/PluginHostProvider";
 import { NotificationProvider } from "./components/NotificationContext";
 import { registerAllCommands } from "./commands/registerDefaults";
+import { TabsProvider } from "./contexts/TabsContext";
+import { RemindersProvider } from "./contexts/RemindersContext";
+import { NavigationProvider } from "./contexts/NavigationContext";
 
 // Initialize commands before rendering
 registerAllCommands();
@@ -27,9 +30,15 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           <LinkIndexProvider>
             <SearchIndexProvider>
               <TagsProvider>
-                <PluginHostProvider>
-                  <App />
-                </PluginHostProvider>
+                <RemindersProvider>
+                  <TabsProvider>
+                    <NavigationProvider>
+                      <PluginHostProvider>
+                        <App />
+                      </PluginHostProvider>
+                    </NavigationProvider>
+                  </TabsProvider>
+                </RemindersProvider>
               </TagsProvider>
             </SearchIndexProvider>
           </LinkIndexProvider>

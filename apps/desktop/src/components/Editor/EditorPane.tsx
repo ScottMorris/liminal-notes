@@ -589,6 +589,12 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   };
 
   const handleNavigate = (path: string) => {
+      // Save current state before navigating
+      if (activeTabId && editorRef.current) {
+          const state = editorRef.current.getEditorState();
+          updateTabState(activeTabId, state);
+      }
+
       const existing = openTabs.find(t => t.path === path);
       if (existing) {
           switchTab(existing.id);
