@@ -51,18 +51,3 @@ export type VaultDescriptor = {
   locator: VaultLocator;
   settings?: VaultSettings;
 };
-
-export const isDesktopPathLocator = (locator: VaultLocator): locator is DesktopVaultLocator =>
-  locator.platform === 'desktop' && locator.scheme === 'path';
-
-export const isAndroidSafLocator = (locator: VaultLocator): locator is AndroidSafVaultLocator =>
-  locator.platform === 'android' && locator.scheme === 'saf';
-
-export const isAndroidSandboxLocator = (locator: VaultLocator): locator is AndroidSandboxVaultLocator =>
-  locator.platform === 'android' && locator.scheme === 'sandbox';
-
-export const isIosBookmarkLocator = (locator: VaultLocator): locator is IosBookmarkVaultLocator =>
-  locator.platform === 'ios' && locator.scheme === 'bookmark';
-
-export const isIosSandboxLocator = (locator: VaultLocator): locator is IosSandboxVaultLocator =>
-  locator.platform === 'ios' && locator.scheme === 'sandbox';

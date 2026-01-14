@@ -1,5 +1,4 @@
 import type { VaultDescriptor } from '@liminal-notes/core-shared/vault/types';
-import { isDesktopPathLocator } from '@liminal-notes/core-shared/vault/types';
 import type { VaultConfigAdapter, VaultLocatorMeta } from '@liminal-notes/vault-core/config';
 import { getVaultConfig, setVaultConfig, resetVaultConfig } from '../ipc';
 import type { LegacyVaultConfig } from '../types';
@@ -17,7 +16,7 @@ const toDescriptor = (config: LegacyVaultConfig): VaultDescriptor => ({
 
 const toLegacy = (descriptor: VaultDescriptor): LegacyVaultConfig => {
   const locator = descriptor.locator;
-  if (!isDesktopPathLocator(locator)) {
+  if (!(locator.platform === 'desktop' && locator.scheme === 'path')) {
     throw new Error('Desktop adapter only supports desktop path locators');
   }
 
@@ -79,7 +78,7 @@ class DesktopVaultConfigAdapter implements VaultConfigAdapter {
 
   async getLocatorMeta(): Promise<VaultLocatorMeta> {
     const descriptor = await this.getActiveVault();
-    if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+    if (!descriptor || descriptor.locator.platform !== 'desktop' || descriptor.locator.scheme !== 'path') {
       return { kind: 'path', permissionsOk: false, needsReauth: false };
     }
     return {
@@ -97,7 +96,7 @@ class DesktopVaultConfigAdapter implements VaultConfigAdapter {
 
   private async getRootPath(): Promise<string | null> {
     const descriptor = await this.getActiveVault();
-    if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+    if (!descriptor || descriptor.locator.platform !== 'desktop' || descriptor.locator.scheme !== 'path') {
       return null;
     }
     return descriptor.locator.rootPath;
