@@ -43,9 +43,18 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+.btn-conflict-action:active {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: translateY(1px);
+}
+
 .btn-conflict-action.primary {
   background-color: rgba(0, 0, 0, 0.1);
   font-weight: 600;
+}
+
+.btn-conflict-action.primary:active {
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 /* Dark mode overrides if needed - assuming CSS vars handle most, but fallback: */

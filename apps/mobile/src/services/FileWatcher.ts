@@ -14,6 +14,7 @@ class FileWatcherService {
   private fileSnapshot: Map<string, number>; // path -> mtime
   private intervalId: NodeJS.Timeout | null = null;
   private isScanning = false;
+  private isInitialized = false;
 
   constructor() {
     this.vault = new MobileSandboxVaultAdapter();
@@ -25,6 +26,9 @@ class FileWatcherService {
    * Loads initial state and sets up listeners.
    */
   async init() {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
     await this.vault.init();
     await this.performScan(true); // Initial silent scan
 

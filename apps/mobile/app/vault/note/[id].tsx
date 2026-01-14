@@ -155,23 +155,6 @@ export default function NoteScreen() {
       isMountedRef.current = true;
       loadNote();
 
-      // File Watcher Listener
-      const watcherSub = DeviceEventEmitter.addListener('vault:file-event', (event: FileWatcherEvent) => {
-          if (!noteId) return;
-          if (event.path === noteId && event.type === 'modified') {
-               // If dirty -> Conflict
-               if (isDirty) {
-                   setConflictPath(noteId);
-               } else {
-                   // If clean -> Auto-reload
-                   // Note: We need to be careful not to reload if we are 'saving'.
-                   if (saveStatus !== SaveStatus.Saving) {
-                       loadNote(); // Re-read from disk
-                   }
-               }
-          }
-      });
-
       const onBeforeRemove = (e: any) => {
           if (!isDirty) {
               return;
@@ -193,12 +176,34 @@ export default function NoteScreen() {
       return () => {
           showSub.remove();
           hideSub.remove();
-          watcherSub.remove();
           isMountedRef.current = false;
           navigation.removeListener('beforeRemove', onBeforeRemove);
           if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       };
-  }, [noteId, isDirty, saveStatus]); // Added deps for watcher logic
+  }, [noteId]); // Only on note ID change
+
+  // Separate effect for file watcher to access latest state without re-loading note
+  useEffect(() => {
+      const watcherSub = DeviceEventEmitter.addListener('vault:file-event', (event: FileWatcherEvent) => {
+          if (!noteId) return;
+          if (event.path === noteId && event.type === 'modified') {
+               // If dirty -> Conflict
+               if (isDirty) {
+                   setConflictPath(noteId);
+               } else {
+                   // If clean -> Auto-reload
+                   // Note: We need to be careful not to reload if we are 'saving'.
+                   if (saveStatus !== SaveStatus.Saving) {
+                       loadNote(); // Re-read from disk
+                   }
+               }
+          }
+      });
+
+      return () => {
+          watcherSub.remove();
+      };
+  }, [noteId, isDirty, saveStatus]);
 
   const loadNote = async () => {
     if (!noteId) {
@@ -420,6 +425,9 @@ export default function NoteScreen() {
           const adapter = new MobileSandboxVaultAdapter();
           await adapter.writeNote(noteId!, textToSave);
           const saveTime = Date.now();
+
+          // Notify watcher of internal write to prevent self-trigger
+          await fileWatcher.notifyInternalWrite(noteId!);
 
           // Update tags state from saved text
           const finalTags = computeTagsForContent(textToSave);
