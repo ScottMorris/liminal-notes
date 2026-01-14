@@ -10,40 +10,51 @@ import {
 import { NoteId } from '@liminal-notes/core-shared/types';
 import * as FileSystem from 'expo-file-system';
 import { FileNotFoundError, FileExistsError } from '../errors';
+import { resolveBookmark, releaseAccess } from 'ios-bookmarks';
 
 /**
- * Mobile implementation of the VaultAdapter using iOS FileSystem (Bookmarks/Picker URIs).
- *
- * Note: On iOS, `expo-document-picker` returns a URI that might be temporary or valid only
- * for the current session unless security-scoped bookmarks are used.
- * Standard `expo-file-system` does not support creating/resolving security-scoped bookmarks.
- * This adapter attempts to work with the provided URI as-is, which works for the session
- * but may fail after app restart if the OS invalidates permission.
+ * Mobile implementation of the VaultAdapter using iOS FileSystem with Security Scoped Bookmarks.
  */
 export class MobileBookmarkVaultAdapter implements VaultAdapter {
-  private readonly rootUri: string;
+  private readonly bookmark: string;
+  private rootUri: string | null = null;
 
-  constructor(bookmarkOrUri: string) {
-    // In a full implementation, this would resolve the bookmark to a URI.
-    // For now, we assume we are passed the URI directly.
-    this.rootUri = bookmarkOrUri;
+  constructor(bookmarkBase64: string) {
+    this.bookmark = bookmarkBase64;
   }
 
   async init(): Promise<void> {
-    const info = await FileSystem.getInfoAsync(this.rootUri);
-    if (!info.exists) {
-        throw new FileNotFoundError(`Root URI not found or inaccessible: ${this.rootUri}`);
+    if (this.rootUri) return;
+
+    try {
+        // Resolve and start accessing
+        const uri = await resolveBookmark(this.bookmark);
+        this.rootUri = uri;
+
+        const info = await FileSystem.getInfoAsync(this.rootUri);
+        if (!info.exists) {
+            throw new FileNotFoundError(`Resolved URI not found or inaccessible: ${this.rootUri}`);
+        }
+    } catch (e) {
+        console.error("Failed to resolve bookmark", e);
+        throw e;
     }
   }
 
+  // Helper to ensure we have a root URI
+  private getRoot(): string {
+      if (!this.rootUri) {
+          throw new Error("VaultAdapter not initialized. Call init() first.");
+      }
+      return this.rootUri;
+  }
+
   async listFiles(opts?: ListFilesOptions): Promise<VaultFileEntry[]> {
+    const root = this.getRoot();
     const entries: VaultFileEntry[] = [];
 
-    // Recursive helper similar to Sandbox
     const traverse = async (dirUri: string, relativePath: string) => {
         try {
-            // readDirectoryAsync returns file NAMES, not full URIs, for standard file://
-            // Check if this holds for picker URIs. usually yes.
             const itemNames = await FileSystem.readDirectoryAsync(dirUri);
 
             for (const name of itemNames) {
@@ -81,12 +92,13 @@ export class MobileBookmarkVaultAdapter implements VaultAdapter {
         }
     };
 
-    await traverse(this.rootUri, '');
+    await traverse(root, '');
     return entries.sort((a, b) => a.id.localeCompare(b.id));
   }
 
   async readNote(id: NoteId): Promise<ReadNoteResult> {
-    const uri = this.rootUri.endsWith('/') ? `${this.rootUri}${id}` : `${this.rootUri}/${id}`;
+    const root = this.getRoot();
+    const uri = root.endsWith('/') ? `${root}${id}` : `${root}/${id}`;
 
     const info = await FileSystem.getInfoAsync(uri);
     if (!info.exists) {
@@ -103,13 +115,14 @@ export class MobileBookmarkVaultAdapter implements VaultAdapter {
   }
 
   async writeNote(id: NoteId, content: string, opts?: WriteNoteOptions): Promise<WriteNoteResult> {
-    const uri = this.rootUri.endsWith('/') ? `${this.rootUri}${id}` : `${this.rootUri}/${id}`;
+    const root = this.getRoot();
+    const uri = root.endsWith('/') ? `${root}${id}` : `${root}/${id}`;
     const segments = id.split('/');
 
     // Check parents
     if (segments.length > 1) {
         const parentPath = segments.slice(0, -1).join('/');
-        const parentUri = this.rootUri.endsWith('/') ? `${this.rootUri}${parentPath}` : `${this.rootUri}/${parentPath}`;
+        const parentUri = root.endsWith('/') ? `${root}${parentPath}` : `${root}/${parentPath}`;
 
         const parentInfo = await FileSystem.getInfoAsync(parentUri);
         if (!parentInfo.exists) {
@@ -132,8 +145,9 @@ export class MobileBookmarkVaultAdapter implements VaultAdapter {
   }
 
   async rename(from: NoteId, to: NoteId): Promise<void> {
-    const fromUri = this.rootUri.endsWith('/') ? `${this.rootUri}${from}` : `${this.rootUri}/${from}`;
-    const toUri = this.rootUri.endsWith('/') ? `${this.rootUri}${to}` : `${this.rootUri}/${to}`;
+    const root = this.getRoot();
+    const fromUri = root.endsWith('/') ? `${root}${from}` : `${root}/${from}`;
+    const toUri = root.endsWith('/') ? `${root}${to}` : `${root}/${to}`;
 
     const fromInfo = await FileSystem.getInfoAsync(fromUri);
     if (!fromInfo.exists) throw new FileNotFoundError(from);
@@ -145,19 +159,19 @@ export class MobileBookmarkVaultAdapter implements VaultAdapter {
     const toSegments = to.split('/');
     if (toSegments.length > 1) {
         const parentPath = toSegments.slice(0, -1).join('/');
-        const parentUri = this.rootUri.endsWith('/') ? `${this.rootUri}${parentPath}` : `${this.rootUri}/${parentPath}`;
+        const parentUri = root.endsWith('/') ? `${root}${parentPath}` : `${root}/${parentPath}`;
         const parentInfo = await FileSystem.getInfoAsync(parentUri);
         if (!parentInfo.exists) {
             await FileSystem.makeDirectoryAsync(parentUri, { intermediates: true });
         }
     }
 
-    // Expo FileSystem moveAsync works with file:// URIs
     await FileSystem.moveAsync({ from: fromUri, to: toUri });
   }
 
   async stat(id: string): Promise<VaultStat> {
-    const uri = this.rootUri.endsWith('/') ? `${this.rootUri}${id}` : `${this.rootUri}/${id}`;
+    const root = this.getRoot();
+    const uri = root.endsWith('/') ? `${root}${id}` : `${root}/${id}`;
     const info = await FileSystem.getInfoAsync(uri);
 
     if (!info.exists) {
@@ -173,7 +187,8 @@ export class MobileBookmarkVaultAdapter implements VaultAdapter {
   }
 
   async mkdir(dirPath: string, opts?: { recursive?: boolean }): Promise<void> {
-    const uri = this.rootUri.endsWith('/') ? `${this.rootUri}${dirPath}` : `${this.rootUri}/${dirPath}`;
+    const root = this.getRoot();
+    const uri = root.endsWith('/') ? `${root}${dirPath}` : `${root}/${dirPath}`;
     await FileSystem.makeDirectoryAsync(uri, { intermediates: opts?.recursive });
   }
 }

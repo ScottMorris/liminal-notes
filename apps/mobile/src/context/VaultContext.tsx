@@ -8,6 +8,7 @@ import { MobileVaultConfigAdapter } from '../adapters/MobileVaultConfigAdapter';
 import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
 import { MobileSafVaultAdapter } from '../adapters/MobileSafVaultAdapter';
 import { MobileBookmarkVaultAdapter } from '../adapters/MobileBookmarkVaultAdapter';
+import { createBookmark } from 'ios-bookmarks';
 
 const StorageAccessFramework = (FileSystem as any).StorageAccessFramework;
 
@@ -59,6 +60,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e) {
         console.error('Failed to init adapter for vault', activeVault.displayName, e);
+        // Do not clear active vault automatically to avoid losing the bookmark if it's just a temporary failure
         setAdapter(null);
       }
     };
@@ -93,7 +95,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
              platform: Platform.OS === 'android' ? 'android' : 'ios',
              scheme: 'sandbox',
              rootUri: 'sandbox://default'
-        } as any // Cast because strict union checks might fail on cross-platform literal
+        } as any
       };
 
       await configAdapter.setActiveVault(sandboxConfig);
@@ -119,13 +121,11 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
           }
 
           const treeUri = permissions.directoryUri;
-          // Decode display name from URI usually works: .../document/primary:FolderName
-          // Or we can ask user. Let's try to derive it.
           const decoded = decodeURIComponent(treeUri);
           const name = decoded.split(':').pop() || 'External Vault';
 
           const descriptor: VaultDescriptor = {
-              vaultId: treeUri, // Use URI as ID for now
+              vaultId: treeUri,
               displayName: name,
               kind: 'external',
               locator: {
@@ -149,7 +149,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
 
       try {
           const result = await DocumentPicker.getDocumentAsync({
-              type: 'public.folder', // Requires expo-document-picker v13+ or compatible setup
+              type: 'public.folder',
               copyToCacheDirectory: false,
               multiple: false
           });
@@ -159,19 +159,17 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
           const uri = result.assets[0].uri;
           const name = result.assets[0].name;
 
-          // Note: On iOS, this URI is often temporary unless we get a bookmark.
-          // Expo Document Picker does not provide security-scoped bookmarks out of the box.
-          // This is a known limitation.
-          // For now, we will save it as 'bookmark' scheme but store the URI.
+          // Create security-scoped bookmark for persistence
+          const bookmark = await createBookmark(uri);
 
           const descriptor: VaultDescriptor = {
-              vaultId: uri,
+              vaultId: uri, // Use original URI as ID, though bookmark is the truth
               displayName: name,
               kind: 'external',
               locator: {
                   platform: 'ios',
                   scheme: 'bookmark',
-                  bookmark: uri // Storing URI as mock bookmark
+                  bookmark: bookmark
               }
           };
 
