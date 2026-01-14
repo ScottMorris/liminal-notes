@@ -30,7 +30,8 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-dev-client"
+      "expo-dev-client",
+      "expo-file-system"
     ],
     "extra": {
       "eas": {
