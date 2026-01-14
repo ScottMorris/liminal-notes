@@ -212,6 +212,23 @@ export const getSections = (appVersion: string, vaultName: string): SettingsSect
                 ]
             }
         ]
+    },
+    {
+        id: 'developer',
+        title: 'Developer',
+        groups: [
+            {
+                id: 'developer-visibility',
+                rows: [
+                    {
+                        id: 'show-frontmatter',
+                        label: 'Show front matter',
+                        description: 'Display YAML front matter in notes.',
+                        controls: [{ kind: 'boolean', key: 'developer.showFrontmatter' }]
+                    }
+                ]
+            }
+        ]
     }
 ];
 };

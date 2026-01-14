@@ -21,6 +21,9 @@ export interface SettingsState {
     useNativeDecorations: boolean;
     timeFormat: 'system' | '12h' | '24h';
   };
+  developer: {
+    showFrontmatter: boolean;
+  };
   corePlugins: Record<string, boolean>;
 }
 
@@ -40,6 +43,9 @@ export const DEFAULT_SETTINGS: SettingsState = {
     fontSize: 16,
     useNativeDecorations: false,
     timeFormat: 'system',
+  },
+  developer: {
+    showFrontmatter: false,
   },
   corePlugins: {},
 };

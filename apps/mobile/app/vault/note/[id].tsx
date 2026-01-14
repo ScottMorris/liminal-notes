@@ -90,6 +90,16 @@ export default function NoteScreen() {
   // Pending tag operation to be applied after getting state
   const pendingTagAction = useRef<{ type: 'add' | 'remove'; tag: string } | null>(null);
 
+  const computeTagsForContent = useCallback((text: string) => {
+      if (!noteId) return [];
+      const { data } = parseFrontmatter(text);
+      let fileTags: string[] = [];
+      if (data.tags && Array.isArray(data.tags)) fileTags = data.tags.map(String);
+      else if (typeof data.tags === 'string') fileTags = [data.tags];
+      const folderTags = deriveTagsFromPath(noteId);
+      return Array.from(new Set([...fileTags.map(normalizeTagId), ...folderTags])).sort();
+  }, [noteId]);
+
   useEffect(() => {
       const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
       const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
@@ -156,13 +166,7 @@ export default function NoteScreen() {
         setLastSavedAt(result.mtimeMs || null);
 
         // Tags
-        const { data } = parseFrontmatter(result.content);
-        let fileTags: string[] = [];
-        if (data.tags && Array.isArray(data.tags)) fileTags = data.tags.map(String);
-        else if (typeof data.tags === 'string') fileTags = [data.tags];
-        const folderTags = deriveTagsFromPath(noteId);
-        const uniqueTags = Array.from(new Set([...fileTags.map(normalizeTagId), ...folderTags]));
-        setTags(uniqueTags.sort());
+        setTags(computeTagsForContent(result.content));
 
         // Lazy Indexing: Upsert on open
         if (searchIndex) {
@@ -234,7 +238,8 @@ export default function NoteScreen() {
         settings: {
             showLineNumbers: settings.editor.showLineNumbers,
             highlightActiveLine: settings.editor.highlightActiveLine,
-            wordWrap: settings.editor.wordWrap
+            wordWrap: settings.editor.wordWrap,
+            showFrontmatter: settings.developer?.showFrontmatter
         },
         featureFlags: {
             links: true
@@ -305,6 +310,7 @@ export default function NoteScreen() {
       }
 
       const receivedText = payload.state.text ?? '';
+      let textToSave = receivedText;
 
       // Handle Pending Tag Action (Add/Remove) using LATEST text
       if (pendingTagAction.current) {
@@ -333,56 +339,16 @@ export default function NoteScreen() {
               }
           });
 
-          // Send updated text back to editor
+          // Update editor to reflect tag change for subsequent RequestState calls
           if (editorRef.current) {
               editorRef.current.sendCommand(EditorCommand.Set, {
                   docId: noteId!,
                   text: updatedText
               });
           }
-
-          // Explicitly save to disk because EditorCommand.Set (HostTransaction) is ignored by update listener
-          // preventing auto-save trigger.
-          try {
-              const adapter = new MobileSandboxVaultAdapter();
-              await adapter.writeNote(noteId!, updatedText);
-              const saveTime = Date.now();
-
-              // Update state
-              if (isMountedRef.current) {
-                  setLastSavedAt(saveTime);
-                  setIsDirty(false); // We just saved
-              }
-
-              // Update Indexes
-              if (searchIndex) {
-                  await searchIndex.upsert({
-                      id: noteId!,
-                      title: noteId!.replace(/\.md$/, ''),
-                      content: updatedText,
-                      mtimeMs: saveTime
-                  });
-              }
-              if (linkIndex) {
-                  const links = parseWikilinks(updatedText).map((match: any) => ({
-                      source: noteId!,
-                      targetRaw: match.targetRaw,
-                      targetPath: match.targetRaw
-                  }));
-                  await linkIndex.upsertLinks(noteId!, links);
-              }
-          } catch (e) {
-              console.error('[NoteScreen] Failed to save after tag update', e);
-              if (isMountedRef.current) {
-                  setSaveStatus(SaveStatus.Error);
-              }
-          }
-
-          return;
+          // Continue through normal save flow with updated text
+          textToSave = updatedText;
       }
-
-      // Normal Save Flow
-      const textToSave = receivedText;
 
       try {
           const adapter = new MobileSandboxVaultAdapter();
@@ -390,13 +356,7 @@ export default function NoteScreen() {
           const saveTime = Date.now();
 
           // Update tags state from saved text
-          const { data } = parseFrontmatter(textToSave);
-          let fileTags: string[] = [];
-          if (data.tags && Array.isArray(data.tags)) fileTags = data.tags.map(String);
-          else if (typeof data.tags === 'string') fileTags = [data.tags];
-          const folderTags = deriveTagsFromPath(noteId!);
-          const uniqueTags = Array.from(new Set([...fileTags.map(normalizeTagId), ...folderTags]));
-          setTags(uniqueTags.sort());
+          setTags(computeTagsForContent(textToSave));
 
           if (searchIndex) {
               try {
@@ -427,6 +387,7 @@ export default function NoteScreen() {
           if (isMountedRef.current) {
               setSaveStatus(SaveStatus.Saved);
               setLastSavedAt(saveTime);
+              setContent(textToSave);
               if (!saveTimerRef.current) {
                 setIsDirty(false);
               }
