@@ -64,7 +64,7 @@ export default function TagSettingsScreen() {
                     label="Filter tags..."
                     value={filter}
                     onChangeText={setFilter}
-                    style={{ backgroundColor: resolveColor('--ln-surface') }}
+                    style={{ backgroundColor: resolveColor('--ln-bg') }}
                     textColor={resolveColor('--ln-fg')}
                     theme={{ colors: { primary: resolveColor('--ln-accent'), onSurfaceVariant: resolveColor('--ln-muted') } }}
                     activeOutlineColor={resolveColor('--ln-accent')}

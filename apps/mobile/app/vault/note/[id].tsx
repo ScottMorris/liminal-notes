@@ -341,7 +341,43 @@ export default function NoteScreen() {
               });
           }
 
-          // We don't save to disk here; setting text in editor will trigger docChanged -> autoSave
+          // Explicitly save to disk because EditorCommand.Set (HostTransaction) is ignored by update listener
+          // preventing auto-save trigger.
+          try {
+              const adapter = new MobileSandboxVaultAdapter();
+              await adapter.writeNote(noteId!, updatedText);
+              const saveTime = Date.now();
+
+              // Update state
+              if (isMountedRef.current) {
+                  setLastSavedAt(saveTime);
+                  setIsDirty(false); // We just saved
+              }
+
+              // Update Indexes
+              if (searchIndex) {
+                  await searchIndex.upsert({
+                      id: noteId!,
+                      title: noteId!.replace(/\.md$/, ''),
+                      content: updatedText,
+                      mtimeMs: saveTime
+                  });
+              }
+              if (linkIndex) {
+                  const links = parseWikilinks(updatedText).map((match: any) => ({
+                      source: noteId!,
+                      targetRaw: match.targetRaw,
+                      targetPath: match.targetRaw
+                  }));
+                  await linkIndex.upsertLinks(noteId!, links);
+              }
+          } catch (e) {
+              console.error('[NoteScreen] Failed to save after tag update', e);
+              if (isMountedRef.current) {
+                  setSaveStatus(SaveStatus.Error);
+              }
+          }
+
           return;
       }
 
@@ -525,10 +561,11 @@ export default function NoteScreen() {
             addTag(text).catch(e => console.error('Failed to add tag def', e));
 
             // Optimistic update
-            setTags(prev => [...prev, text].sort());
+            const normalized = normalizeTagId(text);
+            setTags(prev => [...prev, normalized].sort());
 
             // Request state to apply update safely
-            pendingTagAction.current = { type: 'add', tag: text };
+            pendingTagAction.current = { type: 'add', tag: normalized };
             requestSave();
         }}
       />
