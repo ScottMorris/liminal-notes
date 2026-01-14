@@ -5,11 +5,13 @@ import { recentsStorage, RecentItem } from '../storage/recents';
 import { FolderActivity } from '../indexing/sqlite/SQLiteSearchIndex';
 import { useFocusEffect } from 'expo-router';
 import { useVault } from '../context/VaultContext';
+import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 
 export interface HomeData {
   pinned: PinnedItem[];
   recents: RecentItem[];
   folders: FolderActivity[];
+  rootFiles: VaultFileEntry[];
   loading: boolean;
 }
 
@@ -20,6 +22,7 @@ export function useHomeData() {
     pinned: [],
     recents: [],
     folders: [],
+    rootFiles: [],
     loading: true,
   });
 
@@ -42,8 +45,9 @@ export function useHomeData() {
           activeFolders = await (index as any).getFolderActivity();
       }
 
-      // 2. Get folders from File System (to include empty ones)
+      // 2. Get folders/files from File System (to include empty ones and root files)
       const allFiles = await adapter.listFiles();
+      const rootFiles: VaultFileEntry[] = [];
 
       const fsFolders = new Set<string>();
       for (const file of allFiles) {
@@ -54,6 +58,8 @@ export function useHomeData() {
           } else if (file.type === 'directory') {
               // Explicit top-level folder
               fsFolders.add(file.id);
+          } else if (file.type === 'file') {
+              rootFiles.push(file);
           }
       }
 
@@ -91,6 +97,7 @@ export function useHomeData() {
         pinned,
         recents,
         folders: mergedFolders,
+        rootFiles: rootFiles.sort((a, b) => (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0)),
         loading: false,
       });
     } catch (e: any) {
