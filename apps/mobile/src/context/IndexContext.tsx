@@ -99,6 +99,7 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
             // Optimization: Get map of id -> updated_at
             const existingRows = await db.getAllAsync<{ id: string; updated_at: number }>('SELECT id, updated_at FROM notes');
             const existingMap = new Map(existingRows.map(r => [r.id, r.updated_at]));
+            const forceFullScan = existingMap.size === 0; // Fresh DB: index everything from disk
 
             // Filter for stale or new files
             const tasks: string[] = [];
@@ -107,9 +108,9 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
                 // id is the relative path (e.g. 'foo.md')
                 if (file.type !== 'file' || !file.id.endsWith('.md')) continue;
 
-            if (!existingMap.has(file.id)) {
-                tasks.push(file.id);
-            }
+                if (forceFullScan || !existingMap.has(file.id)) {
+                    tasks.push(file.id);
+                }
             }
 
             console.log(`[Index] Found ${tasks.length} unindexed files.`);
