@@ -28,6 +28,7 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
   const [linkIndex, setLinkIndex] = useState<LinkIndex | null>(null);
   const [tagIndex, setTagIndex] = useState<SQLiteTagIndex | null>(null);
   const [isIndexing, setIsIndexing] = useState(false);
+  const closedDbs = useRef<WeakSet<SQLite.SQLiteDatabase>>(new WeakSet());
 
   // Ref to track if we've already started the background scan for this vault session
   const scanStartedRef = useRef(false);
@@ -36,14 +37,24 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
+    const closeDb = async (database: SQLite.SQLiteDatabase | null) => {
+      if (!database || closedDbs.current.has(database)) return;
+      try {
+        await database.closeAsync();
+      } catch (e: unknown) {
+        const msg = (e as Error)?.message || '';
+        if (!msg.includes('closed')) {
+          console.warn('Failed to close index db', e);
+        }
+      } finally {
+        closedDbs.current.add(database);
+      }
+    };
+
     async function setup() {
       // Tear down previous DB state
       if (db) {
-        try {
-          await db.closeAsync();
-        } catch (e) {
-          console.warn('Failed to close previous index db', e);
-        }
+        await closeDb(db);
         setDb(null);
         setSearchIndex(null);
         setLinkIndex(null);
@@ -59,7 +70,7 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
       try {
         const database = await openDatabase(activeVault.vaultId);
         if (cancelled) {
-          await database.closeAsync();
+          await closeDb(database);
           return;
         }
 
@@ -191,8 +202,14 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
   // Close DB on unmount to avoid dangling handles
   useEffect(() => {
     return () => {
-      if (db) {
-        db.closeAsync().catch((e) => console.warn('Failed to close index db on unmount', e));
+      if (db && !closedDbs.current.has(db)) {
+        db.closeAsync().catch((e) => {
+          const msg = (e as Error)?.message || '';
+          if (!msg.includes('closed')) {
+            console.warn('Failed to close index db on unmount', e);
+          }
+        });
+        closedDbs.current.add(db);
       }
     };
   }, [db]);
