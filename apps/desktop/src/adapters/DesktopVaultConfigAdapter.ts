@@ -1,4 +1,4 @@
-import type { VaultDescriptor } from '@liminal-notes/core-shared/vault/types';
+import type { VaultDescriptor } from '@liminal-notes/vault-core/vault/types';
 import type { VaultConfigAdapter, VaultLocatorMeta } from '@liminal-notes/vault-core/config';
 import { getVaultConfig, setVaultConfig, resetVaultConfig } from '../ipc';
 import type { LegacyVaultConfig } from '../types';

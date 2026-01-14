@@ -1,4 +1,4 @@
-import type { VaultId } from '../types';
+import type { VaultId } from '@liminal-notes/core-shared/types';
 
 export type VaultKind = 'sandbox' | 'external';
 

@@ -1,4 +1,4 @@
-import type { VaultDescriptor } from '@liminal-notes/core-shared/vault/types';
+import type { VaultDescriptor } from './vault/types';
 
 export type VaultLocatorMeta = {
   kind: 'path' | 'saf' | 'bookmark' | 'sandbox';

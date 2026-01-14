@@ -11,7 +11,8 @@
     ".": "./dist/main.mjs",
     "./types": "./dist/types.mjs",
     "./pathSafety": "./dist/pathSafety.mjs",
-    "./config": "./dist/config.mjs"
+    "./config": "./dist/config.mjs",
+    "./vault/types": "./dist/vault/types.mjs"
   },
   "scripts": {
     "build": "tsdown",

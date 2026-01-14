@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { desktopVault } from "../adapters/DesktopVaultAdapter";
 import { desktopVaultConfig } from "../adapters/DesktopVaultConfigAdapter";
 import { FileEntry } from "../types";
-import type { VaultDescriptor } from "@liminal-notes/core-shared/vault/types";
+import type { VaultDescriptor } from "@liminal-notes/vault-core/vault/types";
 import { useLinkIndex } from "../components/LinkIndexContext";
 import { useSearchIndex } from "../components/SearchIndexContext";
 import { useNotification } from "../components/NotificationContext";
