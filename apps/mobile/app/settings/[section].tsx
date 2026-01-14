@@ -10,11 +10,13 @@ import { SliderRow } from '../../src/components/Settings/SliderRow';
 import { ActionRow } from '../../src/components/Settings/ActionRow';
 import { InfoRow } from '../../src/components/Settings/InfoRow';
 import { useVault } from '../../src/context/VaultContext';
+import { useIndex } from '../../src/context/IndexContext';
 
 export default function SettingsSectionScreen() {
   const { section } = useLocalSearchParams();
   const { resolveColor } = useTheme();
   const { activeVault, resetVault } = useVault(); // For Vault Switch action
+  const { forceRescan, isIndexing } = useIndex();
   const router = useRouter();
 
   const vaultName = activeVault?.vaultId === 'sandbox' ? 'Sandbox Vault' : (activeVault?.vaultId || 'None');
@@ -54,6 +56,33 @@ export default function SettingsSectionScreen() {
                       }
                   }
               ]
+          );
+          return;
+      }
+      if (actionId === 'force-rescan') {
+          if (!activeVault) {
+              Alert.alert('No active vault', 'Open a vault before rescanning.');
+              return;
+          }
+          Alert.alert(
+            'Force rescan',
+            'Rebuild the search index from files on disk?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Rescan',
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await forceRescan();
+                        Alert.alert('Rescan started', 'Indexing will refresh in the background.');
+                    } catch (e) {
+                        console.error('Force rescan failed', e);
+                        Alert.alert('Error', 'Failed to start rescan.');
+                    }
+                }
+              }
+            ]
           );
       }
   };

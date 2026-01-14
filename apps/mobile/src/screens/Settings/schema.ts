@@ -225,6 +225,12 @@ export const getSections = (appVersion: string, vaultName: string): SettingsSect
                         label: 'Show front matter',
                         description: 'Display YAML front matter in notes.',
                         controls: [{ kind: 'boolean', key: 'developer.showFrontmatter' }]
+                    },
+                    {
+                        id: 'force-rescan',
+                        label: 'Force rescan',
+                        description: 'Rebuild the search index from files on disk.',
+                        controls: [{ kind: 'action', label: 'Rescan', actionId: 'force-rescan', intent: 'danger' }]
                     }
                 ]
             }
