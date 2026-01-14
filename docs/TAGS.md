@@ -299,7 +299,9 @@ If a note references an unknown tag ID, the app treats it as “discovered” an
 
 A vault cache accelerates UI:
 
-* `.liminal/tag-index.json`
+* `.liminal/tag-index.json` (desktop)
+
+  * Mobile uses an equivalent SQLite cache (`index.db`) to store tag associations and definitions locally while keeping `.liminal/tags.json` as the portable source of truth.
 
   * tag -> note references and counts
   * note -> tag list (redundant)

@@ -53,10 +53,37 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
                 // But TagsContext uses the 'tags' state which comes from JSON.
 
                 // Let's just keep 'tags' state synced with JSON.
-                setTags(loadedTags);
+                let mergedTags = loadedTags;
+
+                // Pull any discovered tags from DB and merge them into JSON/state
+                try {
+                    const dbTags = await tagIndex.getAllTags();
+                    for (const dbTag of dbTags) {
+                        if (!mergedTags[dbTag.id]) {
+                            mergedTags = {
+                                ...mergedTags,
+                                [dbTag.id]: {
+                                    id: dbTag.id,
+                                    displayName: dbTag.displayName || humanizeTagId(dbTag.id),
+                                    color: dbTag.color,
+                                    createdAt: dbTag.createdAt ?? Date.now()
+                                }
+                            };
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[Tags] Failed to merge DB tags into catalogue', err);
+                }
+
+                const hasNew = Object.keys(mergedTags).length !== Object.keys(loadedTags).length;
+                if (hasNew) {
+                    await saveTags(mergedTags);
+                } else {
+                    setTags(mergedTags);
+                }
 
                 // Also update DB for joins
-                for (const tag of Object.values(loadedTags)) {
+                for (const tag of Object.values(mergedTags)) {
                     await tagIndex.upsertTag(tag);
                 }
             } else {

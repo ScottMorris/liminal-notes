@@ -17,7 +17,7 @@ import { FormattingToolbar } from '../../../src/components/Editor/FormattingTool
 import { EditableHeaderTitle } from '../../../src/components/EditableHeaderTitle';
 import { renameNote } from '../../../src/utils/fileOperations';
 import { NoteTags } from '../../../src/components/NoteTags';
-import { normalizeTagId, deriveTagsFromPath } from '@liminal-notes/core-shared/tags';
+import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-notes/core-shared/tags';
 import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 import { AddTagDialog } from '../../../src/components/AddTagDialog';
 
@@ -57,9 +57,9 @@ export default function NoteScreen() {
 
   const router = useRouter();
   const navigation = useNavigation();
-  const { searchIndex, linkIndex } = useIndex();
+  const { searchIndex, linkIndex, tagIndex } = useIndex();
   const { settings } = useSettings();
-  const { addTag } = useTags();
+  const { addTag, tags: tagDefs } = useTags();
   const paperTheme = usePaperTheme();
   const { theme } = useTheme(); // Use custom theme context to get active theme vars
   const insets = useSafeAreaInsets();
@@ -99,6 +99,44 @@ export default function NoteScreen() {
       const folderTags = deriveTagsFromPath(noteId);
       return Array.from(new Set([...fileTags.map(normalizeTagId), ...folderTags])).sort();
   }, [noteId]);
+
+  const materializeTags = useCallback((text: string) => {
+      if (!noteId) return text;
+      const derived = deriveTagsFromPath(noteId);
+      if (derived.length === 0) return text;
+
+      return updateFrontmatter(text, (data) => {
+          let currentTags: string[] = data.tags || [];
+          if (typeof currentTags === 'string') currentTags = [currentTags];
+          currentTags = currentTags.map(t => normalizeTagId(String(t)));
+
+          let changed = false;
+          derived.forEach(dt => {
+              if (!currentTags.includes(dt)) {
+                  currentTags.push(dt);
+                  changed = true;
+              }
+              if (!data.liminal) data.liminal = {};
+              if (!data.liminal.tagMeta) data.liminal.tagMeta = {};
+              if (!data.liminal.tagMeta[dt]) {
+                  data.liminal.tagMeta[dt] = { source: 'folder' };
+              }
+          });
+
+          if (changed) {
+              currentTags.sort();
+              data.tags = currentTags;
+          } else if (!data.tags) {
+              data.tags = currentTags;
+          }
+      });
+  }, [noteId]);
+
+  const ensureTagDefinitions = useCallback(async (tagIds: string[]) => {
+      const missing = tagIds.filter(t => !tagDefs[t]);
+      if (missing.length === 0) return;
+      await Promise.all(missing.map(id => addTag(humanizeTagId(id))));
+  }, [addTag, tagDefs]);
 
   useEffect(() => {
       const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -339,16 +377,21 @@ export default function NoteScreen() {
               }
           });
 
+          const materialized = materializeTags(updatedText);
+
           // Update editor to reflect tag change for subsequent RequestState calls
           if (editorRef.current) {
               editorRef.current.sendCommand(EditorCommand.Set, {
                   docId: noteId!,
-                  text: updatedText
+                  text: materialized
               });
           }
           // Continue through normal save flow with updated text
-          textToSave = updatedText;
+          textToSave = materialized;
       }
+
+      // Always persist derived tags into frontmatter (folder provenance)
+      textToSave = materializeTags(textToSave);
 
       try {
           const adapter = new MobileSandboxVaultAdapter();
@@ -356,7 +399,17 @@ export default function NoteScreen() {
           const saveTime = Date.now();
 
           // Update tags state from saved text
-          setTags(computeTagsForContent(textToSave));
+          const finalTags = computeTagsForContent(textToSave);
+          setTags(finalTags);
+          await ensureTagDefinitions(finalTags);
+
+          if (tagIndex) {
+              try {
+                  await tagIndex.setNoteTags(noteId!, finalTags);
+              } catch (e) {
+                  console.warn('[NoteScreen] Failed to persist tags to index', e);
+              }
+          }
 
           if (searchIndex) {
               try {
