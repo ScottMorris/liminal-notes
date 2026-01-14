@@ -11,6 +11,8 @@ export interface NoteIndexEntry {
 interface SearchIndexContextProps {
   buildIndex: (files: FileEntry[]) => Promise<void>;
   updateEntry: (path: string, content: string) => void;
+  removeFile: (path: string) => void;
+  updateFile: (path: string) => Promise<void>;
   search: (query: string) => NoteIndexEntry[];
   getEntry: (path: string) => NoteIndexEntry | undefined;
   isIndexing: boolean;
@@ -82,6 +84,25 @@ export const SearchIndexProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const removeFile = useCallback((path: string) => {
+    setIndex(prev => {
+      const newIndex = new Map(prev);
+      newIndex.delete(path);
+      return newIndex;
+    });
+  }, []);
+
+  const updateFile = useCallback(async (path: string) => {
+    // Read fresh content from disk and update
+    try {
+      if (!path.endsWith('.md')) return;
+      const { content } = await desktopVault.readNote(path);
+      updateEntry(path, content);
+    } catch (err) {
+      console.warn(`[SearchIndex] Failed to update file ${path}:`, err);
+    }
+  }, [updateEntry]);
+
   const search = useCallback((query: string): NoteIndexEntry[] => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
@@ -116,7 +137,7 @@ export const SearchIndexProvider = ({ children }: { children: ReactNode }) => {
   }, [index]);
 
   return (
-    <SearchIndexContext.Provider value={{ buildIndex, updateEntry, search, getEntry, isIndexing }}>
+    <SearchIndexContext.Provider value={{ buildIndex, updateEntry, removeFile, updateFile, search, getEntry, isIndexing }}>
       {children}
     </SearchIndexContext.Provider>
   );

@@ -1,0 +1,58 @@
+.file-conflict-banner {
+  background-color: var(--ln-warning-bg, #fff3cd);
+  border-bottom: 1px solid var(--ln-warning-border, #ffeeba);
+  color: var(--ln-warning-text, #856404);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9em;
+  z-index: 100;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.conflict-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warning-icon {
+  font-size: 1.2em;
+}
+
+.conflict-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-conflict-action {
+  background: transparent;
+  border: 1px solid currentColor;
+  color: inherit;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-conflict-action:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn-conflict-action.primary {
+  background-color: rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+/* Dark mode overrides if needed - assuming CSS vars handle most, but fallback: */
+@media (prefers-color-scheme: dark) {
+  .file-conflict-banner {
+    background-color: var(--ln-warning-bg, #332701);
+    border-bottom-color: var(--ln-warning-border, #664d03);
+    color: var(--ln-warning-text, #ffc107);
+  }
+}
