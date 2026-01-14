@@ -1,6 +1,6 @@
-import { NoteId, Link } from '../types';
+import type { NoteId, Link } from '../types';
 
-export { NoteId, Link };
+export type { NoteId, Link };
 
 export interface NoteIndexEntry {
   id: NoteId;

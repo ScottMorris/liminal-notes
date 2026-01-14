@@ -97,6 +97,18 @@ export const getSections = (appVersion: string, vaultName: string): SettingsSect
         title: 'Editor',
         groups: [
             {
+                id: 'content',
+                title: 'Content',
+                rows: [
+                     {
+                        id: 'manage-tags',
+                        label: 'Manage Tags',
+                        description: 'Edit tag names and colors.',
+                        controls: [{ kind: 'action', label: 'Edit', actionId: 'manage-tags' }]
+                    }
+                ]
+            },
+            {
                 id: 'behaviour',
                 title: 'Behaviour',
                 rows: [
@@ -196,6 +208,23 @@ export const getSections = (appVersion: string, vaultName: string): SettingsSect
                         label: 'Core Plugins',
                         description: 'Plugin management is coming soon.',
                         controls: [{ kind: 'computed', label: 'View Only' }]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'developer',
+        title: 'Developer',
+        groups: [
+            {
+                id: 'developer-visibility',
+                rows: [
+                    {
+                        id: 'show-frontmatter',
+                        label: 'Show front matter',
+                        description: 'Display YAML front matter in notes.',
+                        controls: [{ kind: 'boolean', key: 'developer.showFrontmatter' }]
                     }
                 ]
             }

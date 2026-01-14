@@ -11,10 +11,15 @@ import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution';
 import { themes } from '@liminal-notes/core-shared/theme';
 import { useSettings } from '../../../src/context/SettingsContext';
+import { useTags } from '../../../src/context/TagsContext';
 import { useTheme } from '../../../src/context/ThemeContext'; // Import custom ThemeContext
 import { FormattingToolbar } from '../../../src/components/Editor/FormattingToolbar';
 import { EditableHeaderTitle } from '../../../src/components/EditableHeaderTitle';
 import { renameNote } from '../../../src/utils/fileOperations';
+import { NoteTags } from '../../../src/components/NoteTags';
+import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-notes/core-shared/tags';
+import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
+import { AddTagDialog } from '../../../src/components/AddTagDialog';
 
 const DEBUG = false;
 
@@ -52,8 +57,9 @@ export default function NoteScreen() {
 
   const router = useRouter();
   const navigation = useNavigation();
-  const { searchIndex, linkIndex } = useIndex();
+  const { searchIndex, linkIndex, tagIndex } = useIndex();
   const { settings } = useSettings();
+  const { addTag, tags: tagDefs } = useTags();
   const paperTheme = usePaperTheme();
   const { theme } = useTheme(); // Use custom theme context to get active theme vars
   const insets = useSafeAreaInsets();
@@ -68,6 +74,10 @@ export default function NoteScreen() {
   const [isDirty, setIsDirty] = useState(false);
   const [revision, setRevision] = useState(0);
 
+  // Tags
+  const [tags, setTags] = useState<string[]>([]);
+  const [isTagPromptVisible, setTagPromptVisible] = useState(false);
+
   const editorRef = useRef<EditorViewRef>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -76,6 +86,57 @@ export default function NoteScreen() {
 
   // To handle navigation blocking
   const pendingNavigationAction = useRef<any>(null);
+
+  // Pending tag operation to be applied after getting state
+  const pendingTagAction = useRef<{ type: 'add' | 'remove'; tag: string } | null>(null);
+
+  const computeTagsForContent = useCallback((text: string) => {
+      if (!noteId) return [];
+      const { data } = parseFrontmatter(text);
+      let fileTags: string[] = [];
+      if (data.tags && Array.isArray(data.tags)) fileTags = data.tags.map(String);
+      else if (typeof data.tags === 'string') fileTags = [data.tags];
+      const folderTags = deriveTagsFromPath(noteId);
+      return Array.from(new Set([...fileTags.map(normalizeTagId), ...folderTags])).sort();
+  }, [noteId]);
+
+  const materializeTags = useCallback((text: string) => {
+      if (!noteId) return text;
+      const derived = deriveTagsFromPath(noteId);
+      if (derived.length === 0) return text;
+
+      return updateFrontmatter(text, (data) => {
+          let currentTags: string[] = data.tags || [];
+          if (typeof currentTags === 'string') currentTags = [currentTags];
+          currentTags = currentTags.map(t => normalizeTagId(String(t)));
+
+          let changed = false;
+          derived.forEach(dt => {
+              if (!currentTags.includes(dt)) {
+                  currentTags.push(dt);
+                  changed = true;
+              }
+              if (!data.liminal) data.liminal = {};
+              if (!data.liminal.tagMeta) data.liminal.tagMeta = {};
+              if (!data.liminal.tagMeta[dt]) {
+                  data.liminal.tagMeta[dt] = { source: 'folder' };
+              }
+          });
+
+          if (changed) {
+              currentTags.sort();
+              data.tags = currentTags;
+          } else if (!data.tags) {
+              data.tags = currentTags;
+          }
+      });
+  }, [noteId]);
+
+  const ensureTagDefinitions = useCallback(async (tagIds: string[]) => {
+      const missing = tagIds.filter(t => !tagDefs[t]);
+      if (missing.length === 0) return;
+      await Promise.all(missing.map(id => addTag(humanizeTagId(id))));
+  }, [addTag, tagDefs]);
 
   useEffect(() => {
       const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -140,7 +201,10 @@ export default function NoteScreen() {
 
         const result = await adapter.readNote(noteId);
         setContent(result.content);
-        setLastSavedAt(result.mtimeMs);
+        setLastSavedAt(result.mtimeMs || null);
+
+        // Tags
+        setTags(computeTagsForContent(result.content));
 
         // Lazy Indexing: Upsert on open
         if (searchIndex) {
@@ -212,7 +276,8 @@ export default function NoteScreen() {
         settings: {
             showLineNumbers: settings.editor.showLineNumbers,
             highlightActiveLine: settings.editor.highlightActiveLine,
-            wordWrap: settings.editor.wordWrap
+            wordWrap: settings.editor.wordWrap,
+            showFrontmatter: settings.developer?.showFrontmatter
         },
         featureFlags: {
             links: true
@@ -256,6 +321,8 @@ export default function NoteScreen() {
       if (DEBUG) console.log('[NoteScreen] DocChanged:', payload);
       setRevision(payload.revision);
       setIsDirty(true);
+      // We don't update tags state here to avoid parsing every keystroke.
+      // Tags update on save or explicit action.
       if (saveStatus !== SaveStatus.Error) {
         setSaveStatus(SaveStatus.Idle);
       }
@@ -280,12 +347,69 @@ export default function NoteScreen() {
           return;
       }
 
-      const textToSave = payload.state.text ?? '';
+      const receivedText = payload.state.text ?? '';
+      let textToSave = receivedText;
+
+      // Handle Pending Tag Action (Add/Remove) using LATEST text
+      if (pendingTagAction.current) {
+          const action = pendingTagAction.current;
+          pendingTagAction.current = null;
+
+          const updatedText = updateFrontmatter(receivedText, (d) => {
+              let cTags = d.tags || [];
+              if (typeof cTags === 'string') cTags = [cTags];
+
+              if (action.type === 'add') {
+                  if (!cTags.includes(action.tag)) {
+                      cTags.push(action.tag);
+                  }
+                  d.tags = cTags;
+                  // Metadata
+                  const tid = normalizeTagId(action.tag);
+                  if (!d.liminal) d.liminal = {};
+                  if (!d.liminal.tagMeta) d.liminal.tagMeta = {};
+                  d.liminal.tagMeta[tid] = { source: 'human' };
+              } else if (action.type === 'remove') {
+                  d.tags = cTags.filter((t: any) => normalizeTagId(String(t)) !== action.tag);
+                  if (d.liminal?.tagMeta?.[action.tag]) {
+                      delete d.liminal.tagMeta[action.tag];
+                  }
+              }
+          });
+
+          const materialized = materializeTags(updatedText);
+
+          // Update editor to reflect tag change for subsequent RequestState calls
+          if (editorRef.current) {
+              editorRef.current.sendCommand(EditorCommand.Set, {
+                  docId: noteId!,
+                  text: materialized
+              });
+          }
+          // Continue through normal save flow with updated text
+          textToSave = materialized;
+      }
+
+      // Always persist derived tags into frontmatter (folder provenance)
+      textToSave = materializeTags(textToSave);
 
       try {
           const adapter = new MobileSandboxVaultAdapter();
           await adapter.writeNote(noteId!, textToSave);
           const saveTime = Date.now();
+
+          // Update tags state from saved text
+          const finalTags = computeTagsForContent(textToSave);
+          setTags(finalTags);
+          await ensureTagDefinitions(finalTags);
+
+          if (tagIndex) {
+              try {
+                  await tagIndex.setNoteTags(noteId!, finalTags);
+              } catch (e) {
+                  console.warn('[NoteScreen] Failed to persist tags to index', e);
+              }
+          }
 
           if (searchIndex) {
               try {
@@ -316,6 +440,7 @@ export default function NoteScreen() {
           if (isMountedRef.current) {
               setSaveStatus(SaveStatus.Saved);
               setLastSavedAt(saveTime);
+              setContent(textToSave);
               if (!saveTimerRef.current) {
                 setIsDirty(false);
               }
@@ -397,6 +522,27 @@ export default function NoteScreen() {
           </TouchableOpacity>
       </View>
 
+      <View style={{ borderBottomWidth: 1, borderBottomColor: paperTheme.colors.outlineVariant, backgroundColor: paperTheme.colors.surface }}>
+        <NoteTags
+            tags={tags}
+            onAdd={() => setTagPromptVisible(true)}
+            onRemove={(tagId) => {
+                const folderTags = deriveTagsFromPath(noteId!);
+                if (folderTags.includes(tagId)) {
+                    Alert.alert('Cannot remove', 'This tag is derived from the folder structure.');
+                    return;
+                }
+                // Optimistic update
+                const normalizedId = normalizeTagId(tagId);
+                setTags(prev => prev.filter(t => normalizeTagId(t) !== normalizedId));
+
+                // Request state to apply update safely
+                pendingTagAction.current = { type: 'remove', tag: normalizedId };
+                requestSave();
+            }}
+        />
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
@@ -418,6 +564,25 @@ export default function NoteScreen() {
           {/* Footer */}
           <LastSavedFooter timestamp={lastSavedAt} />
       </KeyboardAvoidingView>
+
+      <AddTagDialog
+        visible={isTagPromptVisible}
+        onClose={() => setTagPromptVisible(false)}
+        excludeTags={tags}
+        onSelect={(text) => {
+            if(!text) return;
+            // Add definition immediately
+            addTag(text).catch(e => console.error('Failed to add tag def', e));
+
+            // Optimistic update
+            const normalized = normalizeTagId(text);
+            setTags(prev => [...prev, normalized].sort());
+
+            // Request state to apply update safely
+            pendingTagAction.current = { type: 'add', tag: normalized };
+            requestSave();
+        }}
+      />
     </SafeAreaView>
   );
 }

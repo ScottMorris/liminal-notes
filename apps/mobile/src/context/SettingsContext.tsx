@@ -57,6 +57,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             appearance: { ...prev.appearance, ...stored.appearance },
             general: { ...prev.general, ...stored.general },
             vault: { ...prev.vault, ...stored.vault },
+            developer: { ...prev.developer, ...stored.developer },
             corePlugins: { ...prev.corePlugins, ...stored.corePlugins },
         }));
       }

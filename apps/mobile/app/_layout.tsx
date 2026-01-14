@@ -7,6 +7,7 @@ import { IndexProvider } from '../src/context/IndexContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { SettingsProvider } from '../src/context/SettingsContext';
 import { PaperThemeProvider } from '../src/context/PaperThemeContext';
+import { TagsProvider } from '../src/context/TagsContext';
 
 function AppNavigator() {
   const theme = useTheme();
@@ -57,7 +58,9 @@ export default function RootLayout() {
         <PaperThemeProvider>
           <VaultProvider>
             <IndexProvider>
-              <AppNavigator />
+              <TagsProvider>
+                <AppNavigator />
+              </TagsProvider>
             </IndexProvider>
           </VaultProvider>
         </PaperThemeProvider>

@@ -40,6 +40,7 @@ const HostTransaction = Annotation.define<boolean>();
 const lineNumbersCompartment = new Compartment();
 const lineWrappingCompartment = new Compartment();
 const highlightActiveLineCompartment = new Compartment();
+const frontmatterCompartment = new Compartment();
 
 // Apply theme vars to document root
 function applyTheme(vars: Record<string, string>) {
@@ -66,7 +67,7 @@ function initEditor(parent: HTMLElement, config?: InitPayload['settings']) {
     closeBrackets(),
     markdown({ extensions: [GFM] }),
     markdownDecorations,
-    frontmatterHider,
+    frontmatterCompartment.of(frontmatterHider),
     createEditorTheme(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     EditorView.updateListener.of((update) => {
@@ -156,7 +157,8 @@ function handleCommand(msg: AnyMessage) {
               effects: [
                   lineNumbersCompartment.reconfigure(msg.payload.settings.showLineNumbers ? lineNumbers() : []),
                   lineWrappingCompartment.reconfigure(msg.payload.settings.wordWrap ? EditorView.lineWrapping : []),
-                  highlightActiveLineCompartment.reconfigure(msg.payload.settings.highlightActiveLine ? highlightActiveLine() : [])
+                  highlightActiveLineCompartment.reconfigure(msg.payload.settings.highlightActiveLine ? highlightActiveLine() : []),
+                  frontmatterCompartment.reconfigure(msg.payload.settings.showFrontmatter ? [] : frontmatterHider)
               ]
           });
       }
@@ -206,6 +208,7 @@ function handleCommand(msg: AnyMessage) {
       break;
 
     case EditorCommand.Execute:
+      if (!editorView) return;
       if (sharedEditingCommands[msg.payload.id]) {
         sharedEditingCommands[msg.payload.id](editorView);
       } else {

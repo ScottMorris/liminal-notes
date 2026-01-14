@@ -55,6 +55,10 @@
     "./editor/wikiLinkParser": {
       "types": "./dist/editor/wikiLinkParser.d.mts",
       "default": "./dist/editor/wikiLinkParser.mjs"
+    },
+    "./tags": {
+      "types": "./dist/tags.d.mts",
+      "default": "./dist/tags.mjs"
     }
   },
   "scripts": {
@@ -69,11 +73,11 @@
     "@codemirror/view": "^6.39.4",
     "@lezer/common": "^1.5.0",
     "@lezer/highlight": "^1.2.3",
+    "buffer": "^6.0.3",
     "gray-matter": "^4.0.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "buffer": "^6.0.3",
     "happy-dom": "^20.0.11",
     "tsdown": "^0.18.3",
     "typescript": "^5.8.3",

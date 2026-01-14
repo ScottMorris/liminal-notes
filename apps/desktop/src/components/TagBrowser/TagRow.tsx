@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tag } from '../../types/tags';
+import { Tag } from '@liminal-notes/core-shared/tags';
 import { ChevronDownIcon, HashtagIcon } from '../Icons';
 
 interface TagRowProps {

@@ -1,4 +1,10 @@
+import { Buffer } from 'buffer';
 import matter from 'gray-matter';
+
+// Polyfill Buffer for environments (React Native) where it is not defined
+if (typeof globalThis.Buffer === 'undefined') {
+  (globalThis as any).Buffer = Buffer;
+}
 
 export interface FrontmatterResult<T = { [key: string]: any }> {
   data: T;
@@ -34,7 +40,19 @@ export function updateFrontmatter<T = { [key: string]: any }>(
   updater: (data: T) => void
 ): string {
   try {
-    const parsed = matter(fullText);
+    let parsed;
+    try {
+      parsed = matter(fullText);
+    } catch (err) {
+      // If the existing frontmatter is malformed, fall back to treating the whole text as content
+      // so we can rebuild a valid frontmatter block.
+      parsed = {
+        data: {} as T,
+        content: fullText
+      };
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn('Invalid frontmatter encountered, rebuilding with updater. Reason:', msg);
+    }
 
     // Create a clone or modify in place
     updater(parsed.data as T);

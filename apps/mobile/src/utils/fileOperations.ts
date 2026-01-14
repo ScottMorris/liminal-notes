@@ -4,7 +4,6 @@ import { SearchIndex, LinkIndex } from '@liminal-notes/core-shared/indexing/type
 import { NoteId } from '@liminal-notes/core-shared/types';
 import { recentsStorage } from '../storage/recents';
 import { pinnedStorage } from '../storage/pinned';
-import { WikiLinkMatch } from '@liminal-notes/core-shared/types';
 import { FileExistsError, FileNotFoundError } from '../errors';
 
 interface RenameOptions {
@@ -104,7 +103,7 @@ export async function renameFolder({
                 // We could also update link index here if we wanted perfect consistency,
                 // but search index is what drives the "count" in home view.
                 if (linkIndex) {
-                    const links = parseWikilinks(content).map((match: WikiLinkMatch) => ({
+                    const links = parseWikilinks(content).map((match) => ({
                        source: file.id,
                        targetRaw: match.targetRaw,
                        targetPath: match.targetRaw
@@ -186,7 +185,7 @@ export async function renameNote({
 
       if (linkIndex) {
           await linkIndex.removeSource(noteId);
-           const links = parseWikilinks(content).map((match: WikiLinkMatch) => ({
+           const links = parseWikilinks(content).map((match) => ({
                source: newPath,
                targetRaw: match.targetRaw,
                targetPath: match.targetRaw

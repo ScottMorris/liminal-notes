@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 const DB_NAME = 'index.db';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2; // Bump version for tags
 
 export async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
   return await SQLite.openDatabaseAsync(DB_NAME);
@@ -56,6 +56,29 @@ export async function initDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
         title,
         content
       );
+    `);
+
+    // 4. Tags Table (Definitions)
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS tags (
+        id TEXT PRIMARY KEY, -- kebab-case ID
+        display_name TEXT,
+        color TEXT,
+        created_at INTEGER
+      );
+    `);
+
+    // 5. Note Tags (Association)
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS note_tags (
+        note_id TEXT NOT NULL,
+        tag_id TEXT NOT NULL,
+        PRIMARY KEY (note_id, tag_id),
+        FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_note_tags_tag_id ON note_tags(tag_id);
+      CREATE INDEX IF NOT EXISTS idx_note_tags_note_id ON note_tags(note_id);
     `);
 
     // Update version
