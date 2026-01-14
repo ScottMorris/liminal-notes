@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
-import { VaultConfig, FileEntry } from "./types";
+import { LegacyVaultConfig, FileEntry } from "./types";
 
-export const getVaultConfig = async (): Promise<VaultConfig | null> => {
+export const getVaultConfig = async (): Promise<LegacyVaultConfig | null> => {
   return await invoke("get_vault_config");
 };
 

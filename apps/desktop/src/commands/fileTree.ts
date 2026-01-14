@@ -2,9 +2,10 @@ import type { Command, FileContext } from './types';
 import { commandRegistry } from './CommandRegistry';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { openPath, revealItemInDir } from '@tauri-apps/plugin-opener';
-import { getVaultConfig } from '../ipc';
 import { desktopVault } from '../adapters/DesktopVaultAdapter';
 import { confirm } from '@tauri-apps/plugin-dialog';
+import { desktopVaultConfig } from '../adapters/DesktopVaultConfigAdapter';
+import { isDesktopPathLocator } from '@liminal-notes/core-shared/vault/types';
 
 // Open in new tab
 const openInNewTabCommand: Command<FileContext> = {
@@ -73,23 +74,19 @@ const copyPathCommand: Command<FileContext> = {
   run: async (ctx) => {
     // Absolute path? Backend gives us rootPath.
     try {
-      const config = await getVaultConfig();
-      if (config) {
-        // Simple join, might need platform specific separator handling if cross platform is strict,
-        // but forward slash is usually fine or we can let backend handle it.
-        // For clipboard, OS specific separator is better.
-        // Assuming Linux/Mac for now given the environment, but let's try to be generic.
-        const sep = config.root_path.includes('\\') ? '\\' : '/';
-        // Normalize ctx.path (which is forward slash from backend usually)
-        const relative = ctx.path.replace(/\//g, sep);
-        const fullPath = `${config.root_path}${sep}${relative}`;
-        await writeText(fullPath);
-        ctx.operations.notify('Path copied to clipboard', 'success');
-      } else {
-        // Fallback to relative
+      const descriptor = await desktopVaultConfig.getActiveVault();
+      if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
         await writeText(ctx.path);
         ctx.operations.notify('Relative path copied (Vault config missing)', 'success');
+        return;
       }
+
+      const rootPath = descriptor.locator.rootPath;
+      const sep = rootPath.includes('\\') ? '\\' : '/';
+      const relative = ctx.path.replace(/\//g, sep);
+      const fullPath = `${rootPath}${sep}${relative}`;
+      await writeText(fullPath);
+      ctx.operations.notify('Path copied to clipboard', 'success');
     } catch (e) {
       console.error(e);
       ctx.operations.notify('Failed to copy path', 'error');
@@ -119,26 +116,21 @@ const showInExplorerCommand: Command<FileContext> = {
   icon: 'folder-open',
   run: async (ctx) => {
     try {
-      const config = await getVaultConfig();
-      if (config) {
-        const sep = config.root_path.includes('\\') ? '\\' : '/';
-        const relative = ctx.path.replace(/\//g, sep);
-        const fullPath = `${config.root_path}${sep}${relative}`;
+      const descriptor = await desktopVaultConfig.getActiveVault();
+      if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+        return;
+      }
 
-        // If it's a file, we might want to reveal it.
-        // tauri-plugin-opener `reveal`? It has `revealItem` in v2?
-        // `opener.reveal` doesn't exist in the types usually, it's `revealItem` or just `open` on parent.
-        // `revealItem` was added recently. If not available, `open` on parent dir.
-        // Let's check imports.
+      const rootPath = descriptor.locator.rootPath;
+      const sep = rootPath.includes('\\') ? '\\' : '/';
+      const relative = ctx.path.replace(/\//g, sep);
+      const fullPath = `${rootPath}${sep}${relative}`;
 
-        // Reveal item
-        try {
-           await revealItemInDir(fullPath);
-        } catch {
-           // Fallback: open parent directory
-           const parentDir = fullPath.substring(0, fullPath.lastIndexOf(sep));
-           await openPath(parentDir);
-        }
+      try {
+         await revealItemInDir(fullPath);
+      } catch {
+         const parentDir = fullPath.substring(0, fullPath.lastIndexOf(sep));
+         await openPath(parentDir);
       }
     } catch (e) {
       console.error(e);
@@ -156,13 +148,16 @@ const openInDefaultAppCommand: Command<FileContext> = {
   icon: 'external-link',
   run: async (ctx) => {
      try {
-      const config = await getVaultConfig();
-      if (config) {
-        const sep = config.root_path.includes('\\') ? '\\' : '/';
-        const relative = ctx.path.replace(/\//g, sep);
-        const fullPath = `${config.root_path}${sep}${relative}`;
-        await openPath(fullPath);
+      const descriptor = await desktopVaultConfig.getActiveVault();
+      if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+        return;
       }
+
+      const rootPath = descriptor.locator.rootPath;
+      const sep = rootPath.includes('\\') ? '\\' : '/';
+      const relative = ctx.path.replace(/\//g, sep);
+      const fullPath = `${rootPath}${sep}${relative}`;
+      await openPath(fullPath);
     } catch (e) {
       console.error(e);
       ctx.operations.notify('Failed to open file', 'error');
