@@ -7,6 +7,7 @@ import { VaultDescriptor, VaultKind } from '@liminal-notes/vault-core/vault/type
 import { MobileVaultConfigAdapter } from '../adapters/MobileVaultConfigAdapter';
 import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
 import { MobileSafVaultAdapter } from '../adapters/MobileSafVaultAdapter';
+import { MobileBookmarkVaultAdapter } from '../adapters/MobileBookmarkVaultAdapter';
 
 const StorageAccessFramework = (FileSystem as any).StorageAccessFramework;
 
@@ -47,9 +48,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         } else if (activeVault.locator.scheme === 'saf') {
           newAdapter = new MobileSafVaultAdapter(activeVault.locator.treeUri);
         } else if (activeVault.locator.scheme === 'bookmark') {
-           // Fallback for iOS bookmark - currently stubbed
-           console.warn('iOS Bookmarks not fully supported yet');
-           newAdapter = null;
+           newAdapter = new MobileBookmarkVaultAdapter(activeVault.locator.bookmark);
         }
 
         if (newAdapter) {
