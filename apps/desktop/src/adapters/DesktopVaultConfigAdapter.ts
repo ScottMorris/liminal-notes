@@ -55,6 +55,24 @@ class DesktopVaultConfigAdapter {
   async reset(): Promise<void> {
     await resetVaultConfig();
   }
+
+  async getRootPath(): Promise<string | null> {
+    const descriptor = await this.getActiveVault();
+    if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+      return null;
+    }
+    return descriptor.locator.rootPath;
+  }
+
+  async resolveAbsolutePath(relativePath: string): Promise<string | null> {
+    const rootPath = await this.getRootPath();
+    if (!rootPath) {
+      return null;
+    }
+    const separator = rootPath.includes('\\') ? '\\' : '/';
+    const normalisedRelative = relativePath.replace(/\//g, separator);
+    return `${rootPath}${separator}${normalisedRelative}`;
+  }
 }
 
 export const desktopVaultConfig = new DesktopVaultConfigAdapter();

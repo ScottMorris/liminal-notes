@@ -5,7 +5,6 @@ import { openPath, revealItemInDir } from '@tauri-apps/plugin-opener';
 import { desktopVault } from '../adapters/DesktopVaultAdapter';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { desktopVaultConfig } from '../adapters/DesktopVaultConfigAdapter';
-import { isDesktopPathLocator } from '@liminal-notes/core-shared/vault/types';
 
 // Open in new tab
 const openInNewTabCommand: Command<FileContext> = {
@@ -74,17 +73,13 @@ const copyPathCommand: Command<FileContext> = {
   run: async (ctx) => {
     // Absolute path? Backend gives us rootPath.
     try {
-      const descriptor = await desktopVaultConfig.getActiveVault();
-      if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+      const fullPath = await desktopVaultConfig.resolveAbsolutePath(ctx.path);
+      if (!fullPath) {
         await writeText(ctx.path);
         ctx.operations.notify('Relative path copied (Vault config missing)', 'success');
         return;
       }
 
-      const rootPath = descriptor.locator.rootPath;
-      const sep = rootPath.includes('\\') ? '\\' : '/';
-      const relative = ctx.path.replace(/\//g, sep);
-      const fullPath = `${rootPath}${sep}${relative}`;
       await writeText(fullPath);
       ctx.operations.notify('Path copied to clipboard', 'success');
     } catch (e) {
@@ -116,20 +111,15 @@ const showInExplorerCommand: Command<FileContext> = {
   icon: 'folder-open',
   run: async (ctx) => {
     try {
-      const descriptor = await desktopVaultConfig.getActiveVault();
-      if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+      const fullPath = await desktopVaultConfig.resolveAbsolutePath(ctx.path);
+      if (!fullPath) {
         return;
       }
-
-      const rootPath = descriptor.locator.rootPath;
-      const sep = rootPath.includes('\\') ? '\\' : '/';
-      const relative = ctx.path.replace(/\//g, sep);
-      const fullPath = `${rootPath}${sep}${relative}`;
 
       try {
          await revealItemInDir(fullPath);
       } catch {
-         const parentDir = fullPath.substring(0, fullPath.lastIndexOf(sep));
+         const parentDir = fullPath.substring(0, Math.max(fullPath.lastIndexOf('/'), fullPath.lastIndexOf('\\')));
          await openPath(parentDir);
       }
     } catch (e) {
@@ -148,15 +138,10 @@ const openInDefaultAppCommand: Command<FileContext> = {
   icon: 'external-link',
   run: async (ctx) => {
      try {
-      const descriptor = await desktopVaultConfig.getActiveVault();
-      if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+      const fullPath = await desktopVaultConfig.resolveAbsolutePath(ctx.path);
+      if (!fullPath) {
         return;
       }
-
-      const rootPath = descriptor.locator.rootPath;
-      const sep = rootPath.includes('\\') ? '\\' : '/';
-      const relative = ctx.path.replace(/\//g, sep);
-      const fullPath = `${rootPath}${sep}${relative}`;
       await openPath(fullPath);
     } catch (e) {
       console.error(e);
