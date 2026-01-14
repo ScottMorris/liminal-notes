@@ -224,6 +224,14 @@ Supported locators:
 
 On desktop the underlying Tauri IPC persists a simple `{ root_path, name }` config. The desktop adapter maps that to/from a `VaultDescriptor` without changing behaviour. Mobile adapters will persist descriptors (not raw paths) using platform-appropriate storage.
 
+Configuration is accessed through a platform-specific `VaultConfigAdapter` surface so callers stay locator-agnostic:
+
+* `getActiveVault` / `setActiveVault` / `reset`
+* `resolveAbsolutePath(relativePath)` to get a platform-usable absolute path/URI (or `null` if unavailable)
+* Optional metadata helpers (`getDisplayName`, `getLocatorMeta`, `getRootIdentifier`) for UI and diagnostics
+
+Only the adapter inspects locator details (paths, SAF URIs, bookmarks); core features call the adapter methods instead of branching on platform.
+
 ## 9. Indexing & Search
 
 Mobile indexing must be safe for constrained devices.

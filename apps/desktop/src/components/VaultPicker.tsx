@@ -29,7 +29,7 @@ export function VaultPicker({ onVaultConfigured }: VaultPickerProps) {
         const normalizedPath = path.replace(/\\/g, "/");
         const name = normalizedPath.split("/").pop() || "Vault";
 
-        const descriptor = await desktopVaultConfig.setActiveVault(path, name);
+        const descriptor = await desktopVaultConfig.setActiveVaultFromPath(path, name);
         onVaultConfigured(descriptor);
       }
     } catch (err) {

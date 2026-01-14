@@ -1,11 +1,6 @@
-import type {
-  VaultDescriptor,
-  VaultLocator,
-  DesktopVaultLocator,
-} from '@liminal-notes/core-shared/vault/types';
-import {
-  isDesktopPathLocator,
-} from '@liminal-notes/core-shared/vault/types';
+import type { VaultDescriptor } from '@liminal-notes/core-shared/vault/types';
+import { isDesktopPathLocator } from '@liminal-notes/core-shared/vault/types';
+import type { VaultConfigAdapter, VaultLocatorMeta } from '@liminal-notes/vault-core/config';
 import { getVaultConfig, setVaultConfig, resetVaultConfig } from '../ipc';
 import type { LegacyVaultConfig } from '../types';
 
@@ -32,7 +27,18 @@ const toLegacy = (descriptor: VaultDescriptor): LegacyVaultConfig => {
   };
 };
 
-class DesktopVaultConfigAdapter {
+const buildDescriptorFromPath = (rootPath: string, displayName: string): VaultDescriptor => ({
+  vaultId: rootPath,
+  displayName,
+  kind: 'external',
+  locator: {
+    platform: 'desktop',
+    scheme: 'path',
+    rootPath,
+  },
+});
+
+class DesktopVaultConfigAdapter implements VaultConfigAdapter {
   async getActiveVault(): Promise<VaultDescriptor | null> {
     const legacy = await getVaultConfig();
     if (!legacy) {
@@ -41,27 +47,19 @@ class DesktopVaultConfigAdapter {
     return toDescriptor(legacy);
   }
 
-  async setActiveVault(rootPath: string, displayName: string): Promise<VaultDescriptor> {
-    await setVaultConfig(rootPath, displayName);
-    return toDescriptor({ root_path: rootPath, name: displayName });
-  }
-
-  async saveDescriptor(descriptor: VaultDescriptor): Promise<VaultDescriptor> {
+  async setActiveVault(descriptor: VaultDescriptor): Promise<VaultDescriptor> {
     const legacy = toLegacy(descriptor);
     await setVaultConfig(legacy.root_path, legacy.name);
     return descriptor;
   }
 
-  async reset(): Promise<void> {
-    await resetVaultConfig();
+  async setActiveVaultFromPath(rootPath: string, displayName: string): Promise<VaultDescriptor> {
+    const descriptor = buildDescriptorFromPath(rootPath, displayName);
+    return this.setActiveVault(descriptor);
   }
 
-  async getRootPath(): Promise<string | null> {
-    const descriptor = await this.getActiveVault();
-    if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
-      return null;
-    }
-    return descriptor.locator.rootPath;
+  async reset(): Promise<void> {
+    await resetVaultConfig();
   }
 
   async resolveAbsolutePath(relativePath: string): Promise<string | null> {
@@ -72,6 +70,37 @@ class DesktopVaultConfigAdapter {
     const separator = rootPath.includes('\\') ? '\\' : '/';
     const normalisedRelative = relativePath.replace(/\//g, separator);
     return `${rootPath}${separator}${normalisedRelative}`;
+  }
+
+  async getDisplayName(): Promise<string | null> {
+    const descriptor = await this.getActiveVault();
+    return descriptor?.displayName ?? null;
+  }
+
+  async getLocatorMeta(): Promise<VaultLocatorMeta> {
+    const descriptor = await this.getActiveVault();
+    if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+      return { kind: 'path', permissionsOk: false, needsReauth: false };
+    }
+    return {
+      kind: 'path',
+      displayValue: descriptor.locator.rootPath,
+      permissionsOk: true,
+      needsReauth: false,
+    };
+  }
+
+  async getRootIdentifier(): Promise<string | null> {
+    const rootPath = await this.getRootPath();
+    return rootPath ?? null;
+  }
+
+  private async getRootPath(): Promise<string | null> {
+    const descriptor = await this.getActiveVault();
+    if (!descriptor || !isDesktopPathLocator(descriptor.locator)) {
+      return null;
+    }
+    return descriptor.locator.rootPath;
   }
 }
 

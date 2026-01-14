@@ -10,7 +10,8 @@
   "exports": {
     ".": "./dist/main.mjs",
     "./types": "./dist/types.mjs",
-    "./pathSafety": "./dist/pathSafety.mjs"
+    "./pathSafety": "./dist/pathSafety.mjs",
+    "./config": "./dist/config.mjs"
   },
   "scripts": {
     "build": "tsdown",
