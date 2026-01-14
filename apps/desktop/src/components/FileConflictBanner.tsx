@@ -1,5 +1,6 @@
 import React from 'react';
 import './FileConflictBanner.css';
+import { ExclamationTriangleIcon } from './Icons';
 
 interface FileConflictBannerProps {
   onReload: () => void;
@@ -15,7 +16,7 @@ export const FileConflictBanner: React.FC<FileConflictBannerProps> = ({
   return (
     <div className="file-conflict-banner">
       <div className="conflict-message">
-        <span className="warning-icon">⚠️</span>
+        <span className="warning-icon"><ExclamationTriangleIcon size={18} /></span>
         <strong>External Change Detected:</strong> This file has been modified on disk.
       </div>
       <div className="conflict-actions">

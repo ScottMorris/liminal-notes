@@ -227,12 +227,18 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
         } else {
             // Clean: Auto-reload
             try {
-                const { content } = await desktopVault.readNote(changedPath);
-                setContent(content);
+                const { content: newContent } = await desktopVault.readNote(changedPath);
+
+                // Check if content actually changed to avoid cursor reset loop on self-save
+                if (newContent === content) {
+                    return;
+                }
+
+                setContent(newContent);
 
                 // Update state to match new disk content
                 const state = JSON.stringify({
-                    doc: content,
+                    doc: newContent,
                     selection: { anchor: 0, head: 0 }
                 });
                 updateTabState(activeTab.id, state);
@@ -479,6 +485,13 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
   const handleSave = async () => {
     if (!activeTab || !editorRef.current || !editorRef.current.view) return;
+
+    // Prevent saving if there is a conflict to avoid overwriting external changes
+    if (conflictPath && activeTab.path === conflictPath) {
+        notify("Cannot save while there is an external conflict. Please resolve first.", "error");
+        return;
+    }
+
     setIsSaving(true);
 
     try {
