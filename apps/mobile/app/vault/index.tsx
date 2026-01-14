@@ -70,7 +70,7 @@ export default function VaultPickerScreen() {
 
             <Card style={styles.card} mode="outlined" onPress={handleOpenExternal}>
                 <Card.Title
-                    title={Platform.OS === 'android' ? "Open Folder (SAF)" : "Open Folder"}
+                    title={"Open Folder"}
                     subtitle="Use an existing folder on your device."
                     left={(props) => <Avatar.Icon {...props} icon="folder-open" />}
                 />
