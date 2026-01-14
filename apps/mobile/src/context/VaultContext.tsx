@@ -114,6 +114,10 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
+          if (!StorageAccessFramework || typeof StorageAccessFramework.requestDirectoryPermissionsAsync !== 'function') {
+              throw new Error('Storage Access Framework is unavailable. Ensure you are running on Android with expo-file-system SAF support.');
+          }
+
           const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
           if (!permissions.granted) {
               // User cancelled or denied

@@ -20,9 +20,14 @@ const StorageAccessFramework = (FileSystem as any).StorageAccessFramework;
  */
 export class MobileSafVaultAdapter implements VaultAdapter {
   private readonly treeUri: string;
+  private readonly saf: any;
 
   constructor(treeUri: string) {
     this.treeUri = treeUri;
+    this.saf = StorageAccessFramework;
+    if (!this.saf) {
+      throw new Error('Storage Access Framework is unavailable on this platform. Use Android with expo-file-system SAF support.');
+    }
   }
 
   async init(): Promise<void> {
@@ -35,7 +40,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     // Recursive traversal
     const traverse = async (uri: string, relativePath: string) => {
         try {
-            const files = await StorageAccessFramework.readDirectoryAsync(uri);
+            const files = await this.saf.readDirectoryAsync(uri);
 
             for (const fileUri of files) {
                 const info = await FileSystem.getInfoAsync(fileUri);
@@ -85,7 +90,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
 
       for (let i = 0; i < parts.length; i++) {
           const part = parts[i];
-          const children = await StorageAccessFramework.readDirectoryAsync(currentUri);
+          const children = await this.saf.readDirectoryAsync(currentUri);
           let found = false;
 
           for (const childUri of children) {
@@ -107,7 +112,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     const uri = await this.findUriForPath(id);
     if (!uri) throw new FileNotFoundError(id);
 
-    const content = await StorageAccessFramework.readAsStringAsync(uri);
+    const content = await this.saf.readAsStringAsync(uri);
     const info = await FileSystem.getInfoAsync(uri);
 
     return {
@@ -125,12 +130,12 @@ export class MobileSafVaultAdapter implements VaultAdapter {
 
       // Navigate/Create folders
       for (const part of parts) {
-          const children = await StorageAccessFramework.readDirectoryAsync(currentUri);
+          const children = await this.saf.readDirectoryAsync(currentUri);
           let foundUri = children.find((u: string) => decodeURIComponent(u.split('%2F').pop() || '') === part);
 
           if (!foundUri) {
               if (opts?.createParents) {
-                  foundUri = await StorageAccessFramework.createDirectoryAsync(currentUri, part);
+                  foundUri = await this.saf.createDirectoryAsync(currentUri, part);
               } else {
                   throw new FileNotFoundError(`Directory ${part} not found`);
               }
@@ -138,14 +143,14 @@ export class MobileSafVaultAdapter implements VaultAdapter {
           currentUri = foundUri;
       }
 
-      const children = await StorageAccessFramework.readDirectoryAsync(currentUri);
+      const children = await this.saf.readDirectoryAsync(currentUri);
       let fileUri = children.find((u: string) => decodeURIComponent(u.split('%2F').pop() || '') === fileName);
 
       if (fileUri) {
-          await StorageAccessFramework.writeAsStringAsync(fileUri, content);
+          await this.saf.writeAsStringAsync(fileUri, content);
       } else {
-          fileUri = await StorageAccessFramework.createFileAsync(currentUri, fileName, 'text/markdown');
-          await StorageAccessFramework.writeAsStringAsync(fileUri, content);
+          fileUri = await this.saf.createFileAsync(currentUri, fileName, 'text/markdown');
+          await this.saf.writeAsStringAsync(fileUri, content);
       }
 
       const info = await FileSystem.getInfoAsync(fileUri);
@@ -180,12 +185,12 @@ export class MobileSafVaultAdapter implements VaultAdapter {
       let currentUri = this.treeUri;
 
       for (const part of parts) {
-          const children = await StorageAccessFramework.readDirectoryAsync(currentUri);
+          const children = await this.saf.readDirectoryAsync(currentUri);
           let foundUri = children.find((u: string) => decodeURIComponent(u.split('%2F').pop() || '') === part);
 
           if (!foundUri) {
              if (opts?.recursive) {
-                 foundUri = await StorageAccessFramework.createDirectoryAsync(currentUri, part);
+                 foundUri = await this.saf.createDirectoryAsync(currentUri, part);
              } else {
                  throw new FileNotFoundError(`Parent directory for ${part} not found`);
              }
