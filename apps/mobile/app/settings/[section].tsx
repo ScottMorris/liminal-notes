@@ -14,7 +14,7 @@ import { useVault } from '../../src/context/VaultContext';
 export default function SettingsSectionScreen() {
   const { section } = useLocalSearchParams();
   const { resolveColor } = useTheme();
-  const { activeVault } = useVault(); // For Vault Switch action
+  const { activeVault, resetVault } = useVault(); // For Vault Switch action
   const router = useRouter();
 
   const vaultName = activeVault?.vaultId === 'sandbox' ? 'Sandbox Vault' : (activeVault?.vaultId || 'None');
@@ -37,27 +37,20 @@ export default function SettingsSectionScreen() {
       if (actionId === 'switch-vault') {
           Alert.alert(
               'Switch Vault',
-              'Are you sure you want to close the current vault?',
+              'Close the current vault and pick another one?',
               [
                   { text: 'Cancel', style: 'cancel' },
                   {
                       text: 'Switch',
                       style: 'destructive',
-                      onPress: () => {
-                          // Clear active vault and reset nav
-                          // Since setActiveVault might need to persist, we rely on VaultContext
-                          // But VaultContext might just hold state.
-                          // The requirement says "Switch vault (action button)".
-                          // Assuming we just clear it and go back to root?
-                          // Or navigate to a vault picker screen?
-                          // For MVP, lets try to clear it if context allows, or just alert "Not implemented".
-                          // Actually, the vault picker is likely the index screen if no vault is selected.
-
-                          // TODO: Implement actual Vault Switch logic.
-                          // For now, we'll just navigate to root which checks for vault.
-                          // But to "close" it, we need to unset it.
-                          // Checking VaultContext...
-                          Alert.alert('Coming Soon', 'Vault switching logic is being finalized.');
+                      onPress: async () => {
+                          try {
+                              await resetVault();
+                              router.replace('/vault');
+                          } catch (e) {
+                              console.error('Failed to switch vault', e);
+                              Alert.alert('Error', 'Could not switch vault. Please try again.');
+                          }
                       }
                   }
               ]
