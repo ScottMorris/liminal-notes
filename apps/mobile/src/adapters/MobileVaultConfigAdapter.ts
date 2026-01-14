@@ -6,7 +6,18 @@ import { STORAGE_KEYS } from '../storage/keys';
 export class MobileVaultConfigAdapter implements VaultConfigAdapter {
   async getActiveVault(): Promise<VaultDescriptor | null> {
     try {
-      return await kv.getJSON<VaultDescriptor>(STORAGE_KEYS.ACTIVE_VAULT);
+      const stored = await kv.getJSON<unknown>(STORAGE_KEYS.ACTIVE_VAULT);
+      if (!stored) {
+        return null;
+      }
+
+      if (!this.isValidDescriptor(stored)) {
+        console.warn('Stored vault config is missing locator metadata; clearing it');
+        await this.reset();
+        return null;
+      }
+
+      return stored;
     } catch (e) {
       console.error('Failed to load active vault config', e);
       return null;
@@ -46,5 +57,21 @@ export class MobileVaultConfigAdapter implements VaultConfigAdapter {
          // but we can default to true here.
          permissionsOk: true
      };
+  }
+
+  private isValidDescriptor(candidate: unknown): candidate is VaultDescriptor {
+    if (!candidate || typeof candidate !== 'object') {
+      return false;
+    }
+
+    const descriptor = candidate as Record<string, unknown>;
+    const locator = descriptor.locator as Record<string, unknown> | undefined;
+
+    return typeof descriptor.vaultId === 'string'
+      && typeof descriptor.displayName === 'string'
+      && typeof descriptor.kind === 'string'
+      && !!locator
+      && typeof locator.platform === 'string'
+      && typeof locator.scheme === 'string';
   }
 }
