@@ -98,7 +98,6 @@ export default function HomeScreen() {
         <FolderSection folders={folders} onRefresh={refresh} />
         <RecentSection items={recents} onRefresh={refresh} />
         <RootFilesSection files={rootFiles} />
-        <RootFilesSection files={rootFiles} />
 
         {/* Empty State */}
         {pinned.length === 0 && recents.length === 0 && folders.length === 0 && (
@@ -134,7 +133,7 @@ function RootFilesSection({ files }: { files: VaultFileEntry[] }) {
 
   return (
     <View style={styles.rootFilesContainer}>
-      <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>Root notes</Text>
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>All notes</Text>
       <View style={styles.listContainer}>
         {files.map((file, idx) => (
           <List.Item
