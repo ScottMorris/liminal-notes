@@ -40,19 +40,25 @@
 }
 
 .btn-conflict-action:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--ln-warning-hover);
 }
 
 .btn-conflict-action:active {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--ln-warning-active);
   transform: translateY(1px);
 }
 
 .btn-conflict-action.primary {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--ln-warning-active);
   font-weight: 600;
 }
 
 .btn-conflict-action.primary:active {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--ln-warning-text); /* Fallback or specific active color if needed, reusing text color as strong accent for now or rely on opacity mix */
+  /* Actually, let's reuse warning-active but maybe simpler to just let it be.
+     The original code used 0.1 for primary bg and 0.2 for active.
+     Our theme vars are roughly 0.05 and 0.1.
+     Let's map primary bg to 'active' (0.1) and primary:active to something stronger or keep it consistent.
+     Or define explicit primary vars. For now, reusing generic warning hover/active is safer than hardcoding. */
+  filter: brightness(0.9);
 }
