@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { setVaultConfig } from "../ipc";
-import { VaultConfig } from "../types";
+import { desktopVaultConfig } from "../adapters/DesktopVaultConfigAdapter";
+import type { VaultDescriptor } from "@liminal-notes/core-shared/vault/types";
 
 interface VaultPickerProps {
-  onVaultConfigured: (config: VaultConfig) => void;
+  onVaultConfigured: (config: VaultDescriptor) => void;
 }
 
 export function VaultPicker({ onVaultConfigured }: VaultPickerProps) {
@@ -29,8 +29,8 @@ export function VaultPicker({ onVaultConfigured }: VaultPickerProps) {
         const normalizedPath = path.replace(/\\/g, "/");
         const name = normalizedPath.split("/").pop() || "Vault";
 
-        await setVaultConfig(path, name);
-        onVaultConfigured({ root_path: path, name });
+        const descriptor = await desktopVaultConfig.setActiveVaultFromPath(path, name);
+        onVaultConfigured(descriptor);
       }
     } catch (err) {
       console.error(err);

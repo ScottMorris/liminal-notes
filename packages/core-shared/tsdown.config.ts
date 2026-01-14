@@ -15,6 +15,7 @@ export default defineConfig({
     'editor/frontmatterHider': 'src/editor/frontmatterHider.ts',
     'editor/wikiLinkParser': 'src/editor/wikiLinkParser.ts',
     'tags': 'src/tags.ts',
+    'vault/types': 'src/vault/types.ts',
   },
   format: ['esm'],
   dts: true,

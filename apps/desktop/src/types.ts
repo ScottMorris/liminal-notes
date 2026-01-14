@@ -1,4 +1,4 @@
-export interface VaultConfig {
+export interface LegacyVaultConfig {
   root_path: string;
   name: string;
 }

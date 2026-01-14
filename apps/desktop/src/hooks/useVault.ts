@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { getVaultConfig, resetVaultConfig } from "../ipc";
 import { desktopVault } from "../adapters/DesktopVaultAdapter";
-import { VaultConfig, FileEntry } from "../types";
+import { desktopVaultConfig } from "../adapters/DesktopVaultConfigAdapter";
+import { FileEntry } from "../types";
+import type { VaultDescriptor } from "@liminal-notes/core-shared/vault/types";
 import { useLinkIndex } from "../components/LinkIndexContext";
 import { useSearchIndex } from "../components/SearchIndexContext";
 import { useNotification } from "../components/NotificationContext";
 import { useTags } from "../contexts/TagsContext";
 
 export function useVault() {
-  const [vaultConfig, setVaultConfig] = useState<VaultConfig | null>(null);
+  const [vaultConfig, setVaultConfig] = useState<VaultDescriptor | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,7 +40,7 @@ export function useVault() {
   const loadVault = useCallback(async () => {
     try {
       setIsLoading(true);
-      const config = await getVaultConfig();
+      const config = await desktopVaultConfig.getActiveVault();
       if (config) {
         setVaultConfig(config);
         await refreshFiles();
@@ -55,7 +56,7 @@ export function useVault() {
 
   const handleResetVault = useCallback(async () => {
     try {
-      await resetVaultConfig();
+      await desktopVaultConfig.reset();
       setVaultConfig(null);
       setFiles([]);
     } catch (err) {
@@ -63,7 +64,7 @@ export function useVault() {
     }
   }, [notify]);
 
-  const handleVaultConfigured = useCallback(async (config: VaultConfig) => {
+  const handleVaultConfigured = useCallback(async (config: VaultDescriptor) => {
     setVaultConfig(config);
     await refreshFiles();
   }, [refreshFiles]);
