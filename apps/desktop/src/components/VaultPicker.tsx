@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { desktopVaultConfig } from "../adapters/DesktopVaultConfigAdapter";
-import type { VaultDescriptor } from "@liminal-notes/core-shared/vault/types";
+import type { VaultDescriptor } from "@liminal-notes/vault-core/vault/types";
 
 interface VaultPickerProps {
   onVaultConfigured: (config: VaultDescriptor) => void;

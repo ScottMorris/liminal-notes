@@ -231,6 +231,7 @@ Configuration is accessed through a platform-specific `VaultConfigAdapter` surfa
 * Optional metadata helpers (`getDisplayName`, `getLocatorMeta`, `getRootIdentifier`) for UI and diagnostics
 
 Only the adapter inspects locator details (paths, SAF URIs, bookmarks); core features call the adapter methods instead of branching on platform.
+The canonical `VaultDescriptor` and locator types live in `@liminal-notes/vault-core` alongside the `VaultConfigAdapter` interface.
 
 ## 9. Indexing & Search
 

@@ -109,6 +109,7 @@ Responsibilities:
 - Load and persist `vault.config` (JSON/YAML).
 - Expose a platform-neutral vault descriptor (`VaultDescriptor`) via a `VaultConfigAdapter` so frontends do not handle platform-specific locators directly (desktop path, Android SAF URI, iOS bookmark).
 - Resolve platform-specific absolute paths/URIs on behalf of callers (e.g., “open in explorer”) through the adapter surface instead of leaking locator details into the UI.
+- The canonical descriptor and locator types (plus the config adapter interface) live in `@liminal-notes/vault-core`.
 
 Key types:
 
