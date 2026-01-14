@@ -3,8 +3,11 @@ use tauri::Manager;
 mod vault;
 mod settings;
 mod plugins;
+mod watcher;
 
 use plugins::{PluginRegistry, tts::TtsPlugin};
+use std::sync::Mutex;
+use watcher::FileWatcher;
 
 #[tauri::command]
 fn get_linux_accent_colour() -> String {
@@ -81,6 +84,16 @@ pub fn run() {
             registry.activate(app.handle().clone(), "core.tts").unwrap();
 
             app.manage(registry);
+
+            // Initialize watcher
+            let watcher = FileWatcher::new();
+            // Attempt to start if vault is already configured
+            if let Some(config) = vault::get_vault_config(app.handle().clone()) {
+                if let Err(e) = watcher.start(app.handle().clone(), std::path::PathBuf::from(config.root_path)) {
+                    eprintln!("Failed to start watcher: {}", e);
+                }
+            }
+            app.manage(watcher);
 
             if std::env::var("TAURI_FORCE_DEVTOOLS").is_ok() {
                 if let Some(main) = app.get_webview_window("main") {
