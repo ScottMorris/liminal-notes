@@ -3,22 +3,30 @@
 ## Future Improvements
 
 ### Mobile
+
 - [ ] Add 'Enable Debug Logging' setting to Mobile app to control verbose Bridge and Vault logs.
 - [x] Fix capitalization of entered text in editor (Android keyboard treating it as code/lowercase).
 
 ### Pinning
+
 - [ ] Support manual reordering of pinned items.
 - [ ] Add pin/unpin affordances inside note and folder views (not only on Home).
 - [ ] Consider visual distinction between pinned notes vs pinned folders.
 
 ### Reminders
+
 - [ ] Integrate `reminders-core` into mobile home “Focused” section.
 - [ ] Define reminder → note navigation behaviour on mobile.
 - [ ] Decide ordering rules when reminders and pinned items coexist.
 
 ### Performance & Data
+
 - [ ] Cache derived folder activity to reduce repeated aggregation work.
 - [ ] Add richer activity signals (e.g., unread, reminder inside folder).
+
+### Tags
+
+- [ ] Add human-readable tag name to `liminal.tagMeta` entries alongside kebab-case tag IDs.
 
 ## Font Management
 
@@ -80,11 +88,13 @@ We should consider adding a printing feature for notes.
 ## Tab Persistence in Vault
 
 Currently, unsaved tabs are stored in `localStorage` which means:
+
 - They don't sync across devices
 - They're browser-specific
 - They're lost if localStorage is cleared
 
 **Future improvement:**
+
 - Store unsaved tabs in `.liminal/unsaved-tabs.json` within the vault
 - This enables:
   - Cross-device sync (when sync is implemented)
@@ -93,6 +103,7 @@ Currently, unsaved tabs are stored in `localStorage` which means:
   - Version control if vault is in Git
 
 **Implementation notes:**
+
 - Unsaved tabs should be in vault's `.liminal/` directory (gitignored by default)
 - Format: JSON array of `{ id, title, content, createdAt, modifiedAt }`
 - Load on vault open, save on change (debounced)
