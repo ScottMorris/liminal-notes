@@ -18,6 +18,7 @@ import { registerAllCommands } from "./commands/registerDefaults";
 import { TabsProvider } from "./contexts/TabsContext";
 import { RemindersProvider } from "./contexts/RemindersContext";
 import { NavigationProvider } from "./contexts/NavigationContext";
+import { FileWatcherProvider } from "./contexts/FileWatcherContext";
 
 // Initialize commands before rendering
 registerAllCommands();
@@ -33,9 +34,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 <RemindersProvider>
                   <TabsProvider>
                     <NavigationProvider>
-                      <PluginHostProvider>
-                        <App />
-                      </PluginHostProvider>
+                      <FileWatcherProvider>
+                        <PluginHostProvider>
+                          <App />
+                        </PluginHostProvider>
+                      </FileWatcherProvider>
                     </NavigationProvider>
                   </TabsProvider>
                 </RemindersProvider>

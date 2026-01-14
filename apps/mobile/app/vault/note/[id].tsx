@@ -20,6 +20,9 @@ import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-note
 import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 import { AddTagDialog } from '../../../src/components/AddTagDialog';
 import { useVault } from '../../../src/context/VaultContext';
+import { DeviceEventEmitter } from 'react-native';
+import { FileWatcherEvent } from '../../../src/services/FileWatcher';
+import { MobileFileConflictBanner } from '../../../src/components/MobileFileConflictBanner';
 
 const DEBUG = false;
 
@@ -79,6 +82,7 @@ export default function NoteScreen() {
   // Tags
   const [tags, setTags] = useState<string[]>([]);
   const [isTagPromptVisible, setTagPromptVisible] = useState(false);
+  const [conflictPath, setConflictPath] = useState<string | null>(null);
 
   const editorRef = useRef<EditorViewRef>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -153,6 +157,23 @@ export default function NoteScreen() {
       isMountedRef.current = true;
       loadNote();
 
+      // File Watcher Listener
+      const watcherSub = DeviceEventEmitter.addListener('vault:file-event', (event: FileWatcherEvent) => {
+          if (!noteId) return;
+          if (event.path === noteId && event.type === 'modified') {
+               // If dirty -> Conflict
+               if (isDirty) {
+                   setConflictPath(noteId);
+               } else {
+                   // If clean -> Auto-reload
+                   // Note: We need to be careful not to reload if we are 'saving'.
+                   if (saveStatus !== SaveStatus.Saving) {
+                       loadNote(); // Re-read from disk
+                   }
+               }
+          }
+      });
+
       const onBeforeRemove = (e: any) => {
           if (!isDirty) {
               return;
@@ -174,11 +195,12 @@ export default function NoteScreen() {
       return () => {
           showSub.remove();
           hideSub.remove();
+          watcherSub.remove();
           isMountedRef.current = false;
           navigation.removeListener('beforeRemove', onBeforeRemove);
           if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       };
-  }, [noteId]);
+  }, [noteId, isDirty, saveStatus]); // Added deps for watcher logic
 
   const loadNote = async () => {
     if (!noteId) {
@@ -238,6 +260,7 @@ export default function NoteScreen() {
         }
 
         setStatus('ready');
+        setConflictPath(null); // Clear conflict on reload
     } catch (e: any) {
         setStatus('error');
         setErrorMsg(e.message || 'Failed to load note');
@@ -511,6 +534,15 @@ export default function NoteScreen() {
               headerShown: false // We use custom header inside SafeAreaView or could use Stack header
           }}
       />
+
+      {/* Conflict Banner */}
+      {conflictPath && (
+          <MobileFileConflictBanner
+              onReload={() => loadNote()}
+              onKeepMine={() => setConflictPath(null)}
+              onDismiss={() => setConflictPath(null)}
+          />
+      )}
 
       {/* Header / Debug Bar */}
       <View style={[styles.header, { borderBottomColor: paperTheme.colors.outlineVariant, backgroundColor: paperTheme.colors.surface }]}>

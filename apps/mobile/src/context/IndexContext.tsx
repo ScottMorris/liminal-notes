@@ -9,6 +9,8 @@ import { useVault } from './VaultContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution'; // Fixed import path from previous knowledge
 import { parseFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-notes/core-shared/tags';
+import { DeviceEventEmitter } from 'react-native';
+import { FileWatcherEvent, fileWatcher } from '../services/FileWatcher';
 
 interface IndexContextType {
   searchIndex: SearchIndex | null;
@@ -192,12 +194,87 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
     }
   }, [db, activeVault, adapter, searchIndex, linkIndex, tagIndex]);
 
-  // 2. Background Scan Logic (Lazy)
+  // 2. Background Scan Logic (Lazy) + File Watcher
   useEffect(() => {
     if (!db || !activeVault || !adapter || !searchIndex || !tagIndex) return;
     const timer = setTimeout(() => startScan(), 2000);
     return () => clearTimeout(timer);
   }, [db, activeVault, adapter, searchIndex, tagIndex, startScan]);
+
+  useEffect(() => {
+    if (!db || !activeVault || !adapter || !searchIndex || !tagIndex) return;
+
+    const updateIndexForFile = async (noteId: string) => {
+      try {
+        const note = await adapter.readNote(noteId);
+        await searchIndex.upsert({
+          id: noteId,
+          title: noteId.replace(/\.md$/, ''),
+          content: note.content,
+          mtimeMs: Date.now(),
+        });
+
+        if (linkIndex) {
+          const links = parseWikilinks(note.content).map((match) => ({
+            source: noteId,
+            targetRaw: match.targetRaw,
+            targetPath: match.targetRaw,
+          }));
+          await linkIndex.upsertLinks(noteId, links);
+        }
+
+        const { data } = parseFrontmatter(note.content);
+        let fileTags: string[] = [];
+        if (data.tags && Array.isArray(data.tags)) {
+          fileTags = data.tags.map((t: any) => normalizeTagId(String(t)));
+        } else if (data.tags && typeof data.tags === 'string') {
+          fileTags = [normalizeTagId(data.tags)];
+        }
+        const folderTags = deriveTagsFromPath(noteId);
+        const uniqueTags = Array.from(new Set([...fileTags, ...folderTags]));
+
+        for (const tagId of uniqueTags) {
+          const existing = await tagIndex.getTag(tagId);
+          if (!existing) {
+            await tagIndex.upsertTag({
+              id: tagId,
+              displayName: humanizeTagId(tagId),
+              createdAt: Date.now(),
+            });
+          }
+        }
+
+        await tagIndex.setNoteTags(noteId, uniqueTags);
+      } catch (e) {
+        console.warn(`[Index] Failed to update index for ${noteId}`, e);
+      }
+    };
+
+    void fileWatcher.init().catch((e) => {
+      console.warn('[Index] File watcher init failed', e);
+    });
+
+    const subscription = DeviceEventEmitter.addListener('vault:file-event', async (event: FileWatcherEvent) => {
+      console.log(`[Index] Received file event: ${event.type} ${event.path}`);
+      if (!event.path.endsWith('.md')) return;
+
+      if (event.type === 'created' || event.type === 'modified') {
+        await updateIndexForFile(event.path);
+      } else if (event.type === 'deleted') {
+        try {
+          await searchIndex.remove(event.path);
+          if (linkIndex) await linkIndex.removeSource(event.path);
+          await tagIndex.setNoteTags(event.path, []);
+        } catch (e) {
+          console.error(`[Index] Failed to handle deletion for ${event.path}`, e);
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [db, activeVault, adapter, searchIndex, linkIndex, tagIndex]);
 
   // Close DB on unmount to avoid dangling handles
   useEffect(() => {
