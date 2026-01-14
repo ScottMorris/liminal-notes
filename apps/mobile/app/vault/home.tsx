@@ -134,7 +134,7 @@ function RootFilesSection({ files }: { files: VaultFileEntry[] }) {
 
   return (
     <View style={styles.rootFilesContainer}>
-      <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>All notes</Text>
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>Root notes</Text>
       <View style={styles.listContainer}>
         {files.map((file, idx) => (
           <List.Item

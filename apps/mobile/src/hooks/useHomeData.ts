@@ -93,11 +93,14 @@ export function useHomeData() {
           return a.path.localeCompare(b.path);
       });
 
+      // Dedupe root files by id in case adapters return duplicates
+      const uniqueRootFiles = Array.from(new Map(rootFiles.map(f => [f.id, f])).values());
+
       setData({
         pinned,
         recents,
         folders: mergedFolders,
-        rootFiles: rootFiles.sort((a, b) => (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0)),
+        rootFiles: uniqueRootFiles.sort((a, b) => (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0)),
         loading: false,
       });
     } catch (e: any) {
