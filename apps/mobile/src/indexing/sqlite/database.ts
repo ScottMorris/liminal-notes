@@ -1,10 +1,19 @@
 import * as SQLite from 'expo-sqlite';
 
-const DB_NAME = 'index.db';
 const SCHEMA_VERSION = 2; // Bump version for tags
 
-export async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
-  return await SQLite.openDatabaseAsync(DB_NAME);
+const vaultHash = (vaultId: string): string => {
+  // Simple, deterministic hash without external deps
+  let hash = 0;
+  for (let i = 0; i < vaultId.length; i++) {
+    hash = (hash * 31 + vaultId.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(16);
+};
+
+export async function openDatabase(vaultId: string): Promise<SQLite.SQLiteDatabase> {
+  const dbName = `index_${vaultHash(vaultId)}.db`;
+  return await SQLite.openDatabaseAsync(dbName);
 }
 
 export async function initDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
@@ -88,6 +97,9 @@ export async function initDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
 
 // Helper to clear database (for debugging/reset)
 export async function clearDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
-    await db.closeAsync();
-    await SQLite.deleteDatabaseAsync(DB_NAME);
+  const name = (db as any)?._name;
+  await db.closeAsync();
+  if (name) {
+    await SQLite.deleteDatabaseAsync(name);
+  }
 }

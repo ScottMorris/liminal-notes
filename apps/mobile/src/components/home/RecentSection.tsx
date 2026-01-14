@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { List, Surface, Text, useTheme } from 'react-native-paper';
 import { RecentItem } from '../../storage/recents';
 import { pinnedStorage } from '../../storage/pinned';
+import { useVault } from '../../context/VaultContext';
 
 interface RecentSectionProps {
   items: RecentItem[];
@@ -13,6 +14,7 @@ interface RecentSectionProps {
 export function RecentSection({ items, onRefresh }: RecentSectionProps) {
   const router = useRouter();
   const theme = useTheme();
+  const { activeVault } = useVault();
 
   if (items.length === 0) return null;
 
@@ -30,7 +32,7 @@ export function RecentSection({ items, onRefresh }: RecentSectionProps) {
         {
           text: 'Pin Note',
           onPress: async () => {
-            await pinnedStorage.pin(id, 'note');
+            await pinnedStorage.pin(activeVault?.vaultId ?? null, id, 'note');
             onRefresh();
           }
         }

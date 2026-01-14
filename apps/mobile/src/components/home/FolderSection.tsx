@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Text, Card, useTheme } from 'react-native-paper';
 import { FolderActivity } from '../../indexing/sqlite/SQLiteSearchIndex';
 import { pinnedStorage } from '../../storage/pinned';
+import { useVault } from '../../context/VaultContext';
 
 interface FolderSectionProps {
   folders: FolderActivity[];
@@ -13,6 +14,7 @@ interface FolderSectionProps {
 export function FolderSection({ folders, onRefresh }: FolderSectionProps) {
   const router = useRouter();
   const theme = useTheme();
+  const { activeVault } = useVault();
 
   if (folders.length === 0) return null;
 
@@ -31,7 +33,7 @@ export function FolderSection({ folders, onRefresh }: FolderSectionProps) {
               {
                 text: 'Pin Folder',
                 onPress: async () => {
-                  await pinnedStorage.pin(folder, 'folder');
+                  await pinnedStorage.pin(activeVault?.vaultId ?? null, folder, 'folder');
                   onRefresh();
                 }
               }

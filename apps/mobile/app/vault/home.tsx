@@ -8,25 +8,26 @@ import { FolderSection } from '../../src/components/home/FolderSection';
 import { RecentSection } from '../../src/components/home/RecentSection';
 import { FAB, FABAction } from '../../src/components/FAB';
 import { Text, useTheme } from 'react-native-paper'; // Use Paper Text and useTheme
-import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import { PromptModal } from '../../src/components/PromptModal';
 import { HeaderMenu } from '../../src/components/HeaderMenu';
 import { IconButton } from 'react-native-paper';
+import { useVault } from '../../src/context/VaultContext';
 
 export default function HomeScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
   const theme = useTheme();
   const { pinned, recents, folders, loading, refresh } = useHomeData();
+  const { adapter, activeVault } = useVault();
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
 
   const handleCreateNote = async () => {
     try {
+      if (!adapter || !activeVault) {
+        throw new Error('No active vault');
+      }
       // Create new note logic
       const id = `Untitled ${Date.now()}.md`;
-      const adapter = new MobileSandboxVaultAdapter();
-      await adapter.init();
-      // Write empty file
       await adapter.writeNote(id, '', { createParents: true });
 
       // Navigate - Encode ID to handle potential slashes (though less likely at root, good practice)
@@ -40,8 +41,13 @@ export default function HomeScreen() {
   const handleCreateFolder = async (folderName: string) => {
       try {
           setIsFolderPromptVisible(false);
-          const adapter = new MobileSandboxVaultAdapter();
-          await adapter.init();
+          if (!adapter || !activeVault) {
+            throw new Error('No active vault');
+          }
+
+          if (!adapter.mkdir) {
+            throw new Error('Creating folders is not supported for this vault');
+          }
 
           await adapter.mkdir(folderName, { recursive: true });
           // Navigate to folder

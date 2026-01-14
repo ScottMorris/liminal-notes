@@ -3,3 +3,6 @@ export const STORAGE_KEYS = {
     PINNED_ITEMS: 'liminal_pinned_items',
     RECENT_ITEMS: 'liminal_recent_items',
 } as const;
+
+export const vaultScopedKey = (baseKey: string, vaultId?: string | null): string =>
+    vaultId ? `${baseKey}::${vaultId}` : baseKey;

@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { List, Text, useTheme, Surface } from 'react-native-paper';
 import { PinnedItem, pinnedStorage } from '../../storage/pinned';
+import { useVault } from '../../context/VaultContext';
 
 interface FocusedSectionProps {
   items: PinnedItem[];
@@ -12,6 +13,7 @@ interface FocusedSectionProps {
 export function FocusedSection({ items, onRefresh }: FocusedSectionProps) {
   const router = useRouter();
   const theme = useTheme();
+  const { activeVault } = useVault();
 
   if (items.length === 0) return null;
 
@@ -34,7 +36,7 @@ export function FocusedSection({ items, onRefresh }: FocusedSectionProps) {
           text: 'Unpin',
           style: 'destructive',
           onPress: async () => {
-            await pinnedStorage.unpin(item.id);
+            await pinnedStorage.unpin(activeVault?.vaultId ?? null, item.id);
             onRefresh();
           }
         }

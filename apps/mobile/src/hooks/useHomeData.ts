@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useIndex } from '../context/IndexContext';
 import { pinnedStorage, PinnedItem } from '../storage/pinned';
 import { recentsStorage, RecentItem } from '../storage/recents';
 import { FolderActivity } from '../indexing/sqlite/SQLiteSearchIndex';
-import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
 import { useFocusEffect } from 'expo-router';
+import { useVault } from '../context/VaultContext';
 
 export interface HomeData {
   pinned: PinnedItem[];
@@ -15,6 +15,7 @@ export interface HomeData {
 
 export function useHomeData() {
   const { searchIndex: index } = useIndex(); // Destructure searchIndex as index
+  const { adapter, activeVault } = useVault();
   const [data, setData] = useState<HomeData>({
     pinned: [],
     recents: [],
@@ -23,10 +24,15 @@ export function useHomeData() {
   });
 
   const loadData = useCallback(async () => {
+    if (!activeVault || !adapter) {
+      setData(prev => ({ ...prev, pinned: [], recents: [], folders: [], loading: false }));
+      return;
+    }
+
     try {
       const [pinned, recents] = await Promise.all([
-        pinnedStorage.getAll(),
-        recentsStorage.getAll(),
+        pinnedStorage.getAll(activeVault.vaultId),
+        recentsStorage.getAll(activeVault.vaultId),
       ]);
 
       // 1. Get folders from Search Index (Activity based)
@@ -37,8 +43,6 @@ export function useHomeData() {
       }
 
       // 2. Get folders from File System (to include empty ones)
-      const adapter = new MobileSandboxVaultAdapter();
-      await adapter.init();
       const allFiles = await adapter.listFiles();
 
       const fsFolders = new Set<string>();
@@ -98,7 +102,7 @@ export function useHomeData() {
       }
       setData(prev => ({ ...prev, loading: false }));
     }
-  }, [index]);
+  }, [index, activeVault, adapter]);
 
   // Reload when screen focuses to catch updates (e.g. new recent note)
   useFocusEffect(

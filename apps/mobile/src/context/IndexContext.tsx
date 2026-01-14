@@ -6,7 +6,6 @@ import { SQLiteLinkIndex } from '../indexing/sqlite/SQLiteLinkIndex';
 import { SQLiteTagIndex } from '../indexing/sqlite/SQLiteTagIndex';
 import { openDatabase, initDatabase } from '../indexing/sqlite/database';
 import { useVault } from './VaultContext';
-import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
 import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution'; // Fixed import path from previous knowledge
 import { parseFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-notes/core-shared/tags';
@@ -22,7 +21,7 @@ interface IndexContextType {
 const IndexContext = createContext<IndexContextType | undefined>(undefined);
 
 export function IndexProvider({ children }: { children: React.ReactNode }) {
-  const { activeVault } = useVault();
+  const { activeVault, adapter } = useVault();
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [linkIndex, setLinkIndex] = useState<LinkIndex | null>(null);
@@ -32,14 +31,36 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
   // Ref to track if we've already started the background scan for this vault session
   const scanStartedRef = useRef(false);
 
-  // 1. Initialize DB
+  // 1. Initialize DB per vault
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
 
     async function setup() {
+      // Tear down previous DB state
+      if (db) {
+        try {
+          await db.closeAsync();
+        } catch (e) {
+          console.warn('Failed to close previous index db', e);
+        }
+        setDb(null);
+        setSearchIndex(null);
+        setLinkIndex(null);
+        setTagIndex(null);
+      }
+
+      scanStartedRef.current = false;
+
+      if (!activeVault) {
+        return;
+      }
+
       try {
-        const database = await openDatabase();
-        if (!mounted) return;
+        const database = await openDatabase(activeVault.vaultId);
+        if (cancelled) {
+          await database.closeAsync();
+          return;
+        }
 
         await initDatabase(database);
 
@@ -55,16 +76,15 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
     setup();
 
     return () => {
-      mounted = false;
-      if (db) {
-        // db.closeAsync(); // Expo SQLite usually manages connections, but good practice if supported
-      }
+      cancelled = true;
     };
-  }, []);
+  }, [activeVault?.vaultId]);
 
   // 2. Background Scan Logic (Lazy)
   useEffect(() => {
-    if (!db || !activeVault || !searchIndex || !tagIndex || scanStartedRef.current) return;
+    if (!db || !activeVault || !adapter || !searchIndex || !tagIndex || scanStartedRef.current) return;
+
+    const vaultId = activeVault.vaultId;
 
     const runBackgroundScan = async () => {
         scanStartedRef.current = true;
@@ -72,14 +92,7 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
         console.log('[Index] Starting background scan...');
 
         try {
-            // Note: This relies on MobileSandboxVaultAdapter logic.
-            // In a real multi-vault scenario, we'd use a factory based on activeVault.
-            const adapter = new MobileSandboxVaultAdapter();
-            // We need to init to ensure we can list files
-            await adapter.init();
-
-            // listFiles implementation in MobileSandboxVaultAdapter ignores the opts argument for root,
-            // so we pass undefined or an empty object. It scans from its internal root.
+            // Adapter is already initialised by VaultContext
             const files = await adapter.listFiles();
 
             // Get all indexed notes to check mtimes
@@ -94,17 +107,9 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
                 // id is the relative path (e.g. 'foo.md')
                 if (file.type !== 'file' || !file.id.endsWith('.md')) continue;
 
-                // For this iteration, we don't have file stats (mtime) from listFiles in all adapters efficiently.
-                // MobileSandboxVaultAdapter might not return mtime in listFiles yet.
-                // If missing, we might assume it needs indexing if not in DB.
-                // If we want true incremental, we need stat.
-                // For now, let's just index if MISSING from DB.
-                // Updating stale files lazily on open is the "Lazy" part of the strategy.
-                // We will NOT force read all files to check mtime to avoid startup IO storm.
-
-                if (!existingMap.has(file.id)) {
-                    tasks.push(file.id);
-                }
+            if (!existingMap.has(file.id)) {
+                tasks.push(file.id);
+            }
             }
 
             console.log(`[Index] Found ${tasks.length} unindexed files.`);
@@ -180,7 +185,16 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
     const timer = setTimeout(runBackgroundScan, 2000);
     return () => clearTimeout(timer);
 
-  }, [db, activeVault, searchIndex]);
+  }, [db, activeVault, adapter, searchIndex, tagIndex]);
+
+  // Close DB on unmount to avoid dangling handles
+  useEffect(() => {
+    return () => {
+      if (db) {
+        db.closeAsync().catch((e) => console.warn('Failed to close index db on unmount', e));
+      }
+    };
+  }, [db]);
 
   return (
     <IndexContext.Provider value={{ searchIndex, linkIndex, tagIndex, isIndexing, db }}>
