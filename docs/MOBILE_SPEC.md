@@ -207,6 +207,23 @@ Future:
 
 ---
 
+### 8.4 Vault Descriptors and Locators
+
+Vault configuration is platform-neutral and represented as a `VaultDescriptor`:
+
+* `vaultId`: stable identifier for the vault (desktop currently uses the root path as the ID)
+* `displayName`: user-facing label
+* `kind`: `sandbox` or `external`
+* `locator`: how to find the vault on a platform
+
+Supported locators:
+
+* Desktop: `{ platform: "desktop", scheme: "path", rootPath }`
+* Android: `{ platform: "android", scheme: "sandbox" | "saf", rootUri/treeUri }`
+* iOS: `{ platform: "ios", scheme: "sandbox" | "bookmark", rootUri/bookmark }`
+
+On desktop the underlying Tauri IPC persists a simple `{ root_path, name }` config. The desktop adapter maps that to/from a `VaultDescriptor` without changing behaviour. Mobile adapters will persist descriptors (not raw paths) using platform-appropriate storage.
+
 ## 9. Indexing & Search
 
 Mobile indexing must be safe for constrained devices.
