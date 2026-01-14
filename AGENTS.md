@@ -52,6 +52,7 @@ Examples:
 
   - No loose `any` unless explicitly justified.
   - Keep strict mode on and satisfy the compiler instead of suppressing warnings.
+  - Avoid creating barrel files (index.ts that only re-export siblings). Prefer explicit imports/exports to keep dependencies clear.
 
 - **Rust in the backend**:
 
@@ -181,6 +182,7 @@ When touching anything related to plugins or AI:
 **IMPORTANT:** Documentation, code comments, commit messages, and variable names MUST use Canadian English spelling where natural in prose. This is a strict requirement for all text visible to users or developers.
 
 Examples:
+
 - **colour** (not color)
 - **centre** (not center)
 - **licence** (noun) (not license)
