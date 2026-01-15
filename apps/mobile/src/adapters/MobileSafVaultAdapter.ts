@@ -14,8 +14,8 @@ import { FileNotFoundError, FileExistsError } from "../errors";
 // SAF is Android only, and exported from expo-file-system legacy surface
 const StorageAccessFramework = FileSystemLegacy.StorageAccessFramework;
 type StorageAccessFrameworkApi = NonNullable<typeof StorageAccessFramework> & {
-  createDirectoryAsync: (uri: string, dirName: string) => Promise<string>;
-  createFileAsync: (
+  createDirectoryAsync?: (uri: string, dirName: string) => Promise<string>;
+  createFileAsync?: (
     uri: string,
     fileName: string,
     mimeType: string
@@ -153,7 +153,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
       );
 
       if (!foundUri) {
-        if (opts?.createParents) {
+        if (opts?.createParents && this.saf.createDirectoryAsync) {
           foundUri = await this.saf.createDirectoryAsync(currentUri, part);
         } else {
           throw new FileNotFoundError(`Directory ${part} not found`);
@@ -170,6 +170,9 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     if (fileUri) {
       await this.saf.writeAsStringAsync(fileUri, content);
     } else {
+      if (!this.saf.createFileAsync) {
+        throw new Error("SAF createFileAsync is not available");
+      }
       fileUri = await this.saf.createFileAsync(
         currentUri,
         fileName,
@@ -214,10 +217,16 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     }
 
     if (fromInfo.isDirectory) {
+      if (!this.saf.createDirectoryAsync) {
+        throw new Error("SAF createDirectoryAsync is not available");
+      }
       const destDir = await this.saf.createDirectoryAsync(currentUri, fileName);
       await this.copyDirectoryRecursive(fromUri, destDir);
       await this.deleteSaf(fromUri);
     } else {
+      if (!this.saf.createFileAsync) {
+        throw new Error("SAF createFileAsync is not available");
+      }
       destUri = await this.saf.createFileAsync(
         currentUri,
         fileName,
@@ -236,9 +245,15 @@ export class MobileSafVaultAdapter implements VaultAdapter {
       if (!name) continue;
       const info = await FileSystemLegacy.getInfoAsync(child);
       if (info.isDirectory) {
+        if (!this.saf.createDirectoryAsync) {
+          throw new Error("SAF createDirectoryAsync is not available");
+        }
         const newDir = await this.saf.createDirectoryAsync(toUri, name);
         await this.copyDirectoryRecursive(child, newDir);
       } else {
+        if (!this.saf.createFileAsync) {
+          throw new Error("SAF createFileAsync is not available");
+        }
         const destFile = await this.saf.createFileAsync(toUri, name, "text/markdown");
         const content = await this.saf.readAsStringAsync(child);
         await this.saf.writeAsStringAsync(destFile, content);
@@ -264,6 +279,9 @@ export class MobileSafVaultAdapter implements VaultAdapter {
         (u: string) => decodeURIComponent(u.split("%2F").pop() || "") === part
       );
       if (!foundUri) {
+        if (!this.saf.createDirectoryAsync) {
+          throw new Error("SAF createDirectoryAsync is not available");
+        }
         foundUri = await this.saf.createDirectoryAsync(currentUri, part);
       }
       currentUri = foundUri;
@@ -298,6 +316,9 @@ export class MobileSafVaultAdapter implements VaultAdapter {
 
       if (!foundUri) {
         if (opts?.recursive) {
+          if (!this.saf.createDirectoryAsync) {
+            throw new Error("SAF createDirectoryAsync is not available");
+          }
           foundUri = await this.saf.createDirectoryAsync(currentUri, part);
         } else {
           throw new FileNotFoundError(`Parent directory for ${part} not found`);
