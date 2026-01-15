@@ -191,6 +191,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     if (!fromUri) {
       throw new FileNotFoundError(from);
     }
+    const fromInfo = await FileSystemLegacy.getInfoAsync(fromUri);
 
     // Check destination does not exist
     const existingDest = await this.findUriForPath(to);
@@ -224,15 +225,35 @@ export class MobileSafVaultAdapter implements VaultAdapter {
       throw new FileExistsError(to);
     }
 
-    destUri = await this.saf.createFileAsync(
-      currentUri,
-      fileName,
-      "text/markdown"
-    );
-    await FileSystemLegacy.copyAsync({ from: fromUri, to: destUri });
+    if (fromInfo.isDirectory) {
+      const destDir = await this.saf.createDirectoryAsync(currentUri, fileName);
+      await this.copyDirectoryRecursive(fromUri, destDir);
+      await FileSystemLegacy.deleteAsync(fromUri);
+    } else {
+      destUri = await this.saf.createFileAsync(
+        currentUri,
+        fileName,
+        "text/markdown"
+      );
+      await FileSystemLegacy.copyAsync({ from: fromUri, to: destUri });
+      await FileSystemLegacy.deleteAsync(fromUri);
+    }
+  }
 
-    // Delete original
-    await FileSystemLegacy.deleteAsync(fromUri);
+  private async copyDirectoryRecursive(fromUri: string, toUri: string): Promise<void> {
+    const children = await this.saf.readDirectoryAsync(fromUri);
+    for (const child of children) {
+      const name = decodeURIComponent(child.split("%2F").pop() || "");
+      if (!name) continue;
+      const info = await FileSystemLegacy.getInfoAsync(child);
+      if (info.isDirectory) {
+        const newDir = await this.saf.createDirectoryAsync(toUri, name);
+        await this.copyDirectoryRecursive(child, newDir);
+      } else {
+        const destFile = await this.saf.createFileAsync(toUri, name, "text/markdown");
+        await FileSystemLegacy.copyAsync({ from: child, to: destFile });
+      }
+    }
   }
 
   async stat(id: string): Promise<VaultStat> {
