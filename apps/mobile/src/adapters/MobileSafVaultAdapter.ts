@@ -11,10 +11,11 @@ import { NoteId } from '@liminal-notes/core-shared/types';
 import * as FileSystemLegacy from 'expo-file-system/legacy';
 import { FileNotFoundError, FileExistsError } from '../errors';
 
-// SAF is Android only, and exported from expo-file-system
-// We cast to any to avoid TS errors if types are missing in this specific setup/platform check
-const StorageAccessFramework = (FileSystemLegacy as any).StorageAccessFramework;
-type StorageAccessFrameworkApi = typeof StorageAccessFramework & {
+// SAF is Android only, and exported from expo-file-system legacy surface
+const StorageAccessFramework = FileSystemLegacy.StorageAccessFramework;
+type StorageAccessFrameworkApi = NonNullable<typeof StorageAccessFramework> & {
+  createDirectoryAsync: (uri: string, dirName: string) => Promise<string>;
+  createFileAsync: (uri: string, fileName: string, mimeType: string) => Promise<string>;
   deleteAsync?: (uri: string) => Promise<void>;
 };
 
@@ -90,7 +91,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
       if (!path) return this.treeUri; // Root
 
       const parts = path.split('/');
-      let currentUri = this.treeUri;
+      let currentUri: string = this.treeUri;
 
       for (let i = 0; i < parts.length; i++) {
           const part = parts[i];
@@ -234,11 +235,11 @@ export class MobileSafVaultAdapter implements VaultAdapter {
           let foundUri = children.find((u: string) => decodeURIComponent(u.split('%2F').pop() || '') === part);
 
           if (!foundUri) {
-             if (opts?.recursive) {
+              if (opts?.recursive) {
                  foundUri = await this.saf.createDirectoryAsync(currentUri, part);
-             } else {
+              } else {
                  throw new FileNotFoundError(`Parent directory for ${part} not found`);
-             }
+              }
           }
           currentUri = foundUri;
       }
