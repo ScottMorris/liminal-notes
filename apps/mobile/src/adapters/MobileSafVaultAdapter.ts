@@ -14,20 +14,24 @@ import { FileNotFoundError, FileExistsError } from '../errors';
 // SAF is Android only, and exported from expo-file-system
 // We cast to any to avoid TS errors if types are missing in this specific setup/platform check
 const StorageAccessFramework = (FileSystemLegacy as any).StorageAccessFramework;
+type StorageAccessFrameworkApi = typeof StorageAccessFramework & {
+  deleteAsync?: (uri: string) => Promise<void>;
+};
 
 /**
  * Mobile implementation of the VaultAdapter using Android Storage Access Framework (SAF).
  */
 export class MobileSafVaultAdapter implements VaultAdapter {
   private readonly treeUri: string;
-  private readonly saf: any;
+  private readonly saf: StorageAccessFrameworkApi;
 
   constructor(treeUri: string) {
     this.treeUri = treeUri;
-    this.saf = StorageAccessFramework;
-    if (!this.saf) {
+    const saf = StorageAccessFramework as StorageAccessFrameworkApi | undefined;
+    if (!saf) {
       throw new Error('Storage Access Framework is unavailable on this platform. Use Android with expo-file-system SAF support.');
     }
+    this.saf = saf;
   }
 
   async init(): Promise<void> {
