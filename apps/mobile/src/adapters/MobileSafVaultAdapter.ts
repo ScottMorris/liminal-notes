@@ -228,15 +228,16 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     if (fromInfo.isDirectory) {
       const destDir = await this.saf.createDirectoryAsync(currentUri, fileName);
       await this.copyDirectoryRecursive(fromUri, destDir);
-      await FileSystemLegacy.deleteAsync(fromUri);
+      await this.deleteSaf(fromUri);
     } else {
       destUri = await this.saf.createFileAsync(
         currentUri,
         fileName,
         "text/markdown"
       );
-      await FileSystemLegacy.copyAsync({ from: fromUri, to: destUri });
-      await FileSystemLegacy.deleteAsync(fromUri);
+      const content = await this.saf.readAsStringAsync(fromUri);
+      await this.saf.writeAsStringAsync(destUri, content);
+      await this.deleteSaf(fromUri);
     }
   }
 
@@ -251,8 +252,17 @@ export class MobileSafVaultAdapter implements VaultAdapter {
         await this.copyDirectoryRecursive(child, newDir);
       } else {
         const destFile = await this.saf.createFileAsync(toUri, name, "text/markdown");
-        await FileSystemLegacy.copyAsync({ from: child, to: destFile });
+        const content = await this.saf.readAsStringAsync(child);
+        await this.saf.writeAsStringAsync(destFile, content);
       }
+    }
+  }
+
+  private async deleteSaf(uri: string): Promise<void> {
+    if (typeof this.saf.deleteAsync === "function") {
+      await this.saf.deleteAsync(uri);
+    } else {
+      await FileSystemLegacy.deleteAsync(uri);
     }
   }
 
