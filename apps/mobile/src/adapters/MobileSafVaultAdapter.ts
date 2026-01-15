@@ -153,8 +153,8 @@ export class MobileSafVaultAdapter implements VaultAdapter {
       );
 
       if (!foundUri) {
-        if (opts?.createParents && this.saf.createDirectoryAsync) {
-          foundUri = await this.saf.createDirectoryAsync(currentUri, part);
+        if (opts?.createParents) {
+          foundUri = await this.createDirectory(currentUri, part);
         } else {
           throw new FileNotFoundError(`Directory ${part} not found`);
         }
@@ -217,10 +217,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     }
 
     if (fromInfo.isDirectory) {
-      if (!this.saf.createDirectoryAsync) {
-        throw new Error("SAF createDirectoryAsync is not available");
-      }
-      const destDir = await this.saf.createDirectoryAsync(currentUri, fileName);
+      const destDir = await this.createDirectory(currentUri, fileName);
       await this.copyDirectoryRecursive(fromUri, destDir);
       await this.deleteSaf(fromUri);
     } else {
@@ -245,10 +242,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
       if (!name) continue;
       const info = await FileSystemLegacy.getInfoAsync(child);
       if (info.isDirectory) {
-        if (!this.saf.createDirectoryAsync) {
-          throw new Error("SAF createDirectoryAsync is not available");
-        }
-        const newDir = await this.saf.createDirectoryAsync(toUri, name);
+        const newDir = await this.createDirectory(toUri, name);
         await this.copyDirectoryRecursive(child, newDir);
       } else {
         if (!this.saf.createFileAsync) {
@@ -279,10 +273,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
         (u: string) => decodeURIComponent(u.split("%2F").pop() || "") === part
       );
       if (!foundUri) {
-        if (!this.saf.createDirectoryAsync) {
-          throw new Error("SAF createDirectoryAsync is not available");
-        }
-        foundUri = await this.saf.createDirectoryAsync(currentUri, part);
+        foundUri = await this.createDirectory(currentUri, part);
       }
       currentUri = foundUri;
     }
@@ -316,15 +307,23 @@ export class MobileSafVaultAdapter implements VaultAdapter {
 
       if (!foundUri) {
         if (opts?.recursive) {
-          if (!this.saf.createDirectoryAsync) {
-            throw new Error("SAF createDirectoryAsync is not available");
-          }
-          foundUri = await this.saf.createDirectoryAsync(currentUri, part);
+          foundUri = await this.createDirectory(currentUri, part);
         } else {
           throw new FileNotFoundError(`Parent directory for ${part} not found`);
         }
       }
       currentUri = foundUri;
     }
+  }
+
+  private async createDirectory(parentUri: string, name: string): Promise<string> {
+    if (this.saf.createDirectoryAsync) {
+      return this.saf.createDirectoryAsync(parentUri, name);
+    }
+    if (this.saf.createFileAsync) {
+      // SAF allows directories as documents with directory MIME type.
+      return this.saf.createFileAsync(parentUri, name, "vnd.android.document/directory");
+    }
+    throw new Error("SAF directory creation is not available");
   }
 }
