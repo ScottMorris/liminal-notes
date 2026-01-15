@@ -202,19 +202,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     // Ensure parent directories for destination
     const toParts = to.split("/");
     const fileName = toParts.pop()!;
-    let currentUri = this.treeUri;
-
-    for (const part of toParts) {
-      const children = await this.saf.readDirectoryAsync(currentUri);
-      let foundUri = children.find(
-        (u: string) => decodeURIComponent(u.split("%2F").pop() || "") === part
-      );
-
-      if (!foundUri) {
-        foundUri = await this.saf.createDirectoryAsync(currentUri, part);
-      }
-      currentUri = foundUri;
-    }
+    const currentUri = await this.ensureDirectory(this.treeUri, toParts);
 
     // Create new file and copy content
     const destChildren = await this.saf.readDirectoryAsync(currentUri);
@@ -264,6 +252,23 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     } else {
       await FileSystemLegacy.deleteAsync(uri);
     }
+  }
+
+  // SAF createDirectoryAsync only works for paths that exist under the tree;
+  // for multi-level creation, we need to walk and create each segment.
+  private async ensureDirectory(uri: string, segments: string[]): Promise<string> {
+    let currentUri = uri;
+    for (const part of segments) {
+      const children = await this.saf.readDirectoryAsync(currentUri);
+      let foundUri = children.find(
+        (u: string) => decodeURIComponent(u.split("%2F").pop() || "") === part
+      );
+      if (!foundUri) {
+        foundUri = await this.saf.createDirectoryAsync(currentUri, part);
+      }
+      currentUri = foundUri;
+    }
+    return currentUri;
   }
 
   async stat(id: string): Promise<VaultStat> {
