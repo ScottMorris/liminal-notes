@@ -32,6 +32,9 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   const configAdapter = new MobileVaultConfigAdapter();
 
   useEffect(() => {
+    // Log SAF availability early for diagnostics
+    const safAvailable = !!(StorageAccessFramework && typeof StorageAccessFramework.requestDirectoryPermissionsAsync === 'function');
+    console.log('[Vault] SAF available:', safAvailable);
     loadConfig();
   }, []);
 
