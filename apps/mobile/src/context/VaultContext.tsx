@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
+import { NativeModulesProxy } from 'expo-modules-core';
 import { VaultAdapter } from '@liminal-notes/vault-core/types';
 import { VaultDescriptor, VaultKind } from '@liminal-notes/vault-core/vault/types';
 import { MobileVaultConfigAdapter } from '../adapters/MobileVaultConfigAdapter';
@@ -35,8 +36,9 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     // Log SAF availability early for diagnostics
     const safAvailable = !!(StorageAccessFramework && typeof StorageAccessFramework.requestDirectoryPermissionsAsync === 'function');
     const fsKeys = Object.keys(FileSystem || {});
+    const nativeFsKeys = Object.keys((NativeModulesProxy as any)?.ExpoFileSystem || {});
     // Limit log size: only keys, not full objects
-    console.log('[Vault] Platform:', Platform.OS, 'SAF available:', safAvailable, 'FileSystem keys:', fsKeys);
+    console.log('[Vault] Platform:', Platform.OS, 'SAF available:', safAvailable, 'FileSystem keys:', fsKeys, 'Native ExpoFileSystem keys:', nativeFsKeys);
     loadConfig();
   }, []);
 
