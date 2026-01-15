@@ -44,7 +44,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
             const files = await this.saf.readDirectoryAsync(uri);
 
             for (const fileUri of files) {
-                const info = await FileSystem.getInfoAsync(fileUri);
+                const info = await FileSystemLegacy.getInfoAsync(fileUri);
                 if (!info.exists) continue;
 
                 const name = decodeURIComponent(fileUri.split('%2F').pop() || '');
@@ -114,7 +114,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     if (!uri) throw new FileNotFoundError(id);
 
     const content = await this.saf.readAsStringAsync(uri);
-    const info = await FileSystem.getInfoAsync(uri);
+    const info = await FileSystemLegacy.getInfoAsync(uri);
 
     return {
         id,
@@ -154,7 +154,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
           await this.saf.writeAsStringAsync(fileUri, content);
       }
 
-      const info = await FileSystem.getInfoAsync(fileUri);
+      const info = await FileSystemLegacy.getInfoAsync(fileUri);
 
       return {
           id,
@@ -170,7 +170,7 @@ export class MobileSafVaultAdapter implements VaultAdapter {
     const uri = await this.findUriForPath(id);
     if (!uri) throw new FileNotFoundError(id);
 
-    const info = await FileSystem.getInfoAsync(uri);
+    const info = await FileSystemLegacy.getInfoAsync(uri);
     if (!info.exists) throw new FileNotFoundError(id);
 
     return {
