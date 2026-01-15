@@ -9,7 +9,7 @@ import {
 } from '@liminal-notes/vault-core/types';
 import { NoteId } from '@liminal-notes/core-shared/types';
 import * as FileSystemLegacy from 'expo-file-system/legacy';
-import { FileNotFoundError } from '../errors';
+import { FileNotFoundError, FileExistsError } from '../errors';
 
 // SAF is Android only, and exported from expo-file-system
 // We cast to any to avoid TS errors if types are missing in this specific setup/platform check
@@ -162,7 +162,48 @@ export class MobileSafVaultAdapter implements VaultAdapter {
   }
 
   async rename(from: NoteId, to: NoteId): Promise<void> {
-      throw new Error("Rename not supported in SAF adapter yet.");
+      const fromUri = await this.findUriForPath(from);
+      if (!fromUri) {
+        throw new FileNotFoundError(from);
+      }
+
+      // Check destination does not exist
+      const existingDest = await this.findUriForPath(to);
+      if (existingDest) {
+        throw new FileExistsError(to);
+      }
+
+      // Ensure parent directories for destination
+      const toParts = to.split('/');
+      const fileName = toParts.pop()!;
+      let currentUri = this.treeUri;
+
+      for (const part of toParts) {
+        const children = await this.saf.readDirectoryAsync(currentUri);
+        let foundUri = children.find((u: string) => decodeURIComponent(u.split('%2F').pop() || '') === part);
+
+        if (!foundUri) {
+          foundUri = await this.saf.createDirectoryAsync(currentUri, part);
+        }
+        currentUri = foundUri;
+      }
+
+      // Create new file and copy content
+      const destChildren = await this.saf.readDirectoryAsync(currentUri);
+      let destUri = destChildren.find((u: string) => decodeURIComponent(u.split('%2F').pop() || '') === fileName);
+      if (!destUri) {
+        destUri = await this.saf.createFileAsync(currentUri, fileName, 'text/markdown');
+      } else {
+        throw new FileExistsError(to);
+      }
+
+      const content = await this.saf.readAsStringAsync(fromUri);
+      await this.saf.writeAsStringAsync(destUri, content);
+
+      // Delete original
+      if (typeof this.saf.deleteAsync === 'function') {
+        await this.saf.deleteAsync(fromUri);
+      }
   }
 
   async stat(id: string): Promise<VaultStat> {

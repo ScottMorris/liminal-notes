@@ -64,7 +64,7 @@ export default function NoteScreen() {
   const paperTheme = usePaperTheme();
   const { theme } = useTheme(); // Use custom theme context to get active theme vars
   const insets = useSafeAreaInsets();
-  const canRename = Boolean(adapter?.rename) && activeVault?.locator.scheme !== 'saf';
+  const canRename = Boolean(adapter?.rename);
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
