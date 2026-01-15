@@ -9,11 +9,12 @@ import {
 } from '@liminal-notes/vault-core/types';
 import { NoteId } from '@liminal-notes/core-shared/types';
 import * as FileSystem from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 import { FileNotFoundError } from '../errors';
 
 // SAF is Android only, and exported from expo-file-system
 // We cast to any to avoid TS errors if types are missing in this specific setup/platform check
-const StorageAccessFramework = (FileSystem as any).StorageAccessFramework;
+const StorageAccessFramework = (FileSystemLegacy as any).StorageAccessFramework;
 
 /**
  * Mobile implementation of the VaultAdapter using Android Storage Access Framework (SAF).

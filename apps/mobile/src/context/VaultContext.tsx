@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import { NativeModulesProxy } from 'expo-modules-core';
 import { VaultAdapter } from '@liminal-notes/vault-core/types';
@@ -11,7 +12,7 @@ import { MobileSafVaultAdapter } from '../adapters/MobileSafVaultAdapter';
 import { MobileBookmarkVaultAdapter } from '../adapters/MobileBookmarkVaultAdapter';
 import { createBookmark } from 'ios-bookmarks';
 
-const StorageAccessFramework = (FileSystem as any).StorageAccessFramework;
+const StorageAccessFramework = (FileSystemLegacy as any).StorageAccessFramework;
 
 interface VaultContextType {
   activeVault: VaultDescriptor | null;
