@@ -34,7 +34,9 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Log SAF availability early for diagnostics
     const safAvailable = !!(StorageAccessFramework && typeof StorageAccessFramework.requestDirectoryPermissionsAsync === 'function');
-    console.log('[Vault] SAF available:', safAvailable);
+    const fsKeys = Object.keys(FileSystem || {});
+    // Limit log size: only keys, not full objects
+    console.log('[Vault] Platform:', Platform.OS, 'SAF available:', safAvailable, 'FileSystem keys:', fsKeys);
     loadConfig();
   }, []);
 
