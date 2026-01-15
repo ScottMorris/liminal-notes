@@ -8,7 +8,6 @@ import {
   VaultStat
 } from '@liminal-notes/vault-core/types';
 import { NoteId } from '@liminal-notes/core-shared/types';
-import * as FileSystem from 'expo-file-system';
 import * as FileSystemLegacy from 'expo-file-system/legacy';
 import { FileNotFoundError } from '../errors';
 

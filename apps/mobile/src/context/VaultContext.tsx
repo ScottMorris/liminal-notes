@@ -37,9 +37,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     // Log SAF availability early for diagnostics
     const safAvailable = !!(StorageAccessFramework && typeof StorageAccessFramework.requestDirectoryPermissionsAsync === 'function');
     const fsKeys = Object.keys(FileSystem || {});
-    const nativeFsKeys = Object.keys((NativeModulesProxy as any)?.ExpoFileSystem || {});
     // Limit log size: only keys, not full objects
-    console.log('[Vault] Platform:', Platform.OS, 'SAF available:', safAvailable, 'FileSystem keys:', fsKeys, 'Native ExpoFileSystem keys:', nativeFsKeys);
+    console.log('[Vault] Platform:', Platform.OS, 'SAF available:', safAvailable, 'FileSystem keys:', fsKeys);
     loadConfig();
   }, []);
 
