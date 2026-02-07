@@ -2,25 +2,111 @@ name: publish-desktop
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Desktop release tag (must start with desktop-v)
+        required: true
+        type: string
+      release_draft:
+        description: Create/keep this release as draft
+        required: false
+        default: false
+        type: boolean
   push:
     tags:
       - "desktop-v*"
 
+concurrency:
+  group: "publish-desktop-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}"
+  cancel-in-progress: true
+
 jobs:
+  prepare-release:
+    name: Prepare release metadata
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    outputs:
+      tag_name: ${{ steps.meta.outputs.tag_name }}
+      release_name: ${{ steps.meta.outputs.release_name }}
+      release_id: ${{ steps.release.outputs.release_id }}
+    steps:
+      - name: Resolve release tag
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.release_tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "${TAG}" =~ ^desktop-v.+$ ]]; then
+            echo "Invalid release tag: ${TAG}" >&2
+            echo "Expected a tag matching desktop-v*" >&2
+            exit 1
+          fi
+
+          echo "tag_name=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "release_name=Liminal Notes ${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create or reuse release
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.meta.outputs.tag_name }}
+          RELEASE_NAME: ${{ steps.meta.outputs.release_name }}
+          RELEASE_DRAFT: ${{ github.event_name == 'workflow_dispatch' && inputs.release_draft || false }}
+        run: |
+          set -euo pipefail
+
+          RELEASE_MATCH="$(
+            gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+              --jq ".[] | select(.tag_name == \"${TAG_NAME}\") | [.id, .draft] | @tsv" \
+              | head -n 1 || true
+          )"
+
+          if [[ -z "${RELEASE_MATCH}" ]]; then
+            RELEASE_ID="$(
+              gh api \
+                --method POST \
+                "repos/${GITHUB_REPOSITORY}/releases" \
+                -f tag_name="${TAG_NAME}" \
+                -f target_commitish="${GITHUB_SHA}" \
+                -f name="${RELEASE_NAME}" \
+                -f body='See assets below to download and install.' \
+                -F draft="${RELEASE_DRAFT}" \
+                -F prerelease=false \
+                --jq '.id'
+            )"
+          else
+            RELEASE_ID="$(awk '{print $1}' <<< "${RELEASE_MATCH}")"
+            EXISTING_DRAFT="$(awk '{print $2}' <<< "${RELEASE_MATCH}")"
+
+            if [[ "${EXISTING_DRAFT}" == "true" && "${RELEASE_DRAFT}" == "false" ]]; then
+              gh api \
+                --method PATCH \
+                "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+                -F draft=false > /dev/null
+            fi
+          fi
+
+          echo "release_id=${RELEASE_ID}" >> "${GITHUB_OUTPUT}"
+
   publish-tauri:
+    needs: prepare-release
     permissions:
       contents: write
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: ubuntu-24.04
-            args: ""
-            pkg_mgr: apt-get
-          - platform: ubuntu-24.04-arm
-            args: ""
-            pkg_mgr: apt-get
+        platform:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
 
     runs-on: ${{ matrix.platform }}
 
@@ -29,23 +115,35 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: latest
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version-file: .node-version
           cache: pnpm
+
+      - name: Resolve Rust toolchain
+        id: rust_toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLCHAIN="$(awk -F '\"' '/^[[:space:]]*channel[[:space:]]*=/ { print $2; exit }' rust-toolchain.toml)"
+          if [[ -z "${TOOLCHAIN}" ]]; then
+            echo "Unable to resolve Rust toolchain from rust-toolchain.toml" >&2
+            exit 1
+          fi
+          echo "toolchain=${TOOLCHAIN}" >> "${GITHUB_OUTPUT}"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ steps.rust_toolchain.outputs.toolchain }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-           workspaces: |
-             apps/desktop/src-tauri -> target
+          workspaces: |
+            apps/desktop/src-tauri -> target
 
       - name: Linux deps
         if: runner.os == 'Linux'
@@ -57,26 +155,19 @@ jobs:
         run: |
           cargo install tauri-cli \
             --git https://github.com/tauri-apps/tauri \
-            --branch feat/truly-portable-appimage \
+            --rev b5573c1db2bb6118594b586a6aa51aeb37aa7d84 \
             --force
 
       - name: Install JS deps
         run: pnpm install --frozen-lockfile
 
-      - name: Build + attach to draft GitHub Release
+      - name: Build + attach to GitHub Release
         uses: tauri-apps/tauri-action@v0.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: "true"
         with:
           projectPath: apps/desktop
-          tagName: ${{ github.ref_name }}
-          releaseName: Liminal Notes ${{ github.ref_name }}
-          releaseBody: |
-            This is a draft release.
-            See assets below to download and install.
-          releaseDraft: true
-          prerelease: false
-          uploadUpdaterJson: false
-          tauriScript: "~/.cargo/bin/tauri"
-          args: ${{ matrix.args }}
+          releaseId: ${{ needs.prepare-release.outputs.release_id }}
+          includeUpdaterJson: false
+          tauriScript: "cargo tauri"

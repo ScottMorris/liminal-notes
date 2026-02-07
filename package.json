@@ -2,6 +2,11 @@
   "name": "liminal-notes",
   "private": true,
   "version": "0.1.0",
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=20.19.6 <21",
+    "pnpm": "10.28.2"
+  },
   "description": "Local-first, Markdown-based note-taking app with Obsidian-style linking, built with Tauri + React + TypeScript.",
   "workspaces": [
     "apps/*",
