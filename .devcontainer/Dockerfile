@@ -61,8 +61,8 @@ ENV RUSTUP_HOME=$HOME/.rustup
 ENV CARGO_HOME=$HOME/.cargo
 
 # Normalize Java home path across architectures for sdkmanager.
-RUN ln -s "/usr/lib/jvm/java-17-openjdk-$(dpkg --print-architecture)" /usr/lib/jvm/java-17-openjdk-current
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-current
+RUN ln -sfn "/usr/lib/jvm/java-17-openjdk-$(dpkg --print-architecture)" "$HOME/.local/java-17-openjdk-current"
+ENV JAVA_HOME=$HOME/.local/java-17-openjdk-current
 
 # Configure Android SDK paths
 ENV ANDROID_HOME=$HOME/Android/Sdk
