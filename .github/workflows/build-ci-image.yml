@@ -1,0 +1,62 @@
+name: build-ci-image
+
+on:
+  # Manual trigger for rebuilding after secret or registry changes.
+  workflow_dispatch:
+  # Rebuild the shared CI runtime only when its source definition changes.
+  push:
+    paths:
+      - .devcontainer/**
+      - .github/workflows/build-ci-image.yml
+
+concurrency:
+  group: build-ci-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set image repository name
+        shell: bash
+        run: |
+          set -euo pipefail
+          # GHCR image names must be lowercase.
+          echo "IMAGE_REPOSITORY=${GITHUB_REPOSITORY,,}" >> "${GITHUB_ENV}"
+
+      - name: Set up QEMU
+        # Required so Buildx can emulate arm64 when building on amd64 runners.
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push CI image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: .devcontainer/Dockerfile
+          push: true
+          # Publish one manifest tag that supports both desktop CI architectures.
+          platforms: linux/amd64,linux/arm64
+          # Publish a mutable `latest` tag plus an immutable SHA tag.
+          tags: |
+            ghcr.io/${{ env.IMAGE_REPOSITORY }}/ci-base:latest
+            ghcr.io/${{ env.IMAGE_REPOSITORY }}/ci-base:${{ github.sha }}
+          # Reuse/persist BuildKit layers through GitHub Actions cache.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
