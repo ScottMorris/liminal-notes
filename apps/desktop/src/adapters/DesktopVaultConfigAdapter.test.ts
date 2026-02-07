@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { desktopVaultConfig } from './DesktopVaultConfigAdapter';
 import * as ipc from '../ipc';
+import type { VaultDescriptor } from '@liminal-notes/vault-core/vault/types';
 
 describe('DesktopVaultConfigAdapter', () => {
   const legacyConfig = { root_path: '/home/user/vault', name: 'Vault' };
@@ -29,7 +30,7 @@ describe('DesktopVaultConfigAdapter', () => {
 
   it('persists descriptor via setActiveVault', async () => {
     const setSpy = vi.spyOn(ipc, 'setVaultConfig').mockResolvedValue();
-    const descriptor = {
+    const descriptor: VaultDescriptor = {
       vaultId: '/home/user/vault',
       displayName: 'Vault',
       kind: 'external' as const,
@@ -44,6 +45,10 @@ describe('DesktopVaultConfigAdapter', () => {
     const getSpy = vi.spyOn(ipc, 'getVaultConfig').mockResolvedValue(legacyConfig);
 
     const descriptor = await desktopVaultConfig.setActiveVaultFromPath('/home/user/vault', 'Vault');
+    expect(descriptor.locator.platform).toBe('desktop');
+    if (descriptor.locator.platform !== 'desktop') {
+      throw new Error('Expected desktop locator');
+    }
     expect(descriptor.locator.rootPath).toBe('/home/user/vault');
     expect(setSpy).toHaveBeenCalledWith('/home/user/vault', 'Vault');
 
