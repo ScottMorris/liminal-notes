@@ -10,8 +10,17 @@ This document describes the process for creating a new release of the desktop ap
 ## Release Process
 
 1.  **Bump Version**
-    - Update the `version` field in `apps/desktop/package.json`.
-    - Update the `version` field in `apps/desktop/src-tauri/tauri.conf.json`.
+    - Preferred: run `scripts/release-desktop.sh <version>` (for example `scripts/release-desktop.sh 0.1.1`).
+    - The script updates:
+      - `apps/desktop/package.json`
+      - `apps/desktop/src-tauri/tauri.conf.json`
+      - Creates local git tag `desktop-v<version>` by default
+    - Optional flags:
+      - `--dry-run` to preview changes without writing files.
+      - `--no-tag` to skip local tag creation.
+    - Manual fallback:
+      - Update the `version` field in `apps/desktop/package.json`.
+      - Update the `version` field in `apps/desktop/src-tauri/tauri.conf.json`.
     - *(Optional)* Update `CHANGELOG.md` if maintained.
 
 2.  **Commit Changes**
@@ -22,6 +31,7 @@ This document describes the process for creating a new release of the desktop ap
 
 3.  **Tag the Release**
     The CI workflow is triggered by tags matching `desktop-v*`.
+    If you used `scripts/release-desktop.sh` without `--no-tag`, the local tag is already created and you only need to push it.
     ```bash
     git tag desktop-v0.1.0
     git push origin desktop-v0.1.0
