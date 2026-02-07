@@ -59,8 +59,12 @@ We should consider adding a printing feature for notes.
   - **Windows:** Research EV vs. Standard Code Signing certificates (DigiCert, Sectigo), costs (~$400/year for OV), and setting up Azure Key Vault for signing in CI.
 - **Investigate automating version bumps and git tagging.**
   - Consider tools like `changesets` or `standard-version` to manage changelogs and automatic version bumping based on commit messages.
+  - Evaluate `release-please` to auto-generate release notes/highlights from conventional commits and to manage release PR flow.
   - Explore building a release management TUI (e.g., using Ink) to simplify the interactive process of selecting versions and triggering builds.
   - Investigate using AI to generate release notes from commit messages or PR descriptions.
+- **Add Tauri auto-updater flow.**
+  - Keep `includeUpdaterJson: false` in CI for now.
+  - Enable `includeUpdaterJson` once updater signing/verification and in-app upgrade behaviour are fully wired and tested.
 - Investigate setting up cross-compilation for Windows/macOS from Linux, or configuring GitHub Actions for multi-platform builds.
 - Current Linux builds produce `.deb` and `.AppImage`.
 
@@ -84,6 +88,9 @@ We should consider adding a printing feature for notes.
 - Refactor legacy `saveUnsavedTab` helper in `EditorPane.tsx`. It is currently kept for confirmClose logic but ideally should be routed through the command registry or a dedicated context to support non-active tabs.
 - **CodeMirror WikiLinks:** Refactor WikiLink parsing to use a custom CodeMirror Markdown language extension instead of manual regex scanning for better performance and robustness.
 - **Shared Editor Decorations:** Refactor desktop editor decorations (e.g., `markdownDecorations`, `frontmatterHider`) into `@liminal-notes/core-shared` or a similar shared location and integrate them into the mobile editor to achieve visual parity.
+- [ ] Spellcheck: Add support for more languages (currently `en-CA` only).
+- [ ] Spellcheck: Improve performance for very large documents.
+- [ ] Spellcheck: Add "Quick Fix" on left-click/hover.
 
 ## Tab Persistence in Vault
 
