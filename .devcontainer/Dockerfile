@@ -60,8 +60,8 @@ ENV PNPM_HOME=$HOME/.local/share/pnpm
 ENV RUSTUP_HOME=$HOME/.rustup
 ENV CARGO_HOME=$HOME/.cargo
 
-# Set JAVA_HOME for Android builds
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# Set JAVA_HOME for Android builds (architecture-neutral symlink on Ubuntu).
+ENV JAVA_HOME=/usr/lib/jvm/default-java
 
 # Configure Android SDK paths
 ENV ANDROID_HOME=$HOME/Android/Sdk
