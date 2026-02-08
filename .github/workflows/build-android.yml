@@ -111,7 +111,7 @@ jobs:
       contents: write
       packages: read
     container:
-      image: ghcr.io/${{ github.repository_owner }}/liminal-notes-ci-base-android:latest
+      image: ghcr.io/scottmorris/liminal-notes-ci-base-android:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}

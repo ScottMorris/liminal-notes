@@ -40,6 +40,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Normalise image namespace
+        id: ns
+        shell: bash
+        run: echo "owner_lc=${GITHUB_REPOSITORY_OWNER,,}" >> "${GITHUB_OUTPUT}"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -54,7 +59,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/liminal-notes-ci-base-${{ matrix.image_suffix }}
+          images: ghcr.io/${{ steps.ns.outputs.owner_lc }}/liminal-notes-ci-base-${{ matrix.image_suffix }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix={{date 'YYYYMMDD'}}-
@@ -69,8 +74,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/liminal-notes-ci-base-${{ matrix.image_suffix }}:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/liminal-notes-ci-base-${{ matrix.image_suffix }}:buildcache,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ steps.ns.outputs.owner_lc }}/liminal-notes-ci-base-${{ matrix.image_suffix }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ steps.ns.outputs.owner_lc }}/liminal-notes-ci-base-${{ matrix.image_suffix }}:buildcache,mode=max
           platforms: ${{ matrix.platforms }}
 
       - name: Write build summary
@@ -80,4 +85,4 @@ jobs:
           echo "- Target: \`${{ matrix.target }}\`" >> "${GITHUB_STEP_SUMMARY}"
           echo "- Platforms: \`${{ matrix.platforms }}\`" >> "${GITHUB_STEP_SUMMARY}"
           echo "- Digest: \`${{ steps.build.outputs.digest }}\`" >> "${GITHUB_STEP_SUMMARY}"
-          echo "- Image: \`ghcr.io/${{ github.repository_owner }}/liminal-notes-ci-base-${{ matrix.image_suffix }}\`" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Image: \`ghcr.io/${{ steps.ns.outputs.owner_lc }}/liminal-notes-ci-base-${{ matrix.image_suffix }}\`" >> "${GITHUB_STEP_SUMMARY}"
