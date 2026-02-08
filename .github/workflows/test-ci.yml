@@ -27,8 +27,8 @@ permissions:
   contents: read
 
 jobs:
-  packages-quality:
-    name: packages-quality
+  packages-tests:
+    name: packages-tests
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -77,8 +77,8 @@ jobs:
           path: test-results/packages/*.junit.xml
           if-no-files-found: ignore
 
-  desktop-static-quality:
-    name: desktop-static-quality
+  desktop-lint-typecheck:
+    name: desktop-lint-typecheck
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/scottmorris/liminal-notes-ci-base-test:latest
@@ -108,8 +108,8 @@ jobs:
       - name: Run desktop typecheck
         run: pnpm run ci:typecheck:desktop
 
-  rust-quality:
-    name: rust-quality
+  rust-tests:
+    name: rust-tests
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/scottmorris/liminal-notes-ci-base-desktop:latest
@@ -124,8 +124,8 @@ jobs:
       - name: Run Rust tests
         run: pnpm run ci:test:rust
 
-  desktop-quality:
-    name: desktop-quality
+  desktop-tests:
+    name: desktop-tests
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -174,14 +174,14 @@ jobs:
           path: test-results/desktop/junit.xml
           if-no-files-found: ignore
 
-  coverage-summary:
-    name: coverage-summary
+  desktop-coverage-summary:
+    name: desktop-coverage-summary
     runs-on: ubuntu-24.04
     needs:
-      - packages-quality
-      - desktop-static-quality
-      - rust-quality
-      - desktop-quality
+      - packages-tests
+      - desktop-lint-typecheck
+      - rust-tests
+      - desktop-tests
     if: always()
     continue-on-error: true
     permissions:
@@ -251,7 +251,7 @@ jobs:
             cat <<'EOF' > "${COVERAGE_COMMENT}"
             ## Desktop coverage summary
 
-            Coverage output was not generated for this run. Check the `coverage-summary` job logs.
+            Coverage output was not generated for this run. Check the `desktop-coverage-summary` job logs.
             EOF
           fi
 
