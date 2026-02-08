@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/ci-shared-image-desktop-android
     paths:
       - "docker/ci/Dockerfile.ci-base"
       - ".github/workflows/build-ci-images.yml"
