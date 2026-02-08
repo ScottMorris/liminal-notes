@@ -1,0 +1,308 @@
+name: test-ci
+
+on:
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "packages/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/test-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/desktop/**"
+      - "packages/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/test-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: test-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  packages-quality:
+    name: packages-quality
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    container:
+      image: ghcr.io/scottmorris/liminal-notes-ci-base-test:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install JS deps
+        run: pnpm run ci:install
+
+      - name: Run shared package tests
+        run: pnpm run ci:test:packages
+
+      - name: Publish package test results
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: package-tests
+          path: test-results/packages/*.junit.xml
+          reporter: java-junit
+          fail-on-empty: false
+          list-tests: failed
+
+      - name: Upload package test artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-test-results
+          path: test-results/packages/*.junit.xml
+          if-no-files-found: ignore
+
+  desktop-static-quality:
+    name: desktop-static-quality
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/scottmorris/liminal-notes-ci-base-test:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install JS deps
+        run: pnpm run ci:install
+
+      - name: Run desktop lint
+        run: pnpm run ci:lint:desktop
+
+      - name: Run desktop typecheck
+        run: pnpm run ci:typecheck:desktop
+
+  rust-quality:
+    name: rust-quality
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/scottmorris/liminal-notes-ci-base-desktop:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run Rust tests
+        run: pnpm run ci:test:rust
+
+  desktop-quality:
+    name: desktop-quality
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    container:
+      image: ghcr.io/scottmorris/liminal-notes-ci-base-test:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install JS deps
+        run: pnpm run ci:install
+
+      - name: Run desktop tests
+        run: pnpm run ci:test:desktop
+
+      - name: Publish desktop test results
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: desktop-tests
+          path: test-results/desktop/junit.xml
+          reporter: java-junit
+          fail-on-empty: false
+          list-tests: failed
+
+      - name: Upload desktop test artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-test-results
+          path: test-results/desktop/junit.xml
+          if-no-files-found: ignore
+
+  coverage-summary:
+    name: coverage-summary
+    runs-on: ubuntu-24.04
+    needs:
+      - packages-quality
+      - desktop-static-quality
+      - rust-quality
+      - desktop-quality
+    if: always()
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
+    container:
+      image: ghcr.io/scottmorris/liminal-notes-ci-base-test:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install JS deps
+        run: pnpm run ci:install
+
+      - name: Collect desktop coverage
+        continue-on-error: true
+        run: pnpm run ci:test:desktop:coverage
+
+      - name: Build coverage comment body
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p test-results/coverage/desktop
+          COVERAGE_JSON="test-results/coverage/desktop/coverage-summary.json"
+          COVERAGE_COMMENT="test-results/coverage/desktop/coverage-comment.md"
+
+          if [[ -f "${COVERAGE_JSON}" ]]; then
+            node <<'NODE'
+            const fs = require('node:fs');
+
+            const coveragePath = 'test-results/coverage/desktop/coverage-summary.json';
+            const outPath = 'test-results/coverage/desktop/coverage-comment.md';
+            const summary = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+            const total = summary.total;
+
+            const pct = (value) => `${Number(value).toFixed(2)}%`;
+
+            const body = [
+              '## Desktop coverage summary',
+              '',
+              '| Metric | Covered / Total | Percent |',
+              '|---|---:|---:|',
+              `| Lines | ${total.lines.covered} / ${total.lines.total} | ${pct(total.lines.pct)} |`,
+              `| Statements | ${total.statements.covered} / ${total.statements.total} | ${pct(total.statements.pct)} |`,
+              `| Functions | ${total.functions.covered} / ${total.functions.total} | ${pct(total.functions.pct)} |`,
+              `| Branches | ${total.branches.covered} / ${total.branches.total} | ${pct(total.branches.pct)} |`,
+            ].join('\n');
+
+            fs.writeFileSync(outPath, `${body}\n`, 'utf8');
+            NODE
+          else
+            cat <<'EOF' > "${COVERAGE_COMMENT}"
+            ## Desktop coverage summary
+
+            Coverage output was not generated for this run. Check the `coverage-summary` job logs.
+            EOF
+          fi
+
+      - name: Upload desktop coverage artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-coverage
+          path: test-results/coverage/desktop/*
+          if-no-files-found: ignore
+
+      - name: Post coverage comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('node:fs');
+
+            const marker = '<!-- desktop-coverage-summary -->';
+            const coveragePath = 'test-results/coverage/desktop/coverage-comment.md';
+            const summary = fs.existsSync(coveragePath)
+              ? fs.readFileSync(coveragePath, 'utf8')
+              : '## Desktop coverage summary\n\nCoverage output was not generated for this run.';
+            const body = `${marker}\n${summary}`;
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
