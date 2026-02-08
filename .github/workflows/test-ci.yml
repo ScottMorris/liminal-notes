@@ -59,6 +59,10 @@ jobs:
       - name: Run shared package tests
         run: pnpm run ci:test:packages
 
+      - name: Mark workspace as git safe directory
+        if: always()
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
       - name: Publish package test results
         if: always()
         uses: dorny/test-reporter@v2
@@ -156,6 +160,10 @@ jobs:
       - name: Run desktop tests
         run: pnpm run ci:test:desktop
 
+      - name: Mark workspace as git safe directory
+        if: always()
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
       - name: Publish desktop test results
         if: always()
         uses: dorny/test-reporter@v2
@@ -216,43 +224,21 @@ jobs:
       - name: Build coverage comment body
         if: always()
         shell: bash
+        env:
+          COVERAGE_JSON: test-results/coverage/desktop/coverage-summary.json
+          COVERAGE_COMMENT: test-results/coverage/desktop/coverage-comment.md
         run: |
           set -euo pipefail
 
           mkdir -p test-results/coverage/desktop
-          COVERAGE_JSON="test-results/coverage/desktop/coverage-summary.json"
-          COVERAGE_COMMENT="test-results/coverage/desktop/coverage-comment.md"
 
           if [[ -f "${COVERAGE_JSON}" ]]; then
-            node <<'NODE'
-            const fs = require('node:fs');
-
-            const coveragePath = 'test-results/coverage/desktop/coverage-summary.json';
-            const outPath = 'test-results/coverage/desktop/coverage-comment.md';
-            const summary = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
-            const total = summary.total;
-
-            const pct = (value) => `${Number(value).toFixed(2)}%`;
-
-            const body = [
-              '## Desktop coverage summary',
-              '',
-              '| Metric | Covered / Total | Percent |',
-              '|---|---:|---:|',
-              `| Lines | ${total.lines.covered} / ${total.lines.total} | ${pct(total.lines.pct)} |`,
-              `| Statements | ${total.statements.covered} / ${total.statements.total} | ${pct(total.statements.pct)} |`,
-              `| Functions | ${total.functions.covered} / ${total.functions.total} | ${pct(total.functions.pct)} |`,
-              `| Branches | ${total.branches.covered} / ${total.branches.total} | ${pct(total.branches.pct)} |`,
-            ].join('\n');
-
-            fs.writeFileSync(outPath, `${body}\n`, 'utf8');
-            NODE
+            node -e 'const fs = require("node:fs"); const summary = JSON.parse(fs.readFileSync(process.env.COVERAGE_JSON, "utf8")); const total = summary.total; const pct = (value) => Number(value).toFixed(2) + "%"; const body = ["## Desktop coverage summary", "", "| Metric | Covered / Total | Percent |", "|---|---:|---:|", "| Lines | " + total.lines.covered + " / " + total.lines.total + " | " + pct(total.lines.pct) + " |", "| Statements | " + total.statements.covered + " / " + total.statements.total + " | " + pct(total.statements.pct) + " |", "| Functions | " + total.functions.covered + " / " + total.functions.total + " | " + pct(total.functions.pct) + " |", "| Branches | " + total.branches.covered + " / " + total.branches.total + " | " + pct(total.branches.pct) + " |"].join("\n"); fs.writeFileSync(process.env.COVERAGE_COMMENT, body + "\n", "utf8");'
           else
-            cat <<'EOF' > "${COVERAGE_COMMENT}"
-            ## Desktop coverage summary
-
-            Coverage output was not generated for this run. Check the `desktop-coverage-summary` job logs.
-            EOF
+            printf '%s\n\n%s\n' \
+              '## Desktop coverage summary' \
+              'Coverage output was not generated for this run. Check the `desktop-coverage-summary` job logs.' \
+              > "${COVERAGE_COMMENT}"
           fi
 
       - name: Upload desktop coverage artefacts
