@@ -1,0 +1,194 @@
+name: build-android
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Android release tag (must start with android-v)
+        required: true
+        type: string
+      profile:
+        description: EAS build profile
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - development
+          - production
+      release_draft:
+        description: Create/keep this release as draft
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: build-android-${{ inputs.release_tag }}
+  cancel-in-progress: true
+
+jobs:
+  prepare-release:
+    name: Prepare Android release metadata
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    outputs:
+      tag_name: ${{ steps.meta.outputs.tag_name }}
+      release_name: ${{ steps.meta.outputs.release_name }}
+      release_id: ${{ steps.release.outputs.release_id }}
+
+    steps:
+      - name: Resolve release tag
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${{ inputs.release_tag }}"
+
+          if [[ ! "${TAG}" =~ ^android-v.+$ ]]; then
+            echo "Invalid release tag: ${TAG}" >&2
+            echo "Expected a tag matching android-v*" >&2
+            exit 1
+          fi
+
+          echo "tag_name=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "release_name=Liminal Notes Android ${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create or reuse release
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.meta.outputs.tag_name }}
+          RELEASE_NAME: ${{ steps.meta.outputs.release_name }}
+          RELEASE_DRAFT: ${{ inputs.release_draft }}
+          RELEASE_BODY: |
+            Android `${{ inputs.profile }}` build.
+
+            Commit: `${{ github.sha }}`
+        run: |
+          set -euo pipefail
+
+          RELEASE_MATCH="$({
+            gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+              --jq ".[] | select(.tag_name == \"${TAG_NAME}\") | [.id, .draft] | @tsv" \
+              | head -n 1
+          } || true)"
+
+          if [[ -z "${RELEASE_MATCH}" ]]; then
+            RELEASE_ID="$({
+              gh api \
+                --method POST \
+                "repos/${GITHUB_REPOSITORY}/releases" \
+                -f tag_name="${TAG_NAME}" \
+                -f target_commitish="${GITHUB_SHA}" \
+                -f name="${RELEASE_NAME}" \
+                -f body="${RELEASE_BODY}" \
+                -F draft="${RELEASE_DRAFT}" \
+                -F prerelease=false \
+                --jq '.id'
+            })"
+          else
+            RELEASE_ID="$(awk '{print $1}' <<< "${RELEASE_MATCH}")"
+            EXISTING_DRAFT="$(awk '{print $2}' <<< "${RELEASE_MATCH}")"
+
+            if [[ "${EXISTING_DRAFT}" == "true" && "${RELEASE_DRAFT}" == "false" ]]; then
+              gh api \
+                --method PATCH \
+                "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+                -F draft=false > /dev/null
+            fi
+          fi
+
+          echo "release_id=${RELEASE_ID}" >> "${GITHUB_OUTPUT}"
+
+  build-android:
+    name: Build Android artefacts
+    needs: prepare-release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: read
+    container:
+      image: ghcr.io/scottmorris/liminal-notes-ci-base-android:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install JS deps
+        run: pnpm run ci:install
+
+      - name: Build shared packages
+        run: pnpm run ci:android:prepare
+
+      - name: Mark build start
+        run: touch .android-build-start
+
+      - name: Build Android package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          case "${{ inputs.profile }}" in
+            preview)
+              pnpm run ci:android:build:preview
+              ;;
+            development)
+              pnpm run ci:android:build:development
+              ;;
+            production)
+              pnpm run ci:android:build:production
+              ;;
+            *)
+              echo "Unsupported profile: ${{ inputs.profile }}" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Collect Android artefacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/android
+
+          mapfile -t BUILD_OUTPUTS < <(find apps/mobile -type f \( -name "*.apk" -o -name "*.aab" \) -newer .android-build-start | sort)
+
+          if [[ ${#BUILD_OUTPUTS[@]} -eq 0 ]]; then
+            echo "No APK/AAB outputs found after build." >&2
+            exit 1
+          fi
+
+          for output in "${BUILD_OUTPUTS[@]}"; do
+            cp "${output}" artifacts/android/
+          done
+
+          ls -al artifacts/android
+
+      - name: Upload workflow artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ inputs.profile }}-${{ needs.prepare-release.outputs.tag_name }}
+          path: artifacts/android/*
+          if-no-files-found: error
+
+      - name: Attach artefacts to Android release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag_name }}
+          files: artifacts/android/*
+          overwrite_files: true
