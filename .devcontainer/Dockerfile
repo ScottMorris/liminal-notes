@@ -25,7 +25,6 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     unzip \
     xvfb \
     vim \
-    git \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Java runtime/toolchain required by Android and Gradle builds.
@@ -60,10 +59,8 @@ ENV PNPM_HOME=$HOME/.local/share/pnpm
 ENV RUSTUP_HOME=$HOME/.rustup
 ENV CARGO_HOME=$HOME/.cargo
 
-# Normalize Java home path across architectures for sdkmanager.
-RUN mkdir -p "$HOME/.local" \
-    && ln -sfn "/usr/lib/jvm/java-17-openjdk-$(dpkg --print-architecture)" "$HOME/.local/java-17-openjdk-current"
-ENV JAVA_HOME=$HOME/.local/java-17-openjdk-current
+# Set JAVA_HOME for Android builds
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # Configure Android SDK paths
 ENV ANDROID_HOME=$HOME/Android/Sdk
