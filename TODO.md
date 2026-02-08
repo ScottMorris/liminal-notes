@@ -2,6 +2,14 @@
 
 ## Future Improvements
 
+### CI & Testing
+
+- [x] Add a dedicated `test-ci` workflow with required checks for shared packages, desktop tests, and Rust tests.
+- [x] Publish PR test results using JUnit output (for example via GitHub test result checks/reporter action).
+- [x] Publish PR coverage comments as visibility-only (no coverage fail gate).
+- [ ] Add coverage enforcement thresholds in a later phase after desktop test stability is proven.
+- [ ] Re-enable and harden the skipped desktop editor decoration integration test once the React/Vitest harness mismatch is resolved.
+
 ### Mobile
 
 - [ ] Add 'Enable Debug Logging' setting to Mobile app to control verbose Bridge and Vault logs.
