@@ -15,6 +15,11 @@
   "scripts": {
     "lint": "echo \"(lint to be added by tooling)\"",
     "test": "echo \"(tests to be added by tooling)\"",
+    "ci:install": "pnpm install --frozen-lockfile",
+    "ci:android:prepare": "pnpm --filter @liminal-notes/mobile run prestart",
+    "ci:android:build:preview": "pnpm --filter @liminal-notes/mobile run ci:build:android:preview",
+    "ci:android:build:development": "pnpm --filter @liminal-notes/mobile run ci:build:android:development",
+    "ci:android:build:production": "pnpm --filter @liminal-notes/mobile run ci:build:android:production",
     "tauri": "pnpm --filter @liminal-notes/desktop tauri",
     "dev:desktop": "pnpm --filter @liminal-notes/desktop tauri dev",
     "build:desktop": "pnpm --filter @liminal-notes/desktop tauri build",

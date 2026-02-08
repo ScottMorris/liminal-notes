@@ -111,7 +111,7 @@ jobs:
       contents: write
       packages: read
     container:
-      image: ghcr.io/scottmorris/liminal-notes/ci-base:latest
+      image: ghcr.io/${{ github.repository_owner }}/liminal-notes-ci-base-android:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -130,10 +130,10 @@ jobs:
           cache: pnpm
 
       - name: Install JS deps
-        run: pnpm install --frozen-lockfile
+        run: pnpm run ci:install
 
       - name: Build shared packages
-        run: pnpm --filter @liminal-notes/mobile prestart
+        run: pnpm run ci:android:prepare
 
       - name: Mark build start
         run: touch .android-build-start
@@ -145,13 +145,13 @@ jobs:
 
           case "${{ inputs.profile }}" in
             preview)
-              pnpm --filter @liminal-notes/mobile build:preview:android
+              pnpm run ci:android:build:preview
               ;;
             development)
-              pnpm --filter @liminal-notes/mobile build:dev:android
+              pnpm run ci:android:build:development
               ;;
             production)
-              pnpm --filter @liminal-notes/mobile eas build --profile production --platform android --local
+              pnpm run ci:android:build:production
               ;;
             *)
               echo "Unsupported profile: ${{ inputs.profile }}" >&2

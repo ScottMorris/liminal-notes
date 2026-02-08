@@ -111,7 +111,7 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     container:
-      image: ghcr.io/scottmorris/liminal-notes/ci-base:latest
+      image: ghcr.io/${{ github.repository_owner }}/liminal-notes-ci-base-desktop:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -152,7 +152,7 @@ jobs:
             apps/desktop/src-tauri -> target
 
       - name: Install JS deps
-        run: pnpm install --frozen-lockfile
+        run: pnpm run ci:install
 
       - name: Build + attach to GitHub Release
         uses: tauri-apps/tauri-action@v0.6.1

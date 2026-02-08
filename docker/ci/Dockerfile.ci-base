@@ -1,0 +1,99 @@
+# Shared CI base image definitions.
+# Build targets:
+# - test
+# - desktop
+# - android
+
+FROM ubuntu:24.04 AS common
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG NODE_MAJOR=20
+ARG PNPM_VERSION=10.28.2
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g "pnpm@${PNPM_VERSION}" \
+    && npm cache clean --force
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]
+
+FROM common AS test
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN node --version && pnpm --version
+
+FROM common AS desktop
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    file \
+    libayatana-appindicator3-dev \
+    librsvg2-dev \
+    libssl-dev \
+    libwebkit2gtk-4.1-dev \
+    patchelf \
+    pkg-config \
+    xdg-utils \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:${PATH}
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --default-toolchain stable --no-modify-path \
+    && rustup component add clippy rustfmt
+
+RUN node --version && pnpm --version && cargo --version && rustc --version
+
+FROM common AS android
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    openjdk-17-jdk \
+    unzip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=${JAVA_HOME}/bin:${PATH}
+
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
+ENV PATH=${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/36.0.0:${PATH}
+
+RUN mkdir -p "${ANDROID_HOME}/cmdline-tools" \
+    && cd "${ANDROID_HOME}/cmdline-tools" \
+    && wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
+    && unzip -q commandlinetools-linux-11076708_latest.zip \
+    && rm commandlinetools-linux-11076708_latest.zip \
+    && mv cmdline-tools latest
+
+RUN yes | sdkmanager --licenses \
+    && sdkmanager --channel=0 --install \
+      "platform-tools" \
+      "platforms;android-36" \
+      "build-tools;36.0.0" \
+      "ndk;27.1.12297006" \
+    && rm -rf "${ANDROID_HOME}/cmdline-tools/latest/.downloadIntermediates"
+
+RUN node --version && pnpm --version && java -version && sdkmanager --list_installed

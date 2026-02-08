@@ -12,8 +12,11 @@
     "start:tunnel": "pnpm prestart && expo start --dev-client --tunnel",
     "web": "pnpm prestart && expo start --web",
     "typecheck": "tsc --noEmit",
-    "build:preview:android": "pnpm eas build --profile preview --platform android --local",
-    "build:dev:android": "pnpm eas build --profile development --platform android --local",
+    "ci:build:android:preview": "pnpm exec eas build --profile preview --platform android --local",
+    "ci:build:android:development": "pnpm exec eas build --profile development --platform android --local",
+    "ci:build:android:production": "pnpm exec eas build --profile production --platform android --local",
+    "build:preview:android": "pnpm run ci:build:android:preview",
+    "build:dev:android": "pnpm run ci:build:android:development",
     "build:dev:ios": "pnpm eas build --profile development --platform ios --local",
     "build:dev": "pnpm eas build --profile development --local"
   },
