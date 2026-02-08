@@ -18,3 +18,12 @@ vault/*
 
 # Codex backup
 codex-backup.tar.gz
+
+# Test and coverage artefacts
+test-results/
+coverage/
+.nyc_output/
+.vitest/
+
+# TypeScript build info
+*.tsbuildinfo
