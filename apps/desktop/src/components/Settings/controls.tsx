@@ -216,12 +216,6 @@ export const ActionButton: React.FC<{ def: SettingControlDef; onAction?: (id: st
     return (
         <button
             onClick={handleClick}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleClick();
-                }
-            }}
             type="button"
             disabled={isRunning}
             style={{
