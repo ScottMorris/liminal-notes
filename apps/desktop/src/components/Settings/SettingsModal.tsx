@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useSettings } from '../../contexts/SettingsContext';
 import { getSections } from './schemas';
@@ -59,6 +60,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
 
     const [activeSectionId, setActiveSectionId] = useState(optionsGroups[0]?.id || sections[0]?.id);
     const [isDebugOpen, setIsDebugOpen] = useState(false);
+    const switchVaultInFlightRef = useRef(false);
 
     const activeSection = sections.find(s => s.id === activeSectionId) || (activeSectionId === 'tags' ? tagSection : undefined);
     const activeDeveloperSection = developerSections.find(section => section.id === activeSectionId);
@@ -66,8 +68,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
 
     const handleAction: SettingsActionHandler = async (actionId: string) => {
         if (actionId === 'switch-vault') {
-            if (window.confirm("Are you sure you want to switch vaults?")) {
-                onResetVault();
+            if (switchVaultInFlightRef.current) {
+                return;
+            }
+
+            switchVaultInFlightRef.current = true;
+            try {
+                const shouldSwitchVault = await confirm('Are you sure you want to switch vaults?', {
+                    title: 'Liminal Notes',
+                    kind: 'warning'
+                });
+
+                if (shouldSwitchVault) {
+                    await onResetVault();
+                }
+            } finally {
+                switchVaultInFlightRef.current = false;
             }
             return;
         }

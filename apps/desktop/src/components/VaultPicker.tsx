@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { desktopVaultConfig } from "../adapters/DesktopVaultConfigAdapter";
 import type { VaultDescriptor } from "@liminal-notes/vault-core/vault/types";
@@ -9,8 +9,16 @@ interface VaultPickerProps {
 
 export function VaultPicker({ onVaultConfigured }: VaultPickerProps) {
   const [error, setError] = useState<string | null>(null);
+  const [isChoosingVault, setIsChoosingVault] = useState(false);
+  const isChoosingVaultRef = useRef(false);
 
   const handleChooseVault = async () => {
+    if (isChoosingVaultRef.current) {
+      return;
+    }
+
+    isChoosingVaultRef.current = true;
+    setIsChoosingVault(true);
     try {
       setError(null);
       const selected = await open({
@@ -35,6 +43,9 @@ export function VaultPicker({ onVaultConfigured }: VaultPickerProps) {
     } catch (err) {
       console.error(err);
       setError("Failed to open dialog or save config. " + String(err));
+    } finally {
+      isChoosingVaultRef.current = false;
+      setIsChoosingVault(false);
     }
   };
 
@@ -42,7 +53,9 @@ export function VaultPicker({ onVaultConfigured }: VaultPickerProps) {
     <div className="vault-picker">
       <h2>Welcome to Liminal Notes</h2>
       <p>Please select a folder to use as your vault.</p>
-      <button onClick={handleChooseVault}>Choose Vault Folder</button>
+      <button onClick={handleChooseVault} disabled={isChoosingVault}>
+        {isChoosingVault ? "Opening..." : "Choose Vault Folder"}
+      </button>
       {error && <p className="error">{error}</p>}
     </div>
   );
