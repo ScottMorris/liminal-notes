@@ -8,7 +8,12 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "download-fonts": "node scripts/download-font.cjs"
+    "download-fonts": "node scripts/download-font.cjs",
+    "lint": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:ci": "mkdir -p ../../test-results/desktop && vitest run --reporter=default --reporter=junit --outputFile.junit=../../test-results/desktop/junit.xml",
+    "test:coverage:ci": "mkdir -p ../../test-results/coverage/desktop && vitest run --coverage.enabled --coverage.provider=v8 --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.reporter=cobertura --coverage.reportsDirectory=../../test-results/coverage/desktop"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.0",
@@ -51,6 +56,7 @@
     "jsdom": "^27.3.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.15",
+    "@vitest/coverage-v8": "4.0.15"
   }
 }
