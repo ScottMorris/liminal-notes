@@ -1,73 +1,44 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
-import React from 'react';
-import { CodeMirrorEditor } from '../CodeMirrorEditor';
+import { describe, expect, it } from 'vitest';
+import { EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { markdown } from '@codemirror/lang-markdown';
+import { GFM } from '@lezer/markdown';
+import { markdownDecorations } from '@liminal-notes/core-shared/editor/decorations';
 
-vi.mock('../../../theme/ThemeProvider', () => ({
-  useTheme: () => ({ themeId: 'light' }),
-}));
+function collectDecorationClasses(view: EditorView): string[] {
+  const plugin = view.plugin(markdownDecorations);
+  expect(plugin).not.toBeNull();
 
-// Mock getEditorContext since it's required prop
-const mockGetEditorContext = () => ({
-    operations: {
-        saveNote: async () => {},
-        updateIndexes: async () => {},
-        notify: () => {}
+  const classes: string[] = [];
+  plugin!.decorations.between(0, view.state.doc.length, (_from, _to, deco) => {
+    if (typeof deco.spec.class === 'string') {
+      classes.push(deco.spec.class);
     }
-});
+  });
 
-// Mock the CommandRegistry to avoid errors during initialization
-import { commandRegistry } from '../../../commands/CommandRegistry';
+  return classes;
+}
 
-// Mock window.matchMedia for ThemeProvider
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (query: any) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {}, // deprecated
-    removeListener: () => {}, // deprecated
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => {},
-  }),
-});
+describe('CodeMirror decorations integration', () => {
+  it('applies strong and wikilink decorations', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
 
-describe.skip('CodeMirror decorations integration', () => {
-  it('applies bold decoration class', async () => {
-    // Note: Rendering CodeMirror in JSDOM might not produce visible ranges correctly
-    // without some mocking of measurements, but let's try.
-    // Usually CodeMirror needs to be attached to DOM.
+    const view = new EditorView({
+      parent: container,
+      state: EditorState.create({
+        doc: '**bold text** and [[My Note]]',
+        extensions: [markdown({ extensions: [GFM] }), markdownDecorations],
+      }),
+    });
 
-    const { container } = render(
-      <CodeMirrorEditor
-          value="**bold text**"
-          noteId="test"
-          path="/test.md"
-          onChange={() => {}}
-          onSave={() => {}}
-          getEditorContext={mockGetEditorContext as any}
-      />
-    );
-
-    // We need to wait for the editor to initialize and decorations to be applied.
-    // Decorations are usually applied synchronously during view update or init.
-
-    // Check for decoration class in rendered output
-    // The class is 'cm-strong'
-    // Depending on CM internal structure, it wraps the text span.
-    const strongElement = container.querySelector('.cm-strong');
-
-    // In JSDOM without layout, visibleRanges usually defaults to empty or 0-0 unless mocked?
-    // CodeMirror View usually needs `docView.visibleRange` which depends on `viewport`.
-    // If this test fails, it's likely due to JSDOM layout limitations.
-
-    // If it fails, we might need to rely on unit tests for the logic
-    // and manual verification for the integration, or mock `view.visibleRanges`.
-    // But let's see.
-
-    expect(container).toBeTruthy();
-    expect(strongElement).toBeNull();
+    try {
+      const classes = collectDecorationClasses(view);
+      expect(classes).toContain('cm-strong');
+      expect(classes).toContain('cm-wikilink');
+    } finally {
+      view.destroy();
+      container.remove();
+    }
   });
 });

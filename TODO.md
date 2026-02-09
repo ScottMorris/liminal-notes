@@ -8,7 +8,6 @@
 - [x] Publish PR test results using JUnit output (for example via GitHub test result checks/reporter action).
 - [x] Publish PR coverage comments as visibility-only (no coverage fail gate).
 - [ ] Add coverage enforcement thresholds in a later phase after desktop test stability is proven.
-- [ ] Re-enable and harden the skipped desktop editor decoration integration test once the React/Vitest harness mismatch is resolved.
 
 ### Mobile
 
