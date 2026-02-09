@@ -125,6 +125,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Resolve Rust toolchain
+        id: rust_toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLCHAIN="$(awk -F '\"' '/^[[:space:]]*channel[[:space:]]*=/ { print $2; exit }' rust-toolchain.toml)"
+          if [[ -z "${TOOLCHAIN}" ]]; then
+            echo "Unable to resolve Rust toolchain from rust-toolchain.toml" >&2
+            exit 1
+          fi
+          echo "toolchain=${TOOLCHAIN}" >> "${GITHUB_OUTPUT}"
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ steps.rust_toolchain.outputs.toolchain }}
+
+      - name: Cache Rust build artefacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri -> target
+
       - name: Run Rust tests
         run: pnpm run ci:test:rust
 
