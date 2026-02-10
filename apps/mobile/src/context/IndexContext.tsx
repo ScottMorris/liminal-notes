@@ -11,6 +11,7 @@ import { parseFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-notes/core-shared/tags';
 import { DeviceEventEmitter } from 'react-native';
 import { FileWatcherEvent, fileWatcher } from '../services/FileWatcher';
+import { bindFileWatcherToVault } from './fileWatcherBinding';
 
 interface IndexContextType {
   searchIndex: SearchIndex | null;
@@ -204,6 +205,10 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!db || !activeVault || !adapter || !searchIndex || !tagIndex) return;
 
+    void bindFileWatcherToVault(fileWatcher, adapter, activeVault.vaultId).catch((e) => {
+      console.warn('[Index] File watcher vault bind failed', e);
+    });
+
     const updateIndexForFile = async (noteId: string) => {
       try {
         const note = await adapter.readNote(noteId);
@@ -249,10 +254,6 @@ export function IndexProvider({ children }: { children: React.ReactNode }) {
         console.warn(`[Index] Failed to update index for ${noteId}`, e);
       }
     };
-
-    void fileWatcher.init().catch((e) => {
-      console.warn('[Index] File watcher init failed', e);
-    });
 
     const subscription = DeviceEventEmitter.addListener('vault:file-event', async (event: FileWatcherEvent) => {
       console.log(`[Index] Received file event: ${event.type} ${event.path}`);

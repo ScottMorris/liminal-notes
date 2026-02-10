@@ -9,6 +9,31 @@ import { useTabs } from "../contexts/TabsContext";
 import { FolderIcon, FolderOpenIcon, DocumentTextIcon, PhotoIcon, CodeBracketIcon } from "./Icons";
 import { listen } from '@tauri-apps/api/event';
 
+type Unlisten = () => void;
+type ListenFn = (
+  event: string,
+  handler: () => void
+) => Promise<Unlisten>;
+
+export function registerFileTreeRefreshListeners(
+  listenFn: ListenFn,
+  onRefresh?: () => Promise<void>
+): () => void {
+  const handleFileEvent = () => {
+    if (onRefresh) {
+      void onRefresh();
+    }
+  };
+
+  const unlistenCreated = listenFn('vault:file-created', handleFileEvent);
+  const unlistenDeleted = listenFn('vault:file-deleted', handleFileEvent);
+
+  return () => {
+    void unlistenCreated.then(f => f());
+    void unlistenDeleted.then(f => f());
+  };
+}
+
 interface FileTreeProps {
   files: FileEntry[];
   onFileSelect: (path: string, isDoubleClick: boolean) => void;
@@ -56,19 +81,7 @@ export function FileTree({
 
   // Listen for file events to refresh tree
   useEffect(() => {
-      const handleFileEvent = () => {
-          if (onRefresh) onRefresh();
-      };
-
-      const unlistenCreated = listen('vault:file-created', handleFileEvent);
-      const unlistenModified = listen('vault:file-modified', handleFileEvent);
-      const unlistenDeleted = listen('vault:file-deleted', handleFileEvent);
-
-      return () => {
-          unlistenCreated.then(f => f());
-          unlistenModified.then(f => f());
-          unlistenDeleted.then(f => f());
-      };
+      return registerFileTreeRefreshListeners(listen, onRefresh);
   }, [onRefresh]);
 
   const handleMenuItemClick = async (id: string, action?: () => void) => {
