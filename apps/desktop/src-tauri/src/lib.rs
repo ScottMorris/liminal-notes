@@ -6,7 +6,6 @@ mod plugins;
 mod watcher;
 
 use plugins::{PluginRegistry, tts::TtsPlugin};
-use std::sync::Mutex;
 use watcher::FileWatcher;
 
 #[tauri::command]

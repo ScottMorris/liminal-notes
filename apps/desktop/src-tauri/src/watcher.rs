@@ -1,4 +1,4 @@
-use notify::{RecursiveMode, Watcher};
+use notify::RecursiveMode;
 use notify_debouncer_mini::{new_debouncer, DebounceEventResult};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -57,7 +57,7 @@ impl FileWatcher {
 }
 
 fn handle_event(app: &AppHandle, path: PathBuf, root: &Path) {
-    if should_ignore(&path) {
+    if should_ignore(root, &path) {
         return;
     }
 
@@ -82,9 +82,13 @@ fn handle_event(app: &AppHandle, path: PathBuf, root: &Path) {
     }
 }
 
-fn should_ignore(path: &Path) -> bool {
+fn should_ignore(root: &Path, path: &Path) -> bool {
+    let Ok(relative) = path.strip_prefix(root) else {
+        return false;
+    };
+
     // Ignore .git, .liminal, etc.
-    for component in path.components() {
+    for component in relative.components() {
         if let Some(s) = component.as_os_str().to_str() {
             if s.starts_with('.') && s != "." && s != ".." {
                 return true;
@@ -105,4 +109,24 @@ fn emit_event(app: &AppHandle, event_name: &str, root: &Path, full_path: &Path) 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
     path: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::should_ignore;
+    use std::path::Path;
+
+    #[test]
+    fn ignores_hidden_paths_inside_vault_root() {
+        let root = Path::new("/vault");
+        let path = Path::new("/vault/.git/config");
+        assert!(should_ignore(root, path));
+    }
+
+    #[test]
+    fn does_not_ignore_paths_when_root_itself_is_hidden() {
+        let root = Path::new("/home/user/.vault");
+        let path = Path::new("/home/user/.vault/notes/today.md");
+        assert!(!should_ignore(root, path));
+    }
 }
