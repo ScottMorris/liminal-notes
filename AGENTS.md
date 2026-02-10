@@ -189,6 +189,7 @@ Examples:
 - **organise** (not organize)
 - **behaviour** (not behavior)
 - **favour** (not favor)
+- **synchronisation** (not synchronization)
 
 Code identifiers (variable names, CSS properties) should still respect platform and ecosystem conventions (e.g. `css: { color: 'red' }`), but comments and UI strings must use Canadian spelling (e.g. `// Update the colour`).
 

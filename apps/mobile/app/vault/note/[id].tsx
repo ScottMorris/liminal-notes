@@ -20,6 +20,9 @@ import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-note
 import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 import { AddTagDialog } from '../../../src/components/AddTagDialog';
 import { useVault } from '../../../src/context/VaultContext';
+import { DeviceEventEmitter } from 'react-native';
+import { FileWatcherEvent, fileWatcher } from '../../../src/services/FileWatcher';
+import { MobileFileConflictBanner } from '../../../src/components/MobileFileConflictBanner';
 
 const DEBUG = false;
 
@@ -79,6 +82,7 @@ export default function NoteScreen() {
   // Tags
   const [tags, setTags] = useState<string[]>([]);
   const [isTagPromptVisible, setTagPromptVisible] = useState(false);
+  const [conflictPath, setConflictPath] = useState<string | null>(null);
 
   const editorRef = useRef<EditorViewRef>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -178,7 +182,38 @@ export default function NoteScreen() {
           navigation.removeListener('beforeRemove', onBeforeRemove);
           if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       };
-  }, [noteId]);
+  }, [noteId]); // Only on note ID change
+
+  // Separate effect for file watcher to access latest state without re-loading note
+  useEffect(() => {
+      const watcherSub = DeviceEventEmitter.addListener('vault:file-event', (event: FileWatcherEvent) => {
+          if (!noteId) return;
+          if (event.path === noteId && event.type === 'modified') {
+               // If dirty -> Conflict
+               if (isDirty) {
+                   setConflictPath(noteId);
+               } else {
+                   // If clean -> Auto-reload
+                   // Note: We need to be careful not to reload if we are 'saving'.
+                   if (saveStatus !== SaveStatus.Saving) {
+                       loadNote(); // Re-read from disk
+                   }
+               }
+          }
+      });
+
+      return () => {
+          watcherSub.remove();
+      };
+  }, [noteId, isDirty, saveStatus]);
+
+  useEffect(() => {
+      if (!conflictPath) return;
+      if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = null;
+      }
+  }, [conflictPath]);
 
   const loadNote = async () => {
     if (!noteId) {
@@ -238,6 +273,7 @@ export default function NoteScreen() {
         }
 
         setStatus('ready');
+        setConflictPath(null); // Clear conflict on reload
     } catch (e: any) {
         setStatus('error');
         setErrorMsg(e.message || 'Failed to load note');
@@ -312,6 +348,10 @@ export default function NoteScreen() {
 
   const requestSave = () => {
     if (!editorRef.current || !noteId) return;
+    if (conflictPath && conflictPath === noteId) {
+      if (DEBUG) console.log('[NoteScreen] Save blocked due to unresolved file conflict');
+      return;
+    }
 
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
@@ -408,12 +448,20 @@ export default function NoteScreen() {
       textToSave = materializeTags(textToSave);
 
       try {
+          if (conflictPath && conflictPath === noteId) {
+              if (DEBUG) console.log('[NoteScreen] Write blocked due to unresolved file conflict');
+              return;
+          }
+
           if (!adapter || !activeVault) {
               throw new Error('No active vault');
           }
 
           await adapter.writeNote(noteId!, textToSave);
           const saveTime = Date.now();
+
+          // Notify watcher of internal write to prevent self-trigger
+          await fileWatcher.notifyInternalWrite(noteId!);
 
           // Update tags state from saved text
           const finalTags = computeTagsForContent(textToSave);
@@ -511,6 +559,15 @@ export default function NoteScreen() {
               headerShown: false // We use custom header inside SafeAreaView or could use Stack header
           }}
       />
+
+      {/* Conflict Banner */}
+      {conflictPath && (
+          <MobileFileConflictBanner
+              onReload={() => loadNote()}
+              onKeepMine={() => setConflictPath(null)}
+              onDismiss={() => setConflictPath(null)}
+          />
+      )}
 
       {/* Header / Debug Bar */}
       <View style={[styles.header, { borderBottomColor: paperTheme.colors.outlineVariant, backgroundColor: paperTheme.colors.surface }]}>

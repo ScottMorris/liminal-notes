@@ -7,6 +7,32 @@ import type { MenuModel, MenuPosition } from "./Editor/ContextMenu/types";
 import type { FileContext } from "../commands/types";
 import { useTabs } from "../contexts/TabsContext";
 import { FolderIcon, FolderOpenIcon, DocumentTextIcon, PhotoIcon, CodeBracketIcon } from "./Icons";
+import { listen } from '@tauri-apps/api/event';
+
+type Unlisten = () => void;
+type ListenFn = (
+  event: string,
+  handler: () => void
+) => Promise<Unlisten>;
+
+export function registerFileTreeRefreshListeners(
+  listenFn: ListenFn,
+  onRefresh?: () => Promise<void>
+): () => void {
+  const handleFileEvent = () => {
+    if (onRefresh) {
+      void onRefresh();
+    }
+  };
+
+  const unlistenCreated = listenFn('vault:file-created', handleFileEvent);
+  const unlistenDeleted = listenFn('vault:file-deleted', handleFileEvent);
+
+  return () => {
+    void unlistenCreated.then(f => f());
+    void unlistenDeleted.then(f => f());
+  };
+}
 
 interface FileTreeProps {
   files: FileEntry[];
@@ -52,6 +78,11 @@ export function FileTree({
     window.addEventListener('click', closeMenu);
     return () => window.removeEventListener('click', closeMenu);
   }, []);
+
+  // Listen for file events to refresh tree
+  useEffect(() => {
+      return registerFileTreeRefreshListeners(listen, onRefresh);
+  }, [onRefresh]);
 
   const handleMenuItemClick = async (id: string, action?: () => void) => {
     try {

@@ -26,6 +26,8 @@ import { EditorView } from '@codemirror/view';
 import { EditableTitle } from './EditableTitle';
 import { TtsPlayer } from '../../plugins/core.tts/TtsPlayer';
 import { ttsHighlightField, setTtsHighlight } from '../../plugins/core.tts/highlight';
+import { listen } from '@tauri-apps/api/event';
+import { FileConflictBanner } from '../FileConflictBanner';
 
 interface EditorPaneProps {
   onRefreshFiles?: () => Promise<void>;
@@ -64,6 +66,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [isAddTagOpen, setIsAddTagOpen] = useState(false);
+  const [conflictPath, setConflictPath] = useState<string | null>(null);
 
   // Track which tab the current 'content' belongs to to prevent data bleed
   const [loadedTabId, setLoadedTabId] = useState<string | null>(null);
@@ -72,6 +75,11 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   const [closingTabId, setClosingTabId] = useState<string | null>(null);
 
   const editorRef = useRef<EditorHandle>(null);
+  const contentRef = useRef(content);
+
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
 
   const reminderCount = useMemo(() => {
     if (!activeTab || !activeTab.path) return 0;
@@ -210,10 +218,84 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
 
   // Load content when active tab changes
+  // Listen for external file changes (Desktop File Watcher)
+  useEffect(() => {
+    const unlisten = listen<{ path: string }>('vault:file-modified', async (event) => {
+        const changedPath = event.payload.path;
+
+        // Only care if it affects the active tab
+        if (!activeTab || activeTab.path !== changedPath) return;
+
+        if (activeTab.isDirty) {
+            // Conflict: Externally changed but we have unsaved edits
+            setConflictPath(changedPath);
+        } else {
+            // Clean: Auto-reload
+            try {
+                const { content: newContent } = await desktopVault.readNote(changedPath);
+
+                // Check if content actually changed to avoid cursor reset loop on self-save
+                if (newContent === contentRef.current) {
+                    return;
+                }
+
+                setContent(newContent);
+
+                // Update state to match new disk content
+                const state = JSON.stringify({
+                    doc: newContent,
+                    selection: { anchor: 0, head: 0 }
+                });
+                updateTabState(activeTab.id, state);
+
+                notify("File updated from disk", "success");
+            } catch (err) {
+                console.error("Failed to auto-reload changed file:", err);
+            }
+        }
+    });
+
+    return () => {
+        unlisten.then(f => f());
+    };
+  }, [activeTab, updateTabState, notify]);
+
+  const handleConflictReload = async () => {
+      if (!activeTab) return;
+      try {
+          const { content } = await desktopVault.readNote(activeTab.path);
+          setContent(content);
+
+          // Mark clean
+          updateTabDirty(activeTab.id, false);
+
+          const state = JSON.stringify({
+              doc: content,
+              selection: { anchor: 0, head: 0 }
+          });
+          updateTabState(activeTab.id, state);
+
+          setConflictPath(null);
+          notify("Reloaded from disk", "success");
+      } catch (err) {
+          notify("Failed to reload: " + String(err), "error");
+      }
+  };
+
+  const handleConflictKeepMine = () => {
+      // Just dismiss banner. Next save will overwrite disk.
+      setConflictPath(null);
+  };
+
+  const handleConflictDismiss = () => {
+      setConflictPath(null);
+  };
+
   useEffect(() => {
     if (!activeTab) {
       setContent('');
       setLoadedTabId(null);
+      setConflictPath(null);
       return;
     }
 
@@ -408,6 +490,13 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
   const handleSave = async () => {
     if (!activeTab || !editorRef.current || !editorRef.current.view) return;
+
+    // Prevent saving if there is a conflict to avoid overwriting external changes
+    if (conflictPath && activeTab.path === conflictPath) {
+        notify("Cannot save while there is an external conflict. Please resolve first.", "error");
+        return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -668,6 +757,13 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
        {activeTab ? (
          <>
+           {conflictPath && activeTab.path === conflictPath && (
+               <FileConflictBanner
+                   onReload={handleConflictReload}
+                   onKeepMine={handleConflictKeepMine}
+                   onDismiss={handleConflictDismiss}
+               />
+           )}
            <div className="editor-header">
                 <div className="file-info">
                   <EditableTitle

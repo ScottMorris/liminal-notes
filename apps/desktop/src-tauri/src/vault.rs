@@ -1,3 +1,4 @@
+use crate::watcher::FileWatcher;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Component, Path, PathBuf};
@@ -64,9 +65,19 @@ pub fn get_vault_config(app: AppHandle) -> Option<VaultConfig> {
 #[tauri::command]
 pub fn set_vault_config(app: AppHandle, root_path: String, name: String) -> Result<(), String> {
     let config_path = get_config_path(&app)?;
-    let config = VaultConfig { root_path, name };
+    let config = VaultConfig {
+        root_path: root_path.clone(),
+        name,
+    };
     let content = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
     fs::write(config_path, content).map_err(|e| e.to_string())?;
+
+    // Restart watcher
+    let watcher = app.state::<FileWatcher>();
+    if let Err(e) = watcher.start(app.clone(), PathBuf::from(root_path)) {
+        eprintln!("Failed to start watcher: {}", e);
+    }
+
     Ok(())
 }
 

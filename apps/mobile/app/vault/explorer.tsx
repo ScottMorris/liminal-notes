@@ -19,7 +19,7 @@ export default function ExplorerScreen() {
   const theme = useTheme();
   const { searchIndex, linkIndex } = useIndex();
   const { adapter, activeVault } = useVault();
-  const canRename = Boolean(adapter?.rename) && activeVault?.locator.scheme !== 'saf';
+  const canRename = Boolean(adapter?.rename);
 
   const [items, setItems] = useState<VaultFileEntry[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,0 +1,64 @@
+.file-conflict-banner {
+  background-color: var(--ln-warning-bg);
+  border-bottom: 1px solid var(--ln-warning-border);
+  color: var(--ln-warning-text);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9em;
+  z-index: 100;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.conflict-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warning-icon {
+  font-size: 1.2em;
+}
+
+.conflict-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-conflict-action {
+  background: transparent;
+  border: 1px solid currentColor;
+  color: inherit;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-conflict-action:hover {
+  background-color: var(--ln-warning-hover);
+}
+
+.btn-conflict-action:active {
+  background-color: var(--ln-warning-active);
+  transform: translateY(1px);
+}
+
+.btn-conflict-action.primary {
+  background-color: var(--ln-warning-active);
+  font-weight: 600;
+}
+
+.btn-conflict-action.primary:active {
+  background-color: var(--ln-warning-text); /* Fallback or specific active color if needed, reusing text color as strong accent for now or rely on opacity mix */
+  /* Actually, let's reuse warning-active but maybe simpler to just let it be.
+     The original code used 0.1 for primary bg and 0.2 for active.
+     Our theme vars are roughly 0.05 and 0.1.
+     Let's map primary bg to 'active' (0.1) and primary:active to something stronger or keep it consistent.
+     Or define explicit primary vars. For now, reusing generic warning hover/active is safer than hardcoding. */
+  filter: brightness(0.9);
+}

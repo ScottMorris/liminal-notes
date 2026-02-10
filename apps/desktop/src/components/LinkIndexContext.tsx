@@ -6,6 +6,8 @@ interface LinkIndexContextProps {
   linkIndex: LinkIndex;
   rebuildIndex: (files: FileEntry[]) => Promise<void>;
   updateNote: (path: NotePath, content: string) => void;
+  removeFile: (path: string) => void;
+  updateFile: (path: string) => Promise<void>;
   resolvePath: (targetRaw: string) => NotePath | undefined;
   isLoadingIndex: boolean;
 }
@@ -113,6 +115,9 @@ export const LinkIndexProvider = ({ children }: { children: ReactNode }) => {
 
   const updateNote = useCallback((path: NotePath, content: string) => {
     const paths = knownPathsRef.current;
+    if (!paths.has(path)) {
+      paths.add(path);
+    }
 
     // Parse new links
     const newLinks = parseLinks(path, content);
@@ -156,6 +161,47 @@ export const LinkIndexProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const removeFile = useCallback((path: string) => {
+    knownPathsRef.current.delete(path);
+    setLinkIndex(prev => {
+      const nextOutbound = new Map(prev.outbound);
+      const nextBacklinks = new Map(prev.backlinks);
+
+      // Remove outbound links from this file
+      const oldLinks = nextOutbound.get(path) || [];
+      oldLinks.forEach(link => {
+         if (link.targetPath) {
+             const backlinkList = nextBacklinks.get(link.targetPath) || [];
+             const filtered = backlinkList.filter(p => p !== path);
+             if (filtered.length > 0) {
+                 nextBacklinks.set(link.targetPath, filtered);
+             } else {
+                 nextBacklinks.delete(link.targetPath);
+             }
+         }
+      });
+      nextOutbound.delete(path);
+
+      // Remove backlinks pointing TO this file?
+      // For now, we keep them but they might point to a ghost.
+      // Ideally we re-resolve all backlinks that might have depended on this file.
+      // But that's expensive. Let's just remove the file from indices.
+      nextBacklinks.delete(path);
+
+      return { outbound: nextOutbound, backlinks: nextBacklinks };
+    });
+  }, []);
+
+  const updateFile = useCallback(async (path: string) => {
+    try {
+        if (!path.endsWith('.md')) return;
+        const { content } = await desktopVault.readNote(path);
+        updateNote(path, content);
+    } catch (err) {
+        console.warn(`[LinkIndex] Failed to update file ${path}:`, err);
+    }
+  }, [updateNote]);
+
   const resolvePath = useCallback((targetRaw: string) => {
     return resolveTarget(targetRaw, knownPathsRef.current);
   }, []);
@@ -165,6 +211,8 @@ export const LinkIndexProvider = ({ children }: { children: ReactNode }) => {
       linkIndex,
       rebuildIndex,
       updateNote,
+      removeFile,
+      updateFile,
       resolvePath,
       isLoadingIndex
     }}>
