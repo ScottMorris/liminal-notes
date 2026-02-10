@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
-import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
 import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 import { FAB, FABAction } from '../../src/components/FAB';
 import { PromptModal } from '../../src/components/PromptModal';
@@ -10,6 +9,7 @@ import { useTheme, Text, List, ActivityIndicator, Divider } from 'react-native-p
 import { EditableHeaderTitle } from '../../src/components/EditableHeaderTitle';
 import { renameFolder } from '../../src/utils/fileOperations';
 import { useIndex } from '../../src/context/IndexContext';
+import { useVault } from '../../src/context/VaultContext';
 
 export default function ExplorerScreen() {
   const router = useRouter();
@@ -18,21 +18,21 @@ export default function ExplorerScreen() {
   const currentPath = folder || '';
   const theme = useTheme();
   const { searchIndex, linkIndex } = useIndex();
+  const { adapter, activeVault } = useVault();
+  const canRename = Boolean(adapter?.rename) && activeVault?.locator.scheme !== 'saf';
 
   const [items, setItems] = useState<VaultFileEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadFiles();
-    }, [currentPath])
-  );
+  const loadFiles = useCallback(async () => {
+    if (!adapter || !activeVault) {
+        setItems([]);
+        setLoading(false);
+        return;
+    }
 
-  const loadFiles = async () => {
     try {
-        const adapter = new MobileSandboxVaultAdapter();
-        await adapter.init();
         const allFiles = await adapter.listFiles();
 
         const entries = new Map<string, VaultFileEntry>();
@@ -71,7 +71,13 @@ export default function ExplorerScreen() {
     } finally {
         setLoading(false);
     }
-  };
+  }, [adapter, activeVault, currentPath]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFiles();
+    }, [loadFiles])
+  );
 
   const handlePress = (item: VaultFileEntry) => {
       if (item.type === 'directory') {
@@ -84,11 +90,13 @@ export default function ExplorerScreen() {
 
   const handleCreateNote = async () => {
     try {
+      if (!adapter || !activeVault) {
+        throw new Error('No active vault');
+      }
+
       const filename = `Untitled ${Date.now()}.md`;
       const fullPath = currentPath ? `${currentPath}/${filename}` : filename;
 
-      const adapter = new MobileSandboxVaultAdapter();
-      await adapter.init();
       await adapter.writeNote(fullPath, '', { createParents: true });
 
       // Encode path to handle nested folders
@@ -103,11 +111,15 @@ export default function ExplorerScreen() {
       try {
           setIsFolderPromptVisible(false);
           if (!folderName.trim()) return;
+          if (!adapter || !activeVault) {
+            throw new Error('No active vault');
+          }
 
           const fullPath = currentPath ? `${currentPath}/${folderName}` : folderName;
 
-          const adapter = new MobileSandboxVaultAdapter();
-          await adapter.init();
+          if (!adapter.mkdir) {
+            throw new Error('Creating folders is not supported for this vault');
+          }
 
           await adapter.mkdir(fullPath, { recursive: true });
           loadFiles();
@@ -119,6 +131,13 @@ export default function ExplorerScreen() {
 
   const handleRename = async (newName: string) => {
       if (!currentPath) return; // Cannot rename root
+      if (!adapter || !activeVault) {
+          throw new Error('No active vault');
+      }
+      if (!canRename) {
+          Alert.alert('Unsupported', 'This vault type does not support renaming here.');
+          return;
+      }
 
       try {
           await renameFolder({
@@ -126,7 +145,10 @@ export default function ExplorerScreen() {
               newName,
               searchIndex,
               linkIndex,
-              router
+              router,
+              adapter,
+              vaultId: activeVault.vaultId,
+              supportsRename: canRename
           });
       } catch (e: unknown) {
           // Alert is handled here, but we rethrow so EditableHeaderTitle keeps the input open
@@ -161,7 +183,7 @@ export default function ExplorerScreen() {
       <Stack.Screen
         options={{
             headerTitle: currentPath
-                ? () => <EditableHeaderTitle title={currentPath.split('/').pop() || ''} onRename={handleRename} />
+                ? () => <EditableHeaderTitle title={currentPath.split('/').pop() || ''} onRename={handleRename} disabled={!canRename} />
                 : 'Documents',
             headerRight: currentPath === '' ? () => (
                 <TouchableOpacity onPress={() => router.push('/vault/sandbox')} style={{ marginRight: 8 }}>

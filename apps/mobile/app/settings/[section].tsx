@@ -10,11 +10,13 @@ import { SliderRow } from '../../src/components/Settings/SliderRow';
 import { ActionRow } from '../../src/components/Settings/ActionRow';
 import { InfoRow } from '../../src/components/Settings/InfoRow';
 import { useVault } from '../../src/context/VaultContext';
+import { useIndex } from '../../src/context/IndexContext';
 
 export default function SettingsSectionScreen() {
   const { section } = useLocalSearchParams();
   const { resolveColor } = useTheme();
-  const { activeVault } = useVault(); // For Vault Switch action
+  const { activeVault, resetVault } = useVault(); // For Vault Switch action
+  const { forceRescan, isIndexing } = useIndex();
   const router = useRouter();
 
   const vaultName = activeVault?.vaultId === 'sandbox' ? 'Sandbox Vault' : (activeVault?.vaultId || 'None');
@@ -37,30 +39,50 @@ export default function SettingsSectionScreen() {
       if (actionId === 'switch-vault') {
           Alert.alert(
               'Switch Vault',
-              'Are you sure you want to close the current vault?',
+              'Close the current vault and pick another one?',
               [
                   { text: 'Cancel', style: 'cancel' },
                   {
                       text: 'Switch',
                       style: 'destructive',
-                      onPress: () => {
-                          // Clear active vault and reset nav
-                          // Since setActiveVault might need to persist, we rely on VaultContext
-                          // But VaultContext might just hold state.
-                          // The requirement says "Switch vault (action button)".
-                          // Assuming we just clear it and go back to root?
-                          // Or navigate to a vault picker screen?
-                          // For MVP, lets try to clear it if context allows, or just alert "Not implemented".
-                          // Actually, the vault picker is likely the index screen if no vault is selected.
-
-                          // TODO: Implement actual Vault Switch logic.
-                          // For now, we'll just navigate to root which checks for vault.
-                          // But to "close" it, we need to unset it.
-                          // Checking VaultContext...
-                          Alert.alert('Coming Soon', 'Vault switching logic is being finalized.');
+                      onPress: async () => {
+                          try {
+                              await resetVault();
+                              router.replace('/vault');
+                          } catch (e) {
+                              console.error('Failed to switch vault', e);
+                              Alert.alert('Error', 'Could not switch vault. Please try again.');
+                          }
                       }
                   }
               ]
+          );
+          return;
+      }
+      if (actionId === 'force-rescan') {
+          if (!activeVault) {
+              Alert.alert('No active vault', 'Open a vault before rescanning.');
+              return;
+          }
+          Alert.alert(
+            'Force rescan',
+            'Rebuild the search index from files on disk?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Rescan',
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await forceRescan();
+                        Alert.alert('Rescan started', 'Indexing will refresh in the background.');
+                    } catch (e) {
+                        console.error('Force rescan failed', e);
+                        Alert.alert('Error', 'Failed to start rescan.');
+                    }
+                }
+              }
+            ]
           );
       }
   };

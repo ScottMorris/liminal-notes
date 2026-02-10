@@ -81,6 +81,11 @@ export interface WriteNoteResult {
  */
 export interface VaultAdapter {
   /**
+   * Optional initialization step.
+   */
+  init?(): Promise<void>;
+
+  /**
    * Lists files in the vault.
    *
    * @param opts - Options for filtering the list.

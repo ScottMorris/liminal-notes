@@ -1,32 +1,41 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useIndex } from '../context/IndexContext';
 import { pinnedStorage, PinnedItem } from '../storage/pinned';
 import { recentsStorage, RecentItem } from '../storage/recents';
 import { FolderActivity } from '../indexing/sqlite/SQLiteSearchIndex';
-import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
 import { useFocusEffect } from 'expo-router';
+import { useVault } from '../context/VaultContext';
+import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 
 export interface HomeData {
   pinned: PinnedItem[];
   recents: RecentItem[];
   folders: FolderActivity[];
+  rootFiles: VaultFileEntry[];
   loading: boolean;
 }
 
 export function useHomeData() {
   const { searchIndex: index } = useIndex(); // Destructure searchIndex as index
+  const { adapter, activeVault } = useVault();
   const [data, setData] = useState<HomeData>({
     pinned: [],
     recents: [],
     folders: [],
+    rootFiles: [],
     loading: true,
   });
 
   const loadData = useCallback(async () => {
+    if (!activeVault || !adapter) {
+      setData(prev => ({ ...prev, pinned: [], recents: [], folders: [], loading: false }));
+      return;
+    }
+
     try {
       const [pinned, recents] = await Promise.all([
-        pinnedStorage.getAll(),
-        recentsStorage.getAll(),
+        pinnedStorage.getAll(activeVault.vaultId),
+        recentsStorage.getAll(activeVault.vaultId),
       ]);
 
       // 1. Get folders from Search Index (Activity based)
@@ -36,10 +45,9 @@ export function useHomeData() {
           activeFolders = await (index as any).getFolderActivity();
       }
 
-      // 2. Get folders from File System (to include empty ones)
-      const adapter = new MobileSandboxVaultAdapter();
-      await adapter.init();
+      // 2. Get folders/files from File System (to include empty ones and root files)
       const allFiles = await adapter.listFiles();
+      const rootFiles: VaultFileEntry[] = [];
 
       const fsFolders = new Set<string>();
       for (const file of allFiles) {
@@ -50,6 +58,8 @@ export function useHomeData() {
           } else if (file.type === 'directory') {
               // Explicit top-level folder
               fsFolders.add(file.id);
+          } else if (file.type === 'file') {
+              rootFiles.push(file);
           }
       }
 
@@ -83,10 +93,14 @@ export function useHomeData() {
           return a.path.localeCompare(b.path);
       });
 
+      // Dedupe root files by id in case adapters return duplicates
+      const uniqueRootFiles = Array.from(new Map(rootFiles.map(f => [f.id, f])).values());
+
       setData({
         pinned,
         recents,
         folders: mergedFolders,
+        rootFiles: uniqueRootFiles.sort((a, b) => (b.mtimeMs ?? 0) - (a.mtimeMs ?? 0)),
         loading: false,
       });
     } catch (e: any) {
@@ -98,7 +112,7 @@ export function useHomeData() {
       }
       setData(prev => ({ ...prev, loading: false }));
     }
-  }, [index]);
+  }, [index, activeVault, adapter]);
 
   // Reload when screen focuses to catch updates (e.g. new recent note)
   useFocusEffect(

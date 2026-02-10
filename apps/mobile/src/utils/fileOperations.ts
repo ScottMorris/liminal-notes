@@ -1,7 +1,6 @@
-import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
+import { VaultAdapter } from '@liminal-notes/vault-core/types';
 import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution';
 import { SearchIndex, LinkIndex } from '@liminal-notes/core-shared/indexing/types';
-import { NoteId } from '@liminal-notes/core-shared/types';
 import { recentsStorage } from '../storage/recents';
 import { pinnedStorage } from '../storage/pinned';
 import { FileExistsError, FileNotFoundError } from '../errors';
@@ -14,6 +13,9 @@ interface RenameOptions {
   linkIndex: LinkIndex | null;
   router: any;
   ignoreNextLoadRef: React.MutableRefObject<boolean>;
+  adapter: VaultAdapter | null;
+  vaultId: string | null;
+  supportsRename: boolean;
 }
 
 interface RenameFolderOptions {
@@ -22,6 +24,9 @@ interface RenameFolderOptions {
     searchIndex: SearchIndex | null;
     linkIndex: LinkIndex | null;
     router: any;
+    adapter: VaultAdapter | null;
+    vaultId: string | null;
+    supportsRename: boolean;
 }
 
 export async function renameFolder({
@@ -29,7 +34,10 @@ export async function renameFolder({
     newName,
     searchIndex,
     linkIndex,
-    router
+    router,
+    adapter,
+    vaultId,
+    supportsRename
 }: RenameFolderOptions): Promise<void> {
     // Parent path
     const segments = oldPath.split('/');
@@ -37,14 +45,17 @@ export async function renameFolder({
     const newPath = parent ? `${parent}/${newName}` : newName;
 
     if (newPath === oldPath) return;
+    if (!supportsRename || !adapter || !adapter.rename || !adapter.listFiles) {
+        throw new Error('Renaming folders is not supported for this vault');
+    }
 
     try {
-        const adapter = new MobileSandboxVaultAdapter();
-        await adapter.init();
-
         // Check if target exists
         // Adapter.stat throws if not found
         try {
+            if (!adapter.stat) {
+                throw new FileExistsError(newPath); // Conservatively block rename if we cannot check
+            }
             await adapter.stat(newPath);
             throw new FileExistsError(newPath);
         } catch (e: unknown) {
@@ -117,13 +128,13 @@ export async function renameFolder({
             // Recents & Pinned
             // We can explicitly update them here if we iterate, or do a bulk pass.
             // Let's do explicit update here for safety.
-            await recentsStorage.remove(oldId);
-            await recentsStorage.add(file.id);
-            await pinnedStorage.update(oldId, file.id);
+            await recentsStorage.remove(vaultId, oldId);
+            await recentsStorage.add(vaultId, file.id);
+            await pinnedStorage.update(vaultId, oldId, file.id);
         }
 
         // Also update the folder itself if it was pinned
-        await pinnedStorage.update(oldPath, newPath);
+        await pinnedStorage.update(vaultId, oldPath, newPath);
 
         // Update Router
         router.setParams({ folder: encodeURIComponent(newPath) });
@@ -141,7 +152,10 @@ export async function renameNote({
   searchIndex,
   linkIndex,
   router,
-  ignoreNextLoadRef
+  ignoreNextLoadRef,
+  adapter,
+  vaultId,
+  supportsRename
 }: RenameOptions): Promise<void> {
     // Construct new path: dirname(noteId) + newName + .md
     const segments = noteId.split('/');
@@ -149,11 +163,11 @@ export async function renameNote({
     const newPath = parent ? `${parent}/${newName}.md` : `${newName}.md`;
 
     if (newPath === noteId) return;
+    if (!supportsRename || !adapter || !adapter.rename) {
+        throw new Error('Renaming notes is not supported for this vault');
+    }
 
     try {
-      const adapter = new MobileSandboxVaultAdapter();
-      await adapter.init();
-
       // Check if target exists
       try {
         await adapter.readNote(newPath);
@@ -194,11 +208,11 @@ export async function renameNote({
       }
 
       // Update Recents
-      await recentsStorage.remove(noteId);
-      await recentsStorage.add(newPath);
+      await recentsStorage.remove(vaultId, noteId);
+      await recentsStorage.add(vaultId, newPath);
 
       // Update Pinned Items
-      await pinnedStorage.update(noteId, newPath);
+      await pinnedStorage.update(vaultId, noteId, newPath);
 
       // Seamless Transition
       ignoreNextLoadRef.current = true;

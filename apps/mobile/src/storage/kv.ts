@@ -2,9 +2,10 @@ import Storage from 'expo-sqlite/kv-store';
 import { KVStore } from './types';
 
 export const kv: KVStore = {
-  getItem: Storage.getItem,
-  setItem: Storage.setItem,
-  removeItem: Storage.removeItem,
+  // Wrap to preserve Storage context; its methods reference `this`.
+  getItem: (...args) => Storage.getItem(...args),
+  setItem: (...args) => Storage.setItem(...args),
+  removeItem: (...args) => Storage.removeItem(...args),
 
   // Type-safe JSON helpers
   async getJSON<T>(key: string): Promise<T | null> {

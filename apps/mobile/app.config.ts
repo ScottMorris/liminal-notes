@@ -50,7 +50,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       ...(config.plugins || []),
       'expo-sqlite',
-      'expo-dev-client'
+      'expo-dev-client',
+      'expo-file-system'
     ],
     extra: {
       ...config.extra,

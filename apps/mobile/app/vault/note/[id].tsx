@@ -5,7 +5,6 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme as usePaperTheme, ActivityIndicator, Text } from 'react-native-paper';
 import { EditorView, EditorViewRef } from '../../../src/components/EditorView';
 import { EditorCommand, DocChangedPayload, RequestResponsePayload } from '@liminal-notes/core-shared/mobile/editorProtocol';
-import { MobileSandboxVaultAdapter } from '../../../src/adapters/MobileSandboxVaultAdapter';
 import { recentsStorage } from '../../../src/storage/recents';
 import { useIndex } from '../../../src/context/IndexContext';
 import { parseWikilinks } from '@liminal-notes/core-shared/indexing/resolution';
@@ -20,6 +19,7 @@ import { NoteTags } from '../../../src/components/NoteTags';
 import { normalizeTagId, deriveTagsFromPath, humanizeTagId } from '@liminal-notes/core-shared/tags';
 import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/frontmatter';
 import { AddTagDialog } from '../../../src/components/AddTagDialog';
+import { useVault } from '../../../src/context/VaultContext';
 
 const DEBUG = false;
 
@@ -57,12 +57,14 @@ export default function NoteScreen() {
 
   const router = useRouter();
   const navigation = useNavigation();
+  const { adapter, activeVault } = useVault();
   const { searchIndex, linkIndex, tagIndex } = useIndex();
   const { settings } = useSettings();
   const { addTag, tags: tagDefs } = useTags();
   const paperTheme = usePaperTheme();
   const { theme } = useTheme(); // Use custom theme context to get active theme vars
   const insets = useSafeAreaInsets();
+  const canRename = Boolean(adapter?.rename);
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
@@ -192,12 +194,14 @@ export default function NoteScreen() {
 
     try {
         setStatus('loading');
+        if (!adapter || !activeVault) {
+            setStatus('error');
+            setErrorMsg('No active vault');
+            return;
+        }
 
         // Add to Recents
-        await recentsStorage.add(noteId);
-
-        const adapter = new MobileSandboxVaultAdapter();
-        await adapter.init(); // Ensure root exists
+        await recentsStorage.add(activeVault.vaultId, noteId);
 
         const result = await adapter.readNote(noteId);
         setContent(result.content);
@@ -242,6 +246,13 @@ export default function NoteScreen() {
 
   const handleRename = async (newName: string) => {
     if (!noteId) return;
+    if (!adapter || !activeVault) {
+        throw new Error('No active vault');
+    }
+    if (!canRename) {
+        Alert.alert('Unsupported', 'This vault type does not support renaming here.');
+        return;
+    }
 
     try {
         await renameNote({
@@ -251,7 +262,10 @@ export default function NoteScreen() {
             searchIndex,
             linkIndex,
             router,
-            ignoreNextLoadRef
+            ignoreNextLoadRef,
+            adapter,
+            vaultId: activeVault.vaultId,
+            supportsRename: canRename
         });
     } catch (e: unknown) {
        // Error handled in util but rethrown for UI alert
@@ -394,7 +408,10 @@ export default function NoteScreen() {
       textToSave = materializeTags(textToSave);
 
       try {
-          const adapter = new MobileSandboxVaultAdapter();
+          if (!adapter || !activeVault) {
+              throw new Error('No active vault');
+          }
+
           await adapter.writeNote(noteId!, textToSave);
           const saveTime = Date.now();
 
@@ -504,7 +521,7 @@ export default function NoteScreen() {
           <EditableHeaderTitle
              title={noteId?.split('/').pop()?.replace(/\.md$/i, '') || ''}
              onRename={handleRename}
-             disabled={isDirty} // Disable rename while unsaved changes exist to prevent sync issues
+             disabled={isDirty || !canRename} // Disable rename while unsaved or unsupported
           />
 
           <View style={styles.badges}>

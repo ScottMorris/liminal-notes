@@ -8,25 +8,28 @@ import { FolderSection } from '../../src/components/home/FolderSection';
 import { RecentSection } from '../../src/components/home/RecentSection';
 import { FAB, FABAction } from '../../src/components/FAB';
 import { Text, useTheme } from 'react-native-paper'; // Use Paper Text and useTheme
-import { MobileSandboxVaultAdapter } from '../../src/adapters/MobileSandboxVaultAdapter';
+import { List } from 'react-native-paper';
 import { PromptModal } from '../../src/components/PromptModal';
 import { HeaderMenu } from '../../src/components/HeaderMenu';
 import { IconButton } from 'react-native-paper';
+import { useVault } from '../../src/context/VaultContext';
+import type { VaultFileEntry } from '@liminal-notes/vault-core/types';
 
 export default function HomeScreen() {
   const router = useRouter();
   const isFocused = useIsFocused();
   const theme = useTheme();
-  const { pinned, recents, folders, loading, refresh } = useHomeData();
+  const { pinned, recents, folders, rootFiles, loading, refresh } = useHomeData();
+  const { adapter, activeVault } = useVault();
   const [isFolderPromptVisible, setIsFolderPromptVisible] = useState(false);
 
   const handleCreateNote = async () => {
     try {
+      if (!adapter || !activeVault) {
+        throw new Error('No active vault');
+      }
       // Create new note logic
       const id = `Untitled ${Date.now()}.md`;
-      const adapter = new MobileSandboxVaultAdapter();
-      await adapter.init();
-      // Write empty file
       await adapter.writeNote(id, '', { createParents: true });
 
       // Navigate - Encode ID to handle potential slashes (though less likely at root, good practice)
@@ -40,8 +43,13 @@ export default function HomeScreen() {
   const handleCreateFolder = async (folderName: string) => {
       try {
           setIsFolderPromptVisible(false);
-          const adapter = new MobileSandboxVaultAdapter();
-          await adapter.init();
+          if (!adapter || !activeVault) {
+            throw new Error('No active vault');
+          }
+
+          if (!adapter.mkdir) {
+            throw new Error('Creating folders is not supported for this vault');
+          }
 
           await adapter.mkdir(folderName, { recursive: true });
           // Navigate to folder
@@ -89,6 +97,7 @@ export default function HomeScreen() {
         <FocusedSection items={pinned} onRefresh={refresh} />
         <FolderSection folders={folders} onRefresh={refresh} />
         <RecentSection items={recents} onRefresh={refresh} />
+        <RootFilesSection files={rootFiles} />
 
         {/* Empty State */}
         {pinned.length === 0 && recents.length === 0 && folders.length === 0 && (
@@ -116,6 +125,31 @@ export default function HomeScreen() {
   );
 }
 
+function RootFilesSection({ files }: { files: VaultFileEntry[] }) {
+  const router = useRouter();
+  const theme = useTheme();
+
+  if (files.length === 0) return null;
+
+  return (
+    <View style={styles.rootFilesContainer}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>All notes</Text>
+      <View style={styles.listContainer}>
+        {files.map((file, idx) => (
+          <List.Item
+            key={file.id}
+            title={file.id}
+            description={file.mtimeMs ? new Date(file.mtimeMs).toLocaleDateString() : undefined}
+            left={props => <List.Icon {...props} icon="file-document-outline" />}
+            onPress={() => router.push(`/vault/note/${encodeURIComponent(file.id)}`)}
+            style={idx < files.length - 1 ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.outlineVariant } : undefined}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -137,5 +171,21 @@ const styles = StyleSheet.create({
   },
   emptyText: {
       fontSize: 18,
+  },
+  rootFilesContainer: {
+      marginTop: 16,
+      paddingHorizontal: 16,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  listContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#00000020',
   },
 });

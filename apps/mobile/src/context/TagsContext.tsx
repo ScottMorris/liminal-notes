@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { Tag, TagId, TagCatalogue } from '@liminal-notes/core-shared/tags';
+import { Tag, TagId } from '@liminal-notes/core-shared/tags';
 import { useVault } from './VaultContext';
 import { useIndex } from './IndexContext';
-import { MobileSandboxVaultAdapter } from '../adapters/MobileSandboxVaultAdapter';
 import { humanizeTagId, normalizeTagId } from '@liminal-notes/core-shared/tags';
 
 interface TagsContextType {
@@ -19,7 +18,7 @@ const TagsContext = createContext<TagsContextType | undefined>(undefined);
 const TAGS_FILE = '.liminal/tags.json';
 
 export function TagsProvider({ children }: { children: React.ReactNode }) {
-    const { activeVault } = useVault();
+    const { activeVault, adapter } = useVault();
     const { tagIndex } = useIndex(); // Used to trigger syncs if needed, or we just rely on IndexContext populating DB
     const [tags, setTags] = useState<Record<TagId, Tag>>({});
     const [isLoading, setIsLoading] = useState(false);
@@ -27,12 +26,13 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
 
     // Initial Load
     const loadTags = useCallback(async () => {
-        if (!activeVault) return;
+        if (!activeVault || !adapter) {
+            setTags({});
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
-            const adapter = new MobileSandboxVaultAdapter();
-            await adapter.init();
-
             // 1. Read from JSON (Source of Truth for definitions)
             let loadedTags: Record<TagId, Tag> = {};
             try {
@@ -95,7 +95,7 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setIsLoading(false);
         }
-    }, [activeVault, tagIndex]);
+    }, [activeVault, adapter, tagIndex]);
 
     useEffect(() => {
         loadTags();
@@ -105,7 +105,7 @@ export function TagsProvider({ children }: { children: React.ReactNode }) {
         if (isWritingRef.current) return;
         isWritingRef.current = true;
         try {
-            const adapter = new MobileSandboxVaultAdapter();
+            if (!adapter) return;
             await adapter.writeNote(TAGS_FILE, JSON.stringify(newTags, null, 2), { createParents: true });
             setTags(newTags);
 
