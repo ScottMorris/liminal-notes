@@ -16,9 +16,8 @@ On Desktop (Tauri), we utilize the `notify` crate to receive real-time file syst
     *   System temp files
 3.  **Debouncing**: Rapid events are coalesced (500ms debounce) to prevent UI flooding.
 4.  **Events**: The backend emits:
-    *   `vault:file-created`
+    *   `vault:file-changed` (for create/modify)
     *   `vault:file-deleted`
-    *   `vault:file-changed`
 5.  **Frontend Reaction**:
     *   **Indices**: Search and Link indices update incrementally.
     *   **File Tree**: Refreshes immediately.
