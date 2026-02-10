@@ -75,6 +75,11 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   const [closingTabId, setClosingTabId] = useState<string | null>(null);
 
   const editorRef = useRef<EditorHandle>(null);
+  const contentRef = useRef(content);
+
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
 
   const reminderCount = useMemo(() => {
     if (!activeTab || !activeTab.path) return 0;
@@ -230,7 +235,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                 const { content: newContent } = await desktopVault.readNote(changedPath);
 
                 // Check if content actually changed to avoid cursor reset loop on self-save
-                if (newContent === content) {
+                if (newContent === contentRef.current) {
                     return;
                 }
 
@@ -253,7 +258,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
     return () => {
         unlisten.then(f => f());
     };
-  }, [activeTab, updateTabState]);
+  }, [activeTab, updateTabState, notify]);
 
   const handleConflictReload = async () => {
       if (!activeTab) return;
