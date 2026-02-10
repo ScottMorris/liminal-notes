@@ -21,7 +21,7 @@ import { parseFrontmatter, updateFrontmatter } from '@liminal-notes/core-shared/
 import { AddTagDialog } from '../../../src/components/AddTagDialog';
 import { useVault } from '../../../src/context/VaultContext';
 import { DeviceEventEmitter } from 'react-native';
-import { FileWatcherEvent } from '../../../src/services/FileWatcher';
+import { FileWatcherEvent, fileWatcher } from '../../../src/services/FileWatcher';
 import { MobileFileConflictBanner } from '../../../src/components/MobileFileConflictBanner';
 
 const DEBUG = false;
@@ -207,6 +207,14 @@ export default function NoteScreen() {
       };
   }, [noteId, isDirty, saveStatus]);
 
+  useEffect(() => {
+      if (!conflictPath) return;
+      if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = null;
+      }
+  }, [conflictPath]);
+
   const loadNote = async () => {
     if (!noteId) {
         setStatus('error');
@@ -340,6 +348,10 @@ export default function NoteScreen() {
 
   const requestSave = () => {
     if (!editorRef.current || !noteId) return;
+    if (conflictPath && conflictPath === noteId) {
+      if (DEBUG) console.log('[NoteScreen] Save blocked due to unresolved file conflict');
+      return;
+    }
 
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
@@ -436,6 +448,11 @@ export default function NoteScreen() {
       textToSave = materializeTags(textToSave);
 
       try {
+          if (conflictPath && conflictPath === noteId) {
+              if (DEBUG) console.log('[NoteScreen] Write blocked due to unresolved file conflict');
+              return;
+          }
+
           if (!adapter || !activeVault) {
               throw new Error('No active vault');
           }
