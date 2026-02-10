@@ -1,19 +1,23 @@
 use notify::RecursiveMode;
 use notify_debouncer_mini::{new_debouncer, DebounceEventResult};
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
+use walkdir::WalkDir;
 
 // Wrapper struct to hold the watcher
 pub struct FileWatcher {
     debouncer: Arc<Mutex<Option<notify_debouncer_mini::Debouncer<notify::RecommendedWatcher>>>>,
+    known_paths: Arc<Mutex<HashSet<PathBuf>>>,
 }
 
 impl FileWatcher {
     pub fn new() -> Self {
         Self {
             debouncer: Arc::new(Mutex::new(None)),
+            known_paths: Arc::new(Mutex::new(HashSet::new())),
         }
     }
 
@@ -21,23 +25,30 @@ impl FileWatcher {
         // Stop existing watcher if any
         self.stop();
 
+        let snapshot = build_known_paths_snapshot(&path);
+        {
+            let mut known_paths = self.known_paths.lock().unwrap();
+            *known_paths = snapshot;
+        }
+
         let app_handle = app.clone();
         let path_clone = path.clone();
+        let known_paths = self.known_paths.clone();
 
         // 500ms debounce time
         let mut debouncer = new_debouncer(
             Duration::from_millis(500),
-            move |res: DebounceEventResult| {
-                match res {
-                    Ok(events) => {
-                        for event in events {
-                            handle_event(&app_handle, event.path, &path_clone);
-                        }
+            move |res: DebounceEventResult| match res {
+                Ok(events) => {
+                    let mut known = known_paths.lock().unwrap();
+                    for event in events {
+                        handle_event(&app_handle, event.path, &path_clone, &mut known);
                     }
-                    Err(e) => eprintln!("Watch error: {:?}", e),
                 }
+                Err(e) => eprintln!("Watch error: {:?}", e),
             },
-        ).map_err(|e| format!("Failed to create watcher: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to create watcher: {}", e))?;
 
         debouncer
             .watcher()
@@ -53,38 +64,31 @@ impl FileWatcher {
     pub fn stop(&self) {
         // Dropping the debouncer stops it
         *self.debouncer.lock().unwrap() = None;
+        self.known_paths.lock().unwrap().clear();
     }
 }
 
-fn handle_event(app: &AppHandle, path: PathBuf, root: &Path) {
+fn handle_event(app: &AppHandle, path: PathBuf, root: &Path, known_paths: &mut HashSet<PathBuf>) {
     if should_ignore(root, &path) {
         return;
     }
 
-    // Debouncer gives us just the path and generic "Any" event usually,
-    // but notify-debouncer-mini gives DebouncedEvent { path, kind }.
-    // Wait, check version 0.4.1 signature.
-    // 0.4.1: pub struct DebouncedEvent { pub path: PathBuf, pub kind: DebouncedEventKind }
-    // Enums: Any, AnyContinuous.
-    // It lumps things together. We mostly care that *something* changed.
-
-    // We can check if file exists to distinguish Create/Modify vs Delete
     if path.exists() {
-         // Could be create or modify. We treat them similarly for index updates.
-         // But for UI "Conflict", we usually care if it's modified.
-         // Let's emit 'changed' for both, or try to infer?
-         // Since we don't have previous state easily here, emit 'changed' is safest generic.
-         // But wait, the previous code emitted created/deleted/changed.
-         // 'deleted' is clear (path !exists).
-         emit_event(app, "vault:file-changed", root, &path);
+        let event_name = if known_paths.insert(path.clone()) {
+            "vault:file-created"
+        } else {
+            "vault:file-modified"
+        };
+        emit_event(app, event_name, root, &path);
     } else {
-         emit_event(app, "vault:file-deleted", root, &path);
+        known_paths.remove(&path);
+        emit_event(app, "vault:file-deleted", root, &path);
     }
 }
 
 fn should_ignore(root: &Path, path: &Path) -> bool {
     let Ok(relative) = path.strip_prefix(root) else {
-        return false;
+        return true;
     };
 
     // Ignore .git, .liminal, etc.
@@ -96,6 +100,20 @@ fn should_ignore(root: &Path, path: &Path) -> bool {
         }
     }
     false
+}
+
+fn build_known_paths_snapshot(root: &Path) -> HashSet<PathBuf> {
+    let mut known_paths = HashSet::new();
+
+    for entry in WalkDir::new(root).into_iter().filter_map(Result::ok) {
+        let path = entry.path();
+        if path == root || should_ignore(root, path) {
+            continue;
+        }
+        known_paths.insert(path.to_path_buf());
+    }
+
+    known_paths
 }
 
 fn emit_event(app: &AppHandle, event_name: &str, root: &Path, full_path: &Path) {
@@ -113,8 +131,11 @@ struct Payload {
 
 #[cfg(test)]
 mod tests {
-    use super::should_ignore;
+    use super::{build_known_paths_snapshot, should_ignore};
+    use std::fs;
     use std::path::Path;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn ignores_hidden_paths_inside_vault_root() {
@@ -128,5 +149,38 @@ mod tests {
         let root = Path::new("/home/user/.vault");
         let path = Path::new("/home/user/.vault/notes/today.md");
         assert!(!should_ignore(root, path));
+    }
+
+    #[test]
+    fn ignores_paths_outside_vault_root() {
+        let root = Path::new("/vault");
+        let path = Path::new("/elsewhere/note.md");
+        assert!(should_ignore(root, path));
+    }
+
+    #[test]
+    fn snapshot_excludes_hidden_entries() {
+        let temp_root = temp_dir("watcher-snapshot");
+
+        fs::create_dir_all(temp_root.join("notes")).unwrap();
+        fs::create_dir_all(temp_root.join(".git")).unwrap();
+        fs::write(temp_root.join("notes").join("visible.md"), "# visible").unwrap();
+        fs::write(temp_root.join(".git").join("config"), "hidden").unwrap();
+
+        let snapshot = build_known_paths_snapshot(&temp_root);
+        assert!(snapshot.contains(&temp_root.join("notes").join("visible.md")));
+        assert!(!snapshot.contains(&temp_root.join(".git").join("config")));
+
+        fs::remove_dir_all(temp_root).unwrap();
+    }
+
+    fn temp_dir(prefix: &str) -> PathBuf {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("{prefix}-{suffix}"));
+        fs::create_dir_all(&path).unwrap();
+        path
     }
 }

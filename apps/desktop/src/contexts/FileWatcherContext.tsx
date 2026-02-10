@@ -36,7 +36,7 @@ export function registerFileWatchListeners(
     ]);
   });
 
-  const unlistenChanged = listenFn<FileEvent>('vault:file-changed', async (event) => {
+  const unlistenModified = listenFn<FileEvent>('vault:file-modified', async (event) => {
     await Promise.all([
       updateSearch(event.payload.path),
       updateLinks(event.payload.path),
@@ -52,7 +52,7 @@ export function registerFileWatchListeners(
 
   return () => {
     void unlistenCreated.then((f) => f());
-    void unlistenChanged.then((f) => f());
+    void unlistenModified.then((f) => f());
     void unlistenDeleted.then((f) => f());
   };
 }

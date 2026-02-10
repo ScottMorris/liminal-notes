@@ -40,14 +40,14 @@ describe('registerFileWatchListeners', () => {
 
     expect(listenSpy).toHaveBeenCalledTimes(3);
     expect(callbacks.has('vault:file-created')).toBe(true);
-    expect(callbacks.has('vault:file-changed')).toBe(true);
+    expect(callbacks.has('vault:file-modified')).toBe(true);
     expect(callbacks.has('vault:file-deleted')).toBe(true);
 
     await callbacks.get('vault:file-created')?.({ payload: { path: 'new.md' } });
     expect(updateSearch).toHaveBeenCalledWith('new.md');
     expect(updateLinks).toHaveBeenCalledWith('new.md');
 
-    await callbacks.get('vault:file-changed')?.({ payload: { path: 'updated.md' } });
+    await callbacks.get('vault:file-modified')?.({ payload: { path: 'updated.md' } });
     expect(updateSearch).toHaveBeenCalledWith('updated.md');
     expect(updateLinks).toHaveBeenCalledWith('updated.md');
 

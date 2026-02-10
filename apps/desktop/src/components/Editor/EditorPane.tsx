@@ -220,7 +220,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   // Load content when active tab changes
   // Listen for external file changes (Desktop File Watcher)
   useEffect(() => {
-    const unlisten = listen<{ path: string }>('vault:file-changed', async (event) => {
+    const unlisten = listen<{ path: string }>('vault:file-modified', async (event) => {
         const changedPath = event.payload.path;
 
         // Only care if it affects the active tab

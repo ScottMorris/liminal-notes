@@ -60,11 +60,13 @@ export function FileTree({
           if (onRefresh) onRefresh();
       };
 
-      const unlistenChanged = listen('vault:file-changed', handleFileEvent);
+      const unlistenCreated = listen('vault:file-created', handleFileEvent);
+      const unlistenModified = listen('vault:file-modified', handleFileEvent);
       const unlistenDeleted = listen('vault:file-deleted', handleFileEvent);
 
       return () => {
-          unlistenChanged.then(f => f());
+          unlistenCreated.then(f => f());
+          unlistenModified.then(f => f());
           unlistenDeleted.then(f => f());
       };
   }, [onRefresh]);
