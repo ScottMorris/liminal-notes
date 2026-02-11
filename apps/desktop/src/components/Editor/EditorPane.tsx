@@ -873,7 +873,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                             path={activeTab.path}
                             getEditorContext={getEditorContext}
                             onLinkClick={handleNavigate}
-                            showLineNumbers={settings['editor.showLineNumbers'] !== false}
+                            showLineNumbers={settings['editor.showLineNumbers'] === true}
                             highlightActiveLineEnabled={settings['editor.highlightActiveLine'] === true}
                             readableLineLength={settings['editor.readableLineLength'] === true}
                             wordWrap={settings['editor.wordWrap'] !== false}

@@ -85,7 +85,11 @@ export const getSections = (
                         id: 'show-line-numbers',
                         label: 'Show line numbers',
                         description: 'Show line numbers in the gutter.',
-                        controls: [{ kind: 'boolean', key: 'editor.showLineNumbers' }]
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'editor.showLineNumbers',
+                            defaultValue: false
+                        }]
                     },
                     {
                         id: 'highlight-active-line',

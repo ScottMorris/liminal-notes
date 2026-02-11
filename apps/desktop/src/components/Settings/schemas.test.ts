@@ -40,6 +40,15 @@ describe('settings appearance schema', () => {
 });
 
 describe('settings editor schema', () => {
+  it('defaults show line numbers to disabled', () => {
+    const editor = getEditorSection();
+    const behaviourGroup = editor.groups.find((group) => group.id === 'behaviour');
+    const lineNumberRow = behaviourGroup?.rows.find((row) => row.id === 'show-line-numbers');
+    expect(lineNumberRow).toBeDefined();
+    expect(lineNumberRow?.controls[0].key).toBe('editor.showLineNumbers');
+    expect(lineNumberRow?.controls[0].defaultValue).toBe(false);
+  });
+
   it('includes highlight active line control with default false', () => {
     const editor = getEditorSection();
     const behaviourGroup = editor.groups.find((group) => group.id === 'behaviour');
