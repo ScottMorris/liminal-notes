@@ -61,7 +61,7 @@ function AppContent() {
   } = useVault();
 
   // Use Tabs Context
-  const { openTab, switchTab, openTabs, closeTab, activeTabId, dispatch } = useTabs();
+  const { openTab, switchTab, openTabs, closeTab, activeTabId, dispatch, renameTab } = useTabs();
   // Use Navigation Context
   const { goBack, goForward } = useNavigation();
   // Use Settings Context
@@ -306,20 +306,8 @@ function AppContent() {
           await desktopVault.rename(oldPath, newPath);
           await refreshFiles();
 
-          const oldTab = openTabs.find(t => t.id === oldPath); // Assuming ID=path
-          if (oldTab) {
-              closeTab(oldPath);
-              openTab({
-                  id: newPath,
-                  path: newPath,
-                  title: newFilename.replace('.md', ''),
-                  mode: 'source',
-                  isDirty: oldTab.isDirty,
-                  isLoading: false,
-                  isUnsaved: false,
-                  isPreview: oldTab.isPreview, // Preserve preview state? Or force permanent? Usually permanent on rename.
-                  editorState: oldTab.editorState
-              });
+          if (openTabs.some(t => t.id === oldPath)) {
+              renameTab(oldPath, newPath, newPath, newFilename.replace('.md', ''));
           }
 
       } catch (e) {
@@ -327,7 +315,7 @@ function AppContent() {
       } finally {
           setEditingPath(null);
       }
-  }, [refreshFiles, openTabs, closeTab, openTab]);
+  }, [refreshFiles, openTabs, renameTab]);
 
   const handleFileDelete = useCallback(async (path: string) => {
       try {

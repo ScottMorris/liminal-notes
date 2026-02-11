@@ -99,4 +99,55 @@ describe('tabsReducer', () => {
       expect(newState.openTabs).toHaveLength(2);
       expect(newState.activeTabId).toBe('note-2');
   });
+
+  it('should handle RENAME_TAB without changing tab order', () => {
+      const tab2: OpenTab = { ...mockTab, id: 'note-2', path: 'note-2.md', title: 'Note 2' };
+      const tab3: OpenTab = { ...mockTab, id: 'note-3', path: 'note-3.md', title: 'Note 3' };
+      const state: TabsState = {
+        openTabs: [mockTab, tab2, tab3],
+        activeTabId: tab2.id,
+      };
+
+      const newState = tabsReducer(state, {
+        type: 'RENAME_TAB',
+        tabId: 'note-2',
+        newId: 'renamed-note',
+        path: 'renamed-note.md',
+        title: 'Renamed Note',
+      });
+
+      expect(newState.openTabs.map(t => t.id)).toEqual(['note-1', 'renamed-note', 'note-3']);
+      expect(newState.openTabs[1].path).toBe('renamed-note.md');
+      expect(newState.openTabs[1].title).toBe('Renamed Note');
+      expect(newState.activeTabId).toBe('renamed-note');
+  });
+
+  it('should merge when RENAME_TAB target id is already open', () => {
+      const tab2: OpenTab = {
+        ...mockTab,
+        id: 'note-2',
+        path: 'note-2.md',
+        title: 'Note 2',
+        isDirty: true,
+        editorState: '{"doc":"changed"}'
+      };
+      const tab3: OpenTab = { ...mockTab, id: 'note-3', path: 'note-3.md', title: 'Note 3' };
+      const state: TabsState = {
+        openTabs: [mockTab, tab2, tab3],
+        activeTabId: tab2.id,
+      };
+
+      const newState = tabsReducer(state, {
+        type: 'RENAME_TAB',
+        tabId: 'note-2',
+        newId: 'note-3',
+        path: 'note-3.md',
+        title: 'Note 3',
+      });
+
+      expect(newState.openTabs.map(t => t.id)).toEqual(['note-1', 'note-3']);
+      expect(newState.openTabs[1].isDirty).toBe(true);
+      expect(newState.openTabs[1].editorState).toBe('{"doc":"changed"}');
+      expect(newState.activeTabId).toBe('note-3');
+  });
 });

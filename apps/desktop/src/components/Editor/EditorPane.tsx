@@ -49,6 +49,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
     updateTabState,
     updateTabTitle,
     updateTabPath,
+    renameTab,
     updateTabAiState,
     closeTab: closeTabContext,
     openTab
@@ -601,17 +602,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
             await onRefreshFiles();
           }
 
-          // Re-open tab with new ID
-          const newTab = {
-              ...activeTab,
-              id: newPath,
-              path: newPath,
-              title: newName,
-          };
-
-          // Close old and open new to update ID
-          closeTabContext(activeTab.id);
-          openTab(newTab);
+          renameTab(activeTab.id, newPath, newPath, newName);
 
           notify('Renamed successfully', 'success');
       } catch (e) {
