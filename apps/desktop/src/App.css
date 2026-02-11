@@ -505,6 +505,10 @@ button:disabled {
   overflow: hidden;
 }
 
+.document-column {
+  border-left: 1px solid var(--ln-border);
+}
+
 .editor-pane, .preview-pane {
   flex: 1;
   display: flex;
