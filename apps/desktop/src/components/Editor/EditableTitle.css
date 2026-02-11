@@ -17,6 +17,8 @@
   width: 100%;
   box-sizing: border-box;
   cursor: text;
+  user-select: none;
+  -webkit-user-select: none;
   transition: background-color 0.1s, border-color 0.1s;
 }
 
@@ -28,6 +30,8 @@
   background: var(--ln-bg);
   border-color: var(--ln-border);
   box-shadow: 0 0 0 2px var(--ln-accent-transparent, rgba(66, 153, 225, 0.3));
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .editable-title-error-banner {

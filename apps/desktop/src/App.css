@@ -45,6 +45,33 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Noto Color Emoji', 'Noto Emoji';
 }
 
+/* Prevent accidental text selection in UI chrome. */
+.title-bar,
+.title-bar *,
+.sidebar,
+.sidebar *,
+.tab-bar-container,
+.tab-bar-container *,
+.editor-header,
+.editor-header *,
+.backlinks-panel,
+.backlinks-panel * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Keep editing and reading surfaces selectable. */
+.cm-editor,
+.cm-editor *,
+.markdown-preview,
+.markdown-preview *,
+input,
+textarea,
+[contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 #root {
   width: 100%;
   height: 100vh;
