@@ -88,6 +88,16 @@ export const getSections = (
                         controls: [{ kind: 'boolean', key: 'editor.showLineNumbers' }]
                     },
                     {
+                        id: 'highlight-active-line',
+                        label: 'Highlight active line',
+                        description: 'Highlight the line where your cursor is currently placed.',
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'editor.highlightActiveLine',
+                            defaultValue: false
+                        }]
+                    },
+                    {
                         id: 'readable-line-length',
                         label: 'Readable line length',
                         description: 'Limit maximum line length.',
@@ -97,7 +107,11 @@ export const getSections = (
                         id: 'word-wrap',
                         label: 'Word wrap',
                         description: 'Wrap long lines to fit the window.',
-                        controls: [{ kind: 'boolean', key: 'editor.wordWrap' }]
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'editor.wordWrap',
+                            defaultValue: true
+                        }]
                     }
                 ]
             },
@@ -108,7 +122,11 @@ export const getSections = (
                     {
                         id: 'spellcheck-enabled',
                         label: 'Enable spellcheck',
-                        controls: [{ kind: 'boolean', key: 'editor.spellcheck.enabled' }]
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'editor.spellcheck.enabled',
+                            defaultValue: true
+                        }]
                     },
                     {
                         id: 'spellcheck-language',

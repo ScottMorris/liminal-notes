@@ -9,6 +9,13 @@ const getAppearanceRows = (isLinux: boolean) => {
   return appearance!.groups[0].rows;
 };
 
+const getEditorSection = () => {
+  const sections = getSections([], '0.1.0', new Set<string>(), false);
+  const editor = sections.find((section) => section.id === 'editor');
+  expect(editor).toBeDefined();
+  return editor!;
+};
+
 describe('settings appearance schema', () => {
   it('hides system accent control on non-Linux', () => {
     const rows = getAppearanceRows(false);
@@ -29,5 +36,36 @@ describe('settings appearance schema', () => {
     expect(fontSizeRow).toBeDefined();
     expect(fontSizeRow?.controls[0].kind).toBe('slider');
     expect(fontSizeRow?.controls[0].defaultValue).toBe(DEFAULT_FONT_SIZE);
+  });
+});
+
+describe('settings editor schema', () => {
+  it('includes highlight active line control with default false', () => {
+    const editor = getEditorSection();
+    const behaviourGroup = editor.groups.find((group) => group.id === 'behaviour');
+    expect(behaviourGroup).toBeDefined();
+
+    const activeLineRow = behaviourGroup?.rows.find((row) => row.id === 'highlight-active-line');
+    expect(activeLineRow).toBeDefined();
+    expect(activeLineRow?.controls[0].key).toBe('editor.highlightActiveLine');
+    expect(activeLineRow?.controls[0].defaultValue).toBe(false);
+  });
+
+  it('defaults word wrap to enabled', () => {
+    const editor = getEditorSection();
+    const behaviourGroup = editor.groups.find((group) => group.id === 'behaviour');
+    const wordWrapRow = behaviourGroup?.rows.find((row) => row.id === 'word-wrap');
+    expect(wordWrapRow).toBeDefined();
+    expect(wordWrapRow?.controls[0].key).toBe('editor.wordWrap');
+    expect(wordWrapRow?.controls[0].defaultValue).toBe(true);
+  });
+
+  it('defaults spellcheck to enabled', () => {
+    const editor = getEditorSection();
+    const spellcheckGroup = editor.groups.find((group) => group.id === 'spellcheck');
+    const spellcheckRow = spellcheckGroup?.rows.find((row) => row.id === 'spellcheck-enabled');
+    expect(spellcheckRow).toBeDefined();
+    expect(spellcheckRow?.controls[0].key).toBe('editor.spellcheck.enabled');
+    expect(spellcheckRow?.controls[0].defaultValue).toBe(true);
   });
 });

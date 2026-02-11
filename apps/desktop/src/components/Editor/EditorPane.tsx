@@ -874,8 +874,9 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                             getEditorContext={getEditorContext}
                             onLinkClick={handleNavigate}
                             showLineNumbers={settings['editor.showLineNumbers'] !== false}
+                            highlightActiveLineEnabled={settings['editor.highlightActiveLine'] === true}
                             readableLineLength={settings['editor.readableLineLength'] === true}
-                            wordWrap={settings['editor.wordWrap'] === true}
+                            wordWrap={settings['editor.wordWrap'] !== false}
                             extensions={ttsExtensions}
                             />
                         )}
