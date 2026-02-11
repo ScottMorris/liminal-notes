@@ -32,6 +32,7 @@ import { buildPreviewContent } from './previewContent';
 import { ContextMenu } from './ContextMenu/ContextMenu';
 import type { MenuModel, MenuPosition } from './ContextMenu/types';
 import { createPreviewContextMenuModel } from './previewContextMenu';
+import { resolveNavigablePath } from './navigationPath';
 
 interface EditorPaneProps {
   onRefreshFiles?: () => Promise<void>;
@@ -763,22 +764,24 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   };
 
   const handleNavigate = (path: string) => {
+      const navigablePath = resolveNavigablePath(path, resolvePath);
+
       // Save current state before navigating
       if (activeTabId && editorRef.current) {
           const state = editorRef.current.getEditorState();
           updateTabState(activeTabId, state);
       }
 
-      const existing = openTabs.find(t => t.path === path);
+      const existing = openTabs.find(t => t.path === navigablePath);
       if (existing) {
           switchTab(existing.id);
       } else {
-          const title = path.split('/').pop()?.replace('.md', '') || path;
+          const title = navigablePath.split('/').pop()?.replace('.md', '') || navigablePath;
           dispatch({
               type: 'OPEN_TAB',
               tab: {
-                  id: path,
-                  path: path,
+                  id: navigablePath,
+                  path: navigablePath,
                   title: title,
                   mode: 'source',
                   isDirty: false,
