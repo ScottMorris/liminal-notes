@@ -3,6 +3,8 @@ import { Tab } from './Tab';
 import { OpenTab } from '../../types/tabs';
 import { ChevronDownIcon } from '../Icons';
 import { useTabs } from '../../contexts/TabsContext';
+import { ContextMenu } from './ContextMenu/ContextMenu';
+import type { MenuModel, MenuPosition } from './ContextMenu/types';
 
 // Preload a tiny transparent image for optional drag ghost suppression
 const dragGhostImg = new Image();
@@ -18,12 +20,78 @@ interface TabBarProps {
   onKeepTab: (tabId: string) => void;
 }
 
+export function createTabContextMenuModel(
+  tabId: string,
+  tabPath: string | null,
+  tabs: OpenTab[],
+  actions: {
+    closeTab: (id: string) => void;
+    closeTabs: (ids: string[]) => void;
+    closeOtherTabs: (id: string) => void;
+    closeTabsToRight: (id: string) => void;
+    copyPath: (path: string) => void;
+  }
+): MenuModel {
+  const tabIndex = tabs.findIndex(t => t.id === tabId);
+  const tabsToRight = tabIndex >= 0 ? tabs.slice(tabIndex + 1).map(t => t.id) : [];
+
+  return {
+    sections: [
+      {
+        items: [
+          {
+            id: 'tab.copyPath',
+            label: 'Copy note path',
+            icon: 'copy-clipboard',
+            disabled: !tabPath,
+            action: () => {
+              if (tabPath) actions.copyPath(tabPath);
+            }
+          }
+        ]
+      },
+      {
+        items: [
+          {
+            id: 'tab.close',
+            label: 'Close tab',
+            action: () => actions.closeTab(tabId)
+          },
+          {
+            id: 'tab.closeOthers',
+            label: 'Close other tabs',
+            disabled: tabs.length <= 1,
+            action: () => actions.closeOtherTabs(tabId)
+          },
+          {
+            id: 'tab.closeRight',
+            label: 'Close tabs to the right',
+            disabled: tabsToRight.length === 0,
+            action: () => actions.closeTabsToRight(tabId)
+          },
+          {
+            id: 'tab.closeAll',
+            label: 'Close all tabs',
+            icon: 'trash',
+            disabled: tabs.length === 0,
+            action: () => actions.closeTabs(tabs.map(t => t.id))
+          }
+        ]
+      }
+    ]
+  };
+}
+
 export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }: TabBarProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const { reorderTabs } = useTabs();
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
   const [hoverTabId, setHoverTabId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    model: MenuModel;
+    position: MenuPosition;
+  } | null>(null);
   const reorderFrame = useRef<number | null>(null);
   const pendingTargetId = useRef<string | null>(null);
 
@@ -141,6 +209,38 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
       setHoverTabId(null);
   };
 
+  const closeTabs = (ids: string[]) => {
+    ids.forEach((id) => onTabClose(id));
+  };
+
+  const handleTabContextMenu = (e: React.MouseEvent, tab: OpenTab) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const model = createTabContextMenuModel(tab.id, tab.path ?? null, tabs, {
+      closeTab: (id) => onTabClose(id),
+      closeTabs,
+      closeOtherTabs: (id) => closeTabs(tabs.filter(t => t.id !== id).map(t => t.id)),
+      closeTabsToRight: (id) => {
+        const idx = tabs.findIndex(t => t.id === id);
+        if (idx >= 0) closeTabs(tabs.slice(idx + 1).map(t => t.id));
+      },
+      copyPath: async (path) => {
+        try {
+          const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+          await writeText(path);
+        } catch (err) {
+          console.error('Failed to copy tab path', err);
+        }
+      }
+    });
+
+    setContextMenu({
+      model,
+      position: { x: e.clientX, y: e.clientY }
+    });
+  };
+
   return (
     <div className="tab-bar-container">
         <div
@@ -165,6 +265,7 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
                     tab={tab}
                     isActive={tab.id === activeTabId}
                     onSelect={() => onTabSwitch(tab.id)}
+                    onContextMenu={(e) => handleTabContextMenu(e, tab)}
                     onClose={(e) => {
                         e.stopPropagation(); // Stop propagation to wrapper if any
                         onTabClose(tab.id);
@@ -207,6 +308,16 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
                 </>
             )}
         </div>
+        {contextMenu && (
+            <ContextMenu
+                model={contextMenu.model}
+                position={contextMenu.position}
+                onClose={() => setContextMenu(null)}
+                onItemClick={(_itemId, action) => {
+                    if (action) action();
+                }}
+            />
+        )}
     </div>
   );
 }

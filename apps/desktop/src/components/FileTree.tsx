@@ -497,6 +497,7 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
 function NodeInput({ initialValue, isDir, originalExtension, onSubmit, onCancel }: { initialValue: string, isDir: boolean, originalExtension?: string, onSubmit: (val: string) => void, onCancel: () => void }) {
     const [val, setVal] = useState(initialValue);
     const inputRef = useRef<HTMLInputElement>(null);
+    const didSubmitRef = useRef(false);
 
     useEffect(() => {
         if (inputRef.current) {
@@ -508,8 +509,13 @@ function NodeInput({ initialValue, isDir, originalExtension, onSubmit, onCancel 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.stopPropagation();
-            if (val.trim()) onSubmit(val.trim());
-            else onCancel();
+            const next = val.trim();
+            if (next) {
+                didSubmitRef.current = true;
+                onSubmit(next);
+            } else {
+                onCancel();
+            }
         } else if (e.key === 'Escape') {
             e.stopPropagation();
             onCancel();
@@ -531,7 +537,14 @@ function NodeInput({ initialValue, isDir, originalExtension, onSubmit, onCancel 
                 onKeyDown={handleKeyDown}
                 onBlur={(e) => {
                     e.stopPropagation();
-                    setTimeout(() => onCancel(), 100);
+                    if (didSubmitRef.current) return;
+                    const next = val.trim();
+                    if (next) {
+                        didSubmitRef.current = true;
+                        onSubmit(next);
+                    } else {
+                        onCancel();
+                    }
                 }}
                 style={{
                     fontFamily: 'inherit',

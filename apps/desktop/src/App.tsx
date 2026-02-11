@@ -220,9 +220,46 @@ function AppContent() {
 
   }, [openTab, resolvePath, refreshFiles]);
 
-  const handleCreateCommit = useCallback(async (_name: string) => {
-      // This is for the FileTree input if we still use it.
-  }, []);
+  const handleCreateCommit = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setIsCreating(false);
+      setEditingPath(null);
+      return;
+    }
+
+    const hasMarkdownExtension = /\.md$/i.test(trimmed);
+    const baseTitle = hasMarkdownExtension ? trimmed.replace(/\.md$/i, '') : trimmed;
+    let path = hasMarkdownExtension ? trimmed : `${trimmed}.md`;
+    let counter = 1;
+
+    while (resolvePath(path)) {
+      path = `${baseTitle} ${counter}.md`;
+      counter++;
+    }
+
+    try {
+      await desktopVault.writeNote(path, '');
+      openTab({
+        id: path,
+        path,
+        title: path.split('/').pop()?.replace(/\.md$/i, '') || baseTitle,
+        mode: 'source',
+        isDirty: false,
+        isLoading: false,
+        isUnsaved: false,
+        isPreview: false,
+        editorState: ''
+      });
+      await refreshFiles();
+    } catch (e) {
+      console.error("Failed to create note from file tree input", e);
+      alert("Failed to create note");
+    } finally {
+      setIsCreating(false);
+      setEditingPath(null);
+    }
+  }, [openTab, refreshFiles, resolvePath]);
 
   const handleCreateCancel = useCallback(() => {
     setIsCreating(false);
