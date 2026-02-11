@@ -1,11 +1,13 @@
 import { SettingsSectionDef } from './types';
 import { Theme } from '../../theme/types';
 import { builtInPlugins } from '../../plugins/registry';
+import { DEFAULT_FONT_SIZE } from '../../settings/defaults';
 
 export const getSections = (
     availableThemes: Theme[],
     appVersion: string,
-    enabledPlugins: Set<string>
+    enabledPlugins: Set<string>,
+    isLinux: boolean
 ): SettingsSectionDef[] => {
     // Sort themes: System, then Light themes, then Dark themes
     const lightThemes = availableThemes
@@ -145,12 +147,12 @@ export const getSections = (
                             options: themeOptions
                         }]
                     },
-                    {
+                    ...(isLinux ? [{
                         id: 'system-accent',
-                        label: 'Use system accent color',
-                        description: 'Sync the accent color with your desktop environment (Linux only).',
+                        label: 'Use system accent colour',
+                        description: 'Sync the accent colour with your desktop environment.',
                         controls: [{ kind: 'boolean', key: 'appearance.useSystemAccent' }]
-                    },
+                    }] : []),
                     {
                         id: 'native-decorations',
                         label: 'Use native window decorations',
@@ -160,7 +162,14 @@ export const getSections = (
                     {
                         id: 'font-size',
                         label: 'Font size',
-                        controls: [{ kind: 'slider', key: 'appearance.fontSize', min: 10, max: 30, step: 1 }]
+                        controls: [{
+                            kind: 'slider',
+                            key: 'appearance.fontSize',
+                            min: 10,
+                            max: 30,
+                            step: 1,
+                            defaultValue: DEFAULT_FONT_SIZE
+                        }]
                     },
                     {
                         id: 'time-format',

@@ -177,7 +177,7 @@ export const NumberInput: React.FC<{ def: SettingControlDef }> = ({ def }) => {
 
 export const Slider: React.FC<{ def: SettingControlDef }> = ({ def }) => {
     const [value, setValue] = useSettingValue<number>(def.key);
-    const val = value ?? def.min ?? 0;
+    const val = value ?? def.defaultValue ?? def.min ?? 0;
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

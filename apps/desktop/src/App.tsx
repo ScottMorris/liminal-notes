@@ -24,6 +24,7 @@ import { RemindersProvider } from "./contexts/RemindersContext";
 import { RemindersPanel } from "./features/reminders/RemindersPanel";
 import { ReminderSheet } from "./features/reminders/components/ReminderSheet";
 import { TitleBar } from "./components/TitleBar";
+import { DEFAULT_FONT_SIZE } from "./settings/defaults";
 
 function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
   const cmd = commandRegistry.getCommand(commandId);
@@ -96,8 +97,8 @@ function AppContent() {
         document.body.style.fontSize = `${size}px`;
     } else {
         // Default font size
-        document.documentElement.style.setProperty('--ln-font-size', '16px');
-        document.body.style.fontSize = '16px';
+        document.documentElement.style.setProperty('--ln-font-size', `${DEFAULT_FONT_SIZE}px`);
+        document.body.style.fontSize = `${DEFAULT_FONT_SIZE}px`;
     }
 
     if (settings['editor.spellcheck.enabled'] !== undefined) {
