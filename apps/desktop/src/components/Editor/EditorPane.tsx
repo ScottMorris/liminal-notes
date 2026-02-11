@@ -29,6 +29,9 @@ import { ttsHighlightField, setTtsHighlight } from '../../plugins/core.tts/highl
 import { listen } from '@tauri-apps/api/event';
 import { FileConflictBanner } from '../FileConflictBanner';
 import { buildPreviewContent } from './previewContent';
+import { ContextMenu } from './ContextMenu/ContextMenu';
+import type { MenuModel, MenuPosition } from './ContextMenu/types';
+import { createPreviewContextMenuModel } from './previewContextMenu';
 
 interface EditorPaneProps {
   onRefreshFiles?: () => Promise<void>;
@@ -68,6 +71,10 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [isAddTagOpen, setIsAddTagOpen] = useState(false);
   const [conflictPath, setConflictPath] = useState<string | null>(null);
+  const [previewContextMenu, setPreviewContextMenu] = useState<{
+    model: MenuModel;
+    position: MenuPosition;
+  } | null>(null);
 
   // Track which tab the current 'content' belongs to to prevent data bleed
   const [loadedTabId, setLoadedTabId] = useState<string | null>(null);
@@ -77,6 +84,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
   const editorRef = useRef<EditorHandle>(null);
   const contentRef = useRef(content);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     contentRef.current = content;
@@ -621,6 +629,87 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
   const showFrontmatter = settings['developer.showFrontmatter'] === true;
 
+  const getPreviewSelection = () => {
+    const root = previewRef.current;
+    const selection = window.getSelection();
+    if (!root || !selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return null;
+    }
+
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const element = container.nodeType === Node.ELEMENT_NODE ? container as Element : container.parentElement;
+    if (!element || !root.contains(element)) {
+      return null;
+    }
+
+    const text = selection.toString().trim();
+    if (!text) return null;
+
+    const fragment = range.cloneContents();
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(fragment);
+
+    return {
+      text,
+      html: wrapper.innerHTML
+    };
+  };
+
+  const handlePreviewCopyText = async () => {
+    const selected = getPreviewSelection();
+    if (!selected) return;
+
+    try {
+      const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+      await writeText(selected.text);
+      notify('Copied selection', 'success');
+    } catch (err) {
+      notify('Failed to copy selection: ' + String(err), 'error');
+    }
+  };
+
+  const handlePreviewCopyHtml = async () => {
+    const selected = getPreviewSelection();
+    if (!selected) return;
+
+    try {
+      const clipboard = navigator.clipboard as Clipboard & {
+        write?: (items: ClipboardItem[]) => Promise<void>;
+      };
+
+      if (clipboard?.write && typeof ClipboardItem !== 'undefined') {
+        const item = new ClipboardItem({
+          'text/html': new Blob([selected.html], { type: 'text/html' }),
+          'text/plain': new Blob([selected.text], { type: 'text/plain' })
+        });
+        await clipboard.write([item]);
+      } else {
+        const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+        await writeText(selected.text);
+      }
+
+      notify('Copied selection as HTML', 'success');
+    } catch (err) {
+      notify('Failed to copy as HTML: ' + String(err), 'error');
+    }
+  };
+
+  const handlePreviewContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const model = createPreviewContextMenuModel(!!getPreviewSelection(), {
+      copyText: () => { void handlePreviewCopyText(); },
+      copyHtml: () => { void handlePreviewCopyHtml(); }
+    });
+
+    setPreviewContextMenu({
+      model,
+      position: { x: e.clientX, y: e.clientY }
+    });
+  };
+
   const MarkdownComponents = {
     a: ({ href, children, ...props }: any) => {
       if (href && href.startsWith('wikilink:')) {
@@ -880,7 +969,11 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                         </div>
                         {showPreview && isReady && (
                         <div className="preview-pane">
-                            <div className="markdown-preview">
+                            <div
+                                ref={previewRef}
+                                className="markdown-preview"
+                                onContextMenu={handlePreviewContextMenu}
+                            >
                             <ReactMarkdown
                                 components={MarkdownComponents}
                                 urlTransform={(url) => url}
@@ -924,6 +1017,17 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
         <div className="empty-state">
             <p>Select a file to view or create a new note (Ctrl+N)</p>
         </div>
+       )}
+
+       {previewContextMenu && (
+            <ContextMenu
+                model={previewContextMenu.model}
+                position={previewContextMenu.position}
+                onClose={() => setPreviewContextMenu(null)}
+                onItemClick={(_itemId, action) => {
+                    if (action) action();
+                }}
+            />
        )}
 
        {isReminderModalOpen && activeTab && (
