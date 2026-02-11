@@ -16,6 +16,13 @@ const getEditorSection = () => {
   return editor!;
 };
 
+const getDeveloperSection = () => {
+  const sections = getSections([], '0.1.0', new Set<string>(), false);
+  const developer = sections.find((section) => section.id === 'developer');
+  expect(developer).toBeDefined();
+  return developer!;
+};
+
 describe('settings appearance schema', () => {
   it('hides system accent control on non-Linux', () => {
     const rows = getAppearanceRows(false);
@@ -76,5 +83,16 @@ describe('settings editor schema', () => {
     expect(spellcheckRow).toBeDefined();
     expect(spellcheckRow?.controls[0].key).toBe('editor.spellcheck.enabled');
     expect(spellcheckRow?.controls[0].defaultValue).toBe(true);
+  });
+});
+
+describe('settings developer schema', () => {
+  it('includes show front matter toggle defaulting to disabled', () => {
+    const developer = getDeveloperSection();
+    const visibilityGroup = developer.groups.find((group) => group.id === 'developer-visibility');
+    const showFrontmatterRow = visibilityGroup?.rows.find((row) => row.id === 'show-frontmatter');
+    expect(showFrontmatterRow).toBeDefined();
+    expect(showFrontmatterRow?.controls[0].key).toBe('developer.showFrontmatter');
+    expect(showFrontmatterRow?.controls[0].defaultValue).toBe(false);
   });
 });

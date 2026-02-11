@@ -28,6 +28,7 @@ import { TtsPlayer } from '../../plugins/core.tts/TtsPlayer';
 import { ttsHighlightField, setTtsHighlight } from '../../plugins/core.tts/highlight';
 import { listen } from '@tauri-apps/api/event';
 import { FileConflictBanner } from '../FileConflictBanner';
+import { buildPreviewContent } from './previewContent';
 
 interface EditorPaneProps {
   onRefreshFiles?: () => Promise<void>;
@@ -618,12 +619,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
       return !!resolved && resolved !== activeTab?.path;
   };
 
-  // Wikilink support
-  const preprocessContent = (text: string) => {
-    return text.replace(/\[\[([^\]]+)\]\]/g, (_match, target) => {
-       return `[${target}](wikilink:${target})`;
-    });
-  };
+  const showFrontmatter = settings['developer.showFrontmatter'] === true;
 
   const MarkdownComponents = {
     a: ({ href, children, ...props }: any) => {
@@ -874,6 +870,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                             getEditorContext={getEditorContext}
                             onLinkClick={handleNavigate}
                             showLineNumbers={settings['editor.showLineNumbers'] === true}
+                            showFrontmatter={showFrontmatter}
                             highlightActiveLineEnabled={settings['editor.highlightActiveLine'] === true}
                             readableLineLength={settings['editor.readableLineLength'] === true}
                             wordWrap={settings['editor.wordWrap'] !== false}
@@ -888,7 +885,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                                 components={MarkdownComponents}
                                 urlTransform={(url) => url}
                             >
-                                {preprocessContent(content)}
+                                {buildPreviewContent(content, showFrontmatter)}
                             </ReactMarkdown>
                             </div>
                         </div>

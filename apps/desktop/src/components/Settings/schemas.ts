@@ -211,6 +211,27 @@ export const getSections = (
         ]
     },
     {
+        id: 'developer',
+        title: 'Developer',
+        groups: [
+            {
+                id: 'developer-visibility',
+                rows: [
+                    {
+                        id: 'show-frontmatter',
+                        label: 'Show front matter',
+                        description: 'Display YAML front matter in notes and preview.',
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'developer.showFrontmatter',
+                            defaultValue: false
+                        }]
+                    }
+                ]
+            }
+        ]
+    },
+    {
         id: 'core-plugins',
         title: 'Core plugins',
         groups: [
