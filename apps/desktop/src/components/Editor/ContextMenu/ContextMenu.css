@@ -7,7 +7,7 @@
   padding: 4px;
   min-width: 200px;
   max-width: 300px;
-  z-index: 10000;
+  z-index: 2147483000;
   color: var(--ln-menu-fg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   user-select: none;
@@ -23,7 +23,7 @@
   padding: 4px;
   min-width: 200px;
   max-width: 300px;
-  z-index: 10001; /* Above main menu */
+  z-index: 2147483001; /* Above main menu */
   color: var(--ln-menu-fg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   user-select: none;

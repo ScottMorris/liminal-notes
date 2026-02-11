@@ -18,6 +18,7 @@ export function ContextMenu({
   onItemClick,
 }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const SCROLLBAR_GUTTER_PX = 18;
 
   // Position menu and clamp to viewport
   useEffect(() => {
@@ -33,14 +34,18 @@ export function ContextMenu({
     let { x, y } = position;
 
     // Clamp horizontally
-    if (x + rect.width > viewport.width) {
-      x = viewport.width - rect.width - 8;
+    if (x + rect.width > viewport.width - SCROLLBAR_GUTTER_PX) {
+      x = viewport.width - rect.width - SCROLLBAR_GUTTER_PX;
     }
 
     // Clamp vertically
-    if (y + rect.height > viewport.height) {
-      y = viewport.height - rect.height - 8;
+    if (y + rect.height > viewport.height - SCROLLBAR_GUTTER_PX) {
+      y = viewport.height - rect.height - SCROLLBAR_GUTTER_PX;
     }
+
+    // Keep menu away from the outer edge to avoid overlay scrollbar occlusion.
+    x = Math.max(8, x);
+    y = Math.max(8, y);
 
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
