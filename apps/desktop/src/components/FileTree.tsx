@@ -41,6 +41,7 @@ interface FileTreeProps {
   isCreating?: boolean;
   onRename?: (oldPath: string, newName: string) => void;
   onCreate?: (name: string) => void;
+  onCreateFolder?: (name: string) => void;
   onStartCreate?: () => void;
   onCancel?: () => void;
   onDelete?: (path: string) => void;
@@ -52,6 +53,32 @@ interface DisplayNode extends FileNode {
   isTemp?: boolean;
 }
 
+export function createEmptySpaceMenuModel(
+  onAddNote: () => void,
+  onAddFolder: () => void
+): MenuModel {
+  return {
+    sections: [
+      {
+        items: [
+          {
+            id: 'fileTree.empty.addNote',
+            label: 'Add New Note',
+            icon: 'plus-square',
+            action: onAddNote
+          },
+          {
+            id: 'fileTree.empty.addFolder',
+            label: 'Add New Folder',
+            icon: 'folder-open',
+            action: onAddFolder
+          }
+        ]
+      }
+    ]
+  };
+}
+
 export function FileTree({
   files,
   onFileSelect,
@@ -59,6 +86,7 @@ export function FileTree({
   isCreating,
   onRename,
   onCreate,
+  onCreateFolder,
   onStartCreate,
   onCancel,
   onDelete,
@@ -213,6 +241,45 @@ export function FileTree({
     }
   };
 
+  const handleEmptySpaceContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const model = createEmptySpaceMenuModel(
+      () => {
+        if (onStartCreate) onStartCreate();
+      },
+      () => {
+        const name = window.prompt('Folder name');
+        if (!name || !name.trim()) return;
+        if (onCreateFolder) onCreateFolder(name.trim());
+      }
+    );
+
+    const context: FileContext = {
+      type: 'FileTree',
+      path: '',
+      isDir: true,
+      allFiles: new Set(files.map(f => f.path)),
+      operations: {
+        notify: () => {},
+        refreshFiles: async () => {
+          if (onRefresh) await onRefresh();
+        },
+        startRename: () => {},
+        deleteFileAndCleanup: async () => {},
+        openTab: () => {},
+        createNote: () => {}
+      }
+    };
+
+    setContextMenu({
+      model,
+      position: { x: e.clientX, y: e.clientY },
+      context
+    });
+  };
+
   const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === 'Delete' && selectedNode) {
       e.preventDefault();
@@ -223,7 +290,11 @@ export function FileTree({
 
   if (files.length === 0 && !isCreating) {
     return (
-      <div className="file-tree empty-state-sidebar" style={{ padding: '20px', textAlign: 'center', color: 'var(--ln-muted)' }}>
+      <div
+        className="file-tree empty-state-sidebar"
+        onContextMenu={handleEmptySpaceContextMenu}
+        style={{ padding: '20px', textAlign: 'center', color: 'var(--ln-muted)' }}
+      >
         <p style={{ margin: "0 0 15px 0", fontStyle: 'italic' }}>This vault is empty.</p>
         {onStartCreate && (
            <button
@@ -240,6 +311,14 @@ export function FileTree({
              Create Note
            </button>
         )}
+        {contextMenu && (
+          <ContextMenu
+            model={contextMenu.model}
+            position={contextMenu.position}
+            onClose={() => setContextMenu(null)}
+            onItemClick={handleMenuItemClick}
+          />
+        )}
       </div>
     );
   }
@@ -250,6 +329,7 @@ export function FileTree({
         className="file-tree"
         tabIndex={0}
         onKeyDown={handleKeyDown}
+        onContextMenu={handleEmptySpaceContextMenu}
       >
         {tree.map(node => (
           <TreeNode

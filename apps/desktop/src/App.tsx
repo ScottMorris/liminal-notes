@@ -229,6 +229,20 @@ function AppContent() {
     setEditingPath(null);
   }, []);
 
+  const handleCreateFolder = useCallback(async (name: string) => {
+    const trimmed = name.trim().replace(/\/+$/g, '');
+    if (!trimmed) return;
+
+    try {
+      // Persist a hidden marker so empty folders are represented in the vault tree.
+      await desktopVault.writeNote(`${trimmed}/.keep`, '');
+      await refreshFiles();
+    } catch (e) {
+      console.error("Failed to create folder", e);
+      alert("Failed to create folder");
+    }
+  }, [refreshFiles]);
+
   const handleRenameCommit = useCallback(async (oldPath: string, newName: string) => {
       if (!newName || !newName.trim()) {
           setEditingPath(null);
@@ -369,6 +383,15 @@ function AppContent() {
     };
   }, [handleStartCreate, selectedFile, goBack, goForward]);
 
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('contextmenu', handleContextMenu);
+    return () => window.removeEventListener('contextmenu', handleContextMenu);
+  }, []);
+
   // Listen for view change events
   useEffect(() => {
     const handleViewChange = (e: Event) => {
@@ -480,6 +503,7 @@ function AppContent() {
                     onRename={handleRenameCommit}
                     onCreate={handleCreateCommit}
                     onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
+                    onCreateFolder={handleCreateFolder}
                     onCancel={handleCreateCancel}
                     onStartRename={(path) => setEditingPath(path)}
                     onDelete={handleFileDelete}

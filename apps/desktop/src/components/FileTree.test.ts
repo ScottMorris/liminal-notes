@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { registerFileTreeRefreshListeners } from './FileTree';
+import { createEmptySpaceMenuModel, registerFileTreeRefreshListeners } from './FileTree';
 
 describe('registerFileTreeRefreshListeners', () => {
   const callbacks = new Map<string, () => void>();
@@ -40,5 +40,36 @@ describe('registerFileTreeRefreshListeners', () => {
     unlistenMocks.forEach((unlisten) => {
       expect(unlisten).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('createEmptySpaceMenuModel', () => {
+  it('creates add-note and add-folder entries with actions', () => {
+    const onAddNote = vi.fn();
+    const onAddFolder = vi.fn();
+
+    const model = createEmptySpaceMenuModel(onAddNote, onAddFolder);
+
+    expect(model.sections).toHaveLength(1);
+    const items = model.sections[0]?.items;
+    expect(items).toHaveLength(2);
+
+    const addNote = items?.[0];
+    const addFolder = items?.[1];
+
+    if (!addNote || !addFolder || !('action' in addNote) || !('action' in addFolder)) {
+      throw new Error('Menu model shape mismatch');
+    }
+
+    expect(addNote.id).toBe('fileTree.empty.addNote');
+    expect(addNote.label).toBe('Add New Note');
+    expect(addFolder.id).toBe('fileTree.empty.addFolder');
+    expect(addFolder.label).toBe('Add New Folder');
+
+    addNote.action?.();
+    addFolder.action?.();
+
+    expect(onAddNote).toHaveBeenCalledTimes(1);
+    expect(onAddFolder).toHaveBeenCalledTimes(1);
   });
 });
