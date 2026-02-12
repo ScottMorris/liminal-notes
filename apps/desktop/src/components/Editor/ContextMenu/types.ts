@@ -7,6 +7,7 @@ export interface MenuItem {
   icon?: string;
   shortcut?: string;
   disabled?: boolean;
+  checked?: boolean;
   action?: () => void;
   children?: MenuItem[];  // Submenu items
 }

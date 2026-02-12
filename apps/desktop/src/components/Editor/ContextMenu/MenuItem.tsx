@@ -106,6 +106,9 @@ export function MenuItem({ item, onItemClick }: MenuItemProps) {
         {item.shortcut && (
           <span className="menu-item-shortcut">{item.shortcut}</span>
         )}
+        {item.checked && (
+          <span className="menu-item-check" aria-hidden="true">✓</span>
+        )}
         {hasSubmenu && (
           <span className="menu-item-chevron">›</span>
         )}

@@ -5,6 +5,38 @@ import { ContextMenu } from './Editor/ContextMenu/ContextMenu';
 import { MenuModel } from './Editor/ContextMenu/types';
 import './TitleBar.css';
 
+export function createTitleBarMenuModel(isMaximized: boolean, isAlwaysOnTop: boolean): MenuModel {
+    return {
+        sections: [
+            {
+                items: [
+                    {
+                        id: isMaximized ? 'restore' : 'maximize',
+                        label: isMaximized ? 'Restore' : 'Maximize',
+                        icon: isMaximized ? 'WindowRestoreIcon' : 'WindowMaximizeIcon'
+                    },
+                    {
+                        id: 'minimize',
+                        label: 'Minimize',
+                        icon: 'WindowMinimizeIcon'
+                    }
+                ]
+            },
+            { items: [{ id: 'move', label: 'Move', icon: 'MoveIcon' }] },
+            {
+                items: [{
+                    id: 'always-on-top',
+                    label: 'Always on Top',
+                    checked: isAlwaysOnTop
+                }]
+            },
+            {
+                items: [{ id: 'close', label: 'Close', icon: 'WindowCloseIcon' }]
+            }
+        ]
+    };
+}
+
 export const TitleBar: React.FC = () => {
     const [platform, setPlatform] = useState<'mac' | 'linux' | 'win'>('win');
     const [isMaximized, setIsMaximized] = useState(false);
@@ -75,7 +107,7 @@ export const TitleBar: React.FC = () => {
             case 'always-on-top':
                 const newState = !isAlwaysOnTop;
                 await appWindow.setAlwaysOnTop(newState);
-                setIsAlwaysOnTop(newState);
+                setIsAlwaysOnTop(await appWindow.isAlwaysOnTop());
                 break;
             case 'close':
                 close();
@@ -84,35 +116,7 @@ export const TitleBar: React.FC = () => {
         setMenuOpen(false);
     };
 
-    const menuModel: MenuModel = {
-        sections: [
-            {
-                items: [
-                    {
-                        id: isMaximized ? 'restore' : 'maximize',
-                        label: isMaximized ? 'Restore' : 'Maximize',
-                        icon: isMaximized ? 'WindowRestoreIcon' : 'WindowMaximizeIcon'
-                    },
-                    {
-                        id: 'minimize',
-                        label: 'Minimize',
-                        icon: 'WindowMinimizeIcon'
-                    }
-                ]
-            },
-            { items: [{ id: 'move', label: 'Move', icon: 'MoveIcon' }] },
-            {
-                items: [{
-                    id: 'always-on-top',
-                    label: 'Always on Top',
-                    icon: isAlwaysOnTop ? 'CheckIcon' : undefined
-                }]
-            },
-            {
-                items: [{ id: 'close', label: 'Close', icon: 'WindowCloseIcon' }]
-            }
-        ]
-    };
+    const menuModel: MenuModel = createTitleBarMenuModel(isMaximized, isAlwaysOnTop);
 
     // Mac Traffic Lights
     const MacControls = () => (

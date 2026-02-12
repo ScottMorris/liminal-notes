@@ -132,6 +132,13 @@
   margin-left: 12px;
 }
 
+.menu-item-check {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: var(--ln-menu-fg);
+  margin-left: 10px;
+}
+
 .menu-item-chevron {
   flex-shrink: 0;
   font-size: 1rem;
