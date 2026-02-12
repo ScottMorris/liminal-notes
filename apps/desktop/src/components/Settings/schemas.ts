@@ -1,4 +1,4 @@
-import { SettingsSectionDef } from './types';
+import { SettingRowDef, SettingsSectionDef } from './types';
 import { Theme } from '../../theme/types';
 import { builtInPlugins } from '../../plugins/registry';
 import { DEFAULT_FONT_SIZE } from '../../settings/defaults';
@@ -9,6 +9,13 @@ export const getSections = (
     enabledPlugins: Set<string>,
     isLinux: boolean
 ): SettingsSectionDef[] => {
+    const systemAccentRow: SettingRowDef = {
+        id: 'system-accent',
+        label: 'Use system accent colour',
+        description: 'Sync the accent colour with your desktop environment.',
+        controls: [{ kind: 'boolean', key: 'appearance.useSystemAccent' }]
+    };
+
     // Sort themes: System, then Light themes, then Dark themes
     const lightThemes = availableThemes
         .filter(t => t.category === 'light')
@@ -169,12 +176,7 @@ export const getSections = (
                             options: themeOptions
                         }]
                     },
-                    ...(isLinux ? [{
-                        id: 'system-accent',
-                        label: 'Use system accent colour',
-                        description: 'Sync the accent colour with your desktop environment.',
-                        controls: [{ kind: 'boolean', key: 'appearance.useSystemAccent' }]
-                    }] : []),
+                    ...(isLinux ? [systemAccentRow] : []),
                     {
                         id: 'native-decorations',
                         label: 'Use native window decorations',

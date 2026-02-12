@@ -9,6 +9,9 @@ describe('createTitleBarMenuModel', () => {
     if (!alwaysOnTop) {
       throw new Error('Unexpected menu model shape');
     }
+    if (!('id' in alwaysOnTop)) {
+      throw new Error('Expected menu item, found separator');
+    }
 
     expect(alwaysOnTop.id).toBe('always-on-top');
     expect(alwaysOnTop.icon).toBe('checkbox-checked');
@@ -20,6 +23,9 @@ describe('createTitleBarMenuModel', () => {
 
     if (!alwaysOnTop) {
       throw new Error('Unexpected menu model shape');
+    }
+    if (!('id' in alwaysOnTop)) {
+      throw new Error('Expected menu item, found separator');
     }
 
     expect(alwaysOnTop.icon).toBe('checkbox-empty');
