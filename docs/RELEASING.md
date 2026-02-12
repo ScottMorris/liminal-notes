@@ -44,15 +44,37 @@ This document describes the process for creating a new release of the desktop ap
     - Watch the build progress. It currently targets:
         - Linux x64 (Ubuntu 24.04)
         - Linux ARM64 (Ubuntu 24.04)
+        - Windows x64 (`x86_64-pc-windows-msvc`)
+        - Windows ARM64 (`aarch64-pc-windows-msvc`)
 
-5.  **Review Draft Release**
-    - Once the build completes, a **Draft** release will be created/updated on GitHub.
+5.  **Review Release**
+    - Once the build completes, a release will be created or updated on GitHub.
     - Go to the "Releases" section.
-    - Verify that the assets (AppImage, deb) are present.
-    - Add release notes to the body.
+    - Verify that Linux and Windows assets are present.
+    - Confirm the generated release notes look correct.
+      - Generated note categories are configured in `.github/release.yml`.
+    - If needed, edit the release text with additional context.
 
-6.  **Publish**
-    - When satisfied, click "Edit" on the release and "Publish release" to make it public.
+6.  **Optional Draft Mode**
+    - The default release path publishes immediately.
+    - For manual runs via `workflow_dispatch`, set `release_draft=true` to keep the release as a draft.
+    - This keeps historical/manual review workflows available without changing the default path.
+
+## Windows unsigned installer flow
+
+- Windows builds are currently unsigned and may trigger SmartScreen warnings.
+- Installers are still deterministic build artefacts generated in CI.
+- Each Windows CI job also uploads checksum assets to the release:
+  - `checksums-windows-x64.txt`
+  - `checksums-windows-arm64.txt`
+
+### Verify a downloaded installer on Windows (PowerShell)
+
+```powershell
+Get-FileHash .\liminal-notes_<version>_x64_en-US.msi -Algorithm SHA256
+```
+
+- Compare the printed hash with the matching checksum file attached to the release.
 
 ## Linux AppImage runtime
 
@@ -61,5 +83,6 @@ This document describes the process for creating a new release of the desktop ap
 
 ## Current CI Limitations
 
-- **Windows & macOS**: Currently skipped in the CI pipeline pending research on code signing and notarization.
+- **macOS**: Not yet included in the desktop release pipeline.
 - **Linux ARM**: Builds are performed on `ubuntu-24.04-arm` runners.
+- **Windows code signing**: Installer signing is not configured yet.
