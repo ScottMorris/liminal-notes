@@ -22,6 +22,7 @@ export function Submenu({
 }: SubmenuProps) {
   const submenuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const SCROLLBAR_GUTTER_PX = 18;
 
   // Position submenu relative to parent
   useEffect(() => {
@@ -39,17 +40,19 @@ export function Submenu({
     let y = parentRect.top - 4;
 
     // Check if submenu would overflow right
-    if (x + rect.width > viewport.width) {
+    if (x + rect.width > viewport.width - SCROLLBAR_GUTTER_PX) {
       // Flip to left side of parent
       x = parentRect.left - rect.width + 4;
     }
 
     // Check if submenu would overflow bottom
-    if (y + rect.height > viewport.height) {
+    if (y + rect.height > viewport.height - SCROLLBAR_GUTTER_PX) {
       // Shift up to fit
       y = Math.max(8, viewport.height - rect.height - 8);
     }
 
+    // Keep menu away from edges to reduce overlay scrollbar collisions.
+    x = Math.max(8, x);
     // Ensure not off top
     y = Math.max(8, y);
 

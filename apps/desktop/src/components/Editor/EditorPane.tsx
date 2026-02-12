@@ -28,6 +28,11 @@ import { TtsPlayer } from '../../plugins/core.tts/TtsPlayer';
 import { ttsHighlightField, setTtsHighlight } from '../../plugins/core.tts/highlight';
 import { listen } from '@tauri-apps/api/event';
 import { FileConflictBanner } from '../FileConflictBanner';
+import { buildPreviewContent } from './previewContent';
+import { ContextMenu } from './ContextMenu/ContextMenu';
+import type { MenuModel, MenuPosition } from './ContextMenu/types';
+import { createPreviewContextMenuModel } from './previewContextMenu';
+import { resolveNavigablePath } from './navigationPath';
 
 interface EditorPaneProps {
   onRefreshFiles?: () => Promise<void>;
@@ -44,6 +49,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
     updateTabState,
     updateTabTitle,
     updateTabPath,
+    renameTab,
     updateTabAiState,
     closeTab: closeTabContext,
     openTab
@@ -67,19 +73,32 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [isAddTagOpen, setIsAddTagOpen] = useState(false);
   const [conflictPath, setConflictPath] = useState<string | null>(null);
+  const [previewContextMenu, setPreviewContextMenu] = useState<{
+    model: MenuModel;
+    position: MenuPosition;
+  } | null>(null);
 
   // Track which tab the current 'content' belongs to to prevent data bleed
   const [loadedTabId, setLoadedTabId] = useState<string | null>(null);
 
   // Dirty Confirm Modal State
   const [closingTabId, setClosingTabId] = useState<string | null>(null);
+  const closePromptResolverRef = useRef<((shouldContinue: boolean) => void) | null>(null);
 
   const editorRef = useRef<EditorHandle>(null);
   const contentRef = useRef(content);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     contentRef.current = content;
   }, [content]);
+
+  useEffect(() => {
+    return () => {
+      closePromptResolverRef.current?.(false);
+      closePromptResolverRef.current = null;
+    };
+  }, []);
 
   const reminderCount = useMemo(() => {
     if (!activeTab || !activeTab.path) return 0;
@@ -383,26 +402,45 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
     switchTab(newTabId);
   };
 
-  const handleCloseTab = async (tabId: string) => {
+  const handleCloseTab = async (tabId: string): Promise<boolean> => {
     const tab = openTabs.find(t => t.id === tabId);
-    if (!tab) return;
+    if (!tab) return false;
 
     if (tab.isDirty) {
-        setClosingTabId(tabId);
+        if (closingTabId && closingTabId !== tabId) {
+            return false;
+        }
+
+        if (closingTabId === tabId) {
+            return false;
+        }
+
+        return await new Promise<boolean>((resolve) => {
+            closePromptResolverRef.current = resolve;
+            setClosingTabId(tabId);
+        });
     } else {
         closeTabContext(tabId);
+        return true;
     }
   };
 
   const confirmClose = async (choice: 'Save' | 'Don\'t Save' | 'Cancel') => {
     if (!closingTabId) return;
     const tab = openTabs.find(t => t.id === closingTabId);
+    const currentClosingTabId = closingTabId;
+    const resolveClosePrompt = closePromptResolverRef.current;
+    closePromptResolverRef.current = null;
     setClosingTabId(null);
 
-    if (choice === 'Cancel') return;
+    if (choice === 'Cancel') {
+        resolveClosePrompt?.(false);
+        return;
+    }
 
     if (choice === 'Don\'t Save') {
-        closeTabContext(closingTabId);
+        closeTabContext(currentClosingTabId);
+        resolveClosePrompt?.(true);
         return;
     }
 
@@ -426,10 +464,15 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
             }
             closeTabContext(tab.id);
             notify("Note saved and closed", 'success');
+            resolveClosePrompt?.(true);
         } catch (e) {
             notify("Failed to save: " + String(e), 'error');
+            resolveClosePrompt?.(false);
         }
+        return;
     }
+
+    resolveClosePrompt?.(false);
   };
 
   // Listen for global save event
@@ -591,17 +634,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
             await onRefreshFiles();
           }
 
-          // Re-open tab with new ID
-          const newTab = {
-              ...activeTab,
-              id: newPath,
-              path: newPath,
-              title: newName,
-          };
-
-          // Close old and open new to update ID
-          closeTabContext(activeTab.id);
-          openTab(newTab);
+          renameTab(activeTab.id, newPath, newPath, newName);
 
           notify('Renamed successfully', 'success');
       } catch (e) {
@@ -618,10 +651,86 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
       return !!resolved && resolved !== activeTab?.path;
   };
 
-  // Wikilink support
-  const preprocessContent = (text: string) => {
-    return text.replace(/\[\[([^\]]+)\]\]/g, (_match, target) => {
-       return `[${target}](wikilink:${target})`;
+  const showFrontmatter = settings['developer.showFrontmatter'] === true;
+
+  const getPreviewSelection = () => {
+    const root = previewRef.current;
+    const selection = window.getSelection();
+    if (!root || !selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return null;
+    }
+
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const element = container.nodeType === Node.ELEMENT_NODE ? container as Element : container.parentElement;
+    if (!element || !root.contains(element)) {
+      return null;
+    }
+
+    const text = selection.toString().trim();
+    if (!text) return null;
+
+    const fragment = range.cloneContents();
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(fragment);
+
+    return {
+      text,
+      html: wrapper.innerHTML
+    };
+  };
+
+  const handlePreviewCopyText = async () => {
+    const selected = getPreviewSelection();
+    if (!selected) return;
+
+    try {
+      const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+      await writeText(selected.text);
+      notify('Copied selection', 'success');
+    } catch (err) {
+      notify('Failed to copy selection: ' + String(err), 'error');
+    }
+  };
+
+  const handlePreviewCopyHtml = async () => {
+    const selected = getPreviewSelection();
+    if (!selected) return;
+
+    try {
+      const clipboard = navigator.clipboard as Clipboard & {
+        write?: (items: ClipboardItem[]) => Promise<void>;
+      };
+
+      if (clipboard?.write && typeof ClipboardItem !== 'undefined') {
+        const item = new ClipboardItem({
+          'text/html': new Blob([selected.html], { type: 'text/html' }),
+          'text/plain': new Blob([selected.text], { type: 'text/plain' })
+        });
+        await clipboard.write([item]);
+      } else {
+        const { writeText } = await import('@tauri-apps/plugin-clipboard-manager');
+        await writeText(selected.text);
+      }
+
+      notify('Copied selection as HTML', 'success');
+    } catch (err) {
+      notify('Failed to copy as HTML: ' + String(err), 'error');
+    }
+  };
+
+  const handlePreviewContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const model = createPreviewContextMenuModel(!!getPreviewSelection(), {
+      copyText: () => { void handlePreviewCopyText(); },
+      copyHtml: () => { void handlePreviewCopyHtml(); }
+    });
+
+    setPreviewContextMenu({
+      model,
+      position: { x: e.clientX, y: e.clientY }
     });
   };
 
@@ -678,22 +787,24 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   };
 
   const handleNavigate = (path: string) => {
+      const navigablePath = resolveNavigablePath(path, resolvePath);
+
       // Save current state before navigating
       if (activeTabId && editorRef.current) {
           const state = editorRef.current.getEditorState();
           updateTabState(activeTabId, state);
       }
 
-      const existing = openTabs.find(t => t.path === path);
+      const existing = openTabs.find(t => t.path === navigablePath);
       if (existing) {
           switchTab(existing.id);
       } else {
-          const title = path.split('/').pop()?.replace('.md', '') || path;
+          const title = navigablePath.split('/').pop()?.replace('.md', '') || navigablePath;
           dispatch({
               type: 'OPEN_TAB',
               tab: {
-                  id: path,
-                  path: path,
+                  id: navigablePath,
+                  path: navigablePath,
                   title: title,
                   mode: 'source',
                   isDirty: false,
@@ -873,21 +984,27 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
                             path={activeTab.path}
                             getEditorContext={getEditorContext}
                             onLinkClick={handleNavigate}
-                            showLineNumbers={settings['editor.showLineNumbers'] !== false}
+                            showLineNumbers={settings['editor.showLineNumbers'] === true}
+                            showFrontmatter={showFrontmatter}
+                            highlightActiveLineEnabled={settings['editor.highlightActiveLine'] === true}
                             readableLineLength={settings['editor.readableLineLength'] === true}
-                            wordWrap={settings['editor.wordWrap'] === true}
+                            wordWrap={settings['editor.wordWrap'] !== false}
                             extensions={ttsExtensions}
                             />
                         )}
                         </div>
                         {showPreview && isReady && (
                         <div className="preview-pane">
-                            <div className="markdown-preview">
+                            <div
+                                ref={previewRef}
+                                className="markdown-preview"
+                                onContextMenu={handlePreviewContextMenu}
+                            >
                             <ReactMarkdown
                                 components={MarkdownComponents}
                                 urlTransform={(url) => url}
                             >
-                                {preprocessContent(content)}
+                                {buildPreviewContent(content, showFrontmatter)}
                             </ReactMarkdown>
                             </div>
                         </div>
@@ -926,6 +1043,17 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
         <div className="empty-state">
             <p>Select a file to view or create a new note (Ctrl+N)</p>
         </div>
+       )}
+
+       {previewContextMenu && (
+            <ContextMenu
+                model={previewContextMenu.model}
+                position={previewContextMenu.position}
+                onClose={() => setPreviewContextMenu(null)}
+                onItemClick={(_itemId, action) => {
+                    if (action) action();
+                }}
+            />
        )}
 
        {isReminderModalOpen && activeTab && (

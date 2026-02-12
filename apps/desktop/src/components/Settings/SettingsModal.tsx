@@ -40,14 +40,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onResetVa
     };
 
     const appVersion = pkg.version;
+    const isLinux = navigator.userAgent.includes('Linux');
 
     const sections = useMemo(
-        () => getSections(availableThemes, appVersion, enabledPlugins),
-        [availableThemes, appVersion, enabledPlugins]
+        () => getSections(availableThemes, appVersion, enabledPlugins, isLinux),
+        [availableThemes, appVersion, enabledPlugins, isLinux]
     );
 
     const tagSection = { id: 'tags', title: 'Tag Management', settings: [], groups: [] };
-    const developerSections = [{ id: 'developer-window', title: 'Window sizing' }];
+    const developerSections = [
+        ...sections.filter(s => s.id === 'developer'),
+        { id: 'developer-window', title: 'Window sizing' }
+    ];
 
     // Group sections for sidebar
     const optionsGroups = [

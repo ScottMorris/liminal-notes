@@ -39,12 +39,17 @@ interface FileTreeProps {
   onFileSelect: (path: string, isDoubleClick: boolean) => void;
   editingPath?: string | null;
   isCreating?: boolean;
+  isCreatingFolder?: boolean;
   onRename?: (oldPath: string, newName: string) => void;
   onCreate?: (name: string) => void;
+  onCreateFolder?: (name: string) => void;
   onStartCreate?: () => void;
+  onStartCreateFolder?: () => void;
   onCancel?: () => void;
   onDelete?: (path: string) => void;
   onStartRename?: (path: string) => void;
+  onMoveIntoFolder?: (sourcePath: string, targetFolderPath: string) => Promise<void> | void;
+  onMoveToRoot?: (sourcePath: string) => Promise<void> | void;
   onRefresh?: () => Promise<void>;
 }
 
@@ -52,21 +57,72 @@ interface DisplayNode extends FileNode {
   isTemp?: boolean;
 }
 
+export function createEmptySpaceMenuModel(
+  onAddNote: () => void,
+  onAddFolder: () => void
+): MenuModel {
+  return {
+    sections: [
+      {
+        items: [
+          {
+            id: 'fileTree.empty.addNote',
+            label: 'Add New Note',
+            icon: 'plus-square',
+            action: onAddNote
+          },
+          {
+            id: 'fileTree.empty.addFolder',
+            label: 'Add New Folder',
+            icon: 'folder-open',
+            action: onAddFolder
+          }
+        ]
+      }
+    ]
+  };
+}
+
+export function buildMovedPath(sourcePath: string, targetFolderPath: string): string {
+  const sourceName = sourcePath.split('/').pop() ?? sourcePath;
+  return `${targetFolderPath}/${sourceName}`;
+}
+
+export function canDropPathIntoDirectory(sourcePath: string, targetFolderPath: string): boolean {
+  const sourceParent = sourcePath.includes('/') ? sourcePath.slice(0, sourcePath.lastIndexOf('/')) : '';
+  if (sourcePath === targetFolderPath) return false;
+  if (sourceParent === targetFolderPath) return false;
+  if (targetFolderPath.startsWith(`${sourcePath}/`)) return false;
+  return true;
+}
+
+export function canDropPathToRoot(sourcePath: string): boolean {
+  return sourcePath.includes('/');
+}
+
 export function FileTree({
   files,
   onFileSelect,
   editingPath,
   isCreating,
+  isCreatingFolder,
   onRename,
   onCreate,
+  onCreateFolder,
   onStartCreate,
+  onStartCreateFolder,
   onCancel,
   onDelete,
   onStartRename,
+  onMoveIntoFolder,
+  onMoveToRoot,
   onRefresh
 }: FileTreeProps) {
   const { openTab } = useTabs();
   const [selectedNode, setSelectedNode] = useState<DisplayNode | null>(null);
+  const [draggingPath, setDraggingPath] = useState<string | null>(null);
+  const [isRootDropTarget, setIsRootDropTarget] = useState(false);
+  const [rootHoverPath, setRootHoverPath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     model: MenuModel;
     position: MenuPosition;
@@ -78,6 +134,43 @@ export function FileTree({
     window.addEventListener('click', closeMenu);
     return () => window.removeEventListener('click', closeMenu);
   }, []);
+
+  useEffect(() => {
+    if (!draggingPath) {
+      setIsRootDropTarget(false);
+      setRootHoverPath(null);
+    }
+  }, [draggingPath]);
+
+  useEffect(() => {
+    if (!draggingPath) return;
+
+    const clearDragUi = () => {
+      setDraggingPath(null);
+      setIsRootDropTarget(false);
+      setRootHoverPath(null);
+    };
+
+    const timeout = window.setTimeout(clearDragUi, 15000);
+    const onVisibilityChange = () => {
+      if (document.hidden) clearDragUi();
+    };
+
+    window.addEventListener('dragend', clearDragUi, true);
+    window.addEventListener('drop', clearDragUi, true);
+    window.addEventListener('blur', clearDragUi);
+    window.addEventListener('mouseup', clearDragUi, true);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener('dragend', clearDragUi, true);
+      window.removeEventListener('drop', clearDragUi, true);
+      window.removeEventListener('blur', clearDragUi);
+      window.removeEventListener('mouseup', clearDragUi, true);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [draggingPath]);
 
   // Listen for file events to refresh tree
   useEffect(() => {
@@ -157,8 +250,17 @@ export function FileTree({
       });
     }
 
+    if (isCreatingFolder) {
+      root.unshift({
+        name: "",
+        path: "___creating_folder___",
+        isDir: true,
+        isTemp: true
+      });
+    }
+
     return root;
-  }, [files, isCreating]);
+  }, [files, isCreating, isCreatingFolder]);
 
   const buildContext = (node: DisplayNode): FileContext => ({
     type: 'FileTree',
@@ -213,6 +315,43 @@ export function FileTree({
     }
   };
 
+  const handleEmptySpaceContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const model = createEmptySpaceMenuModel(
+      () => {
+        if (onStartCreate) onStartCreate();
+      },
+      () => {
+        if (onStartCreateFolder) onStartCreateFolder();
+      }
+    );
+
+    const context: FileContext = {
+      type: 'FileTree',
+      path: '',
+      isDir: true,
+      allFiles: new Set(files.map(f => f.path)),
+      operations: {
+        notify: () => {},
+        refreshFiles: async () => {
+          if (onRefresh) await onRefresh();
+        },
+        startRename: () => {},
+        deleteFileAndCleanup: async () => {},
+        openTab: () => {},
+        createNote: () => {}
+      }
+    };
+
+    setContextMenu({
+      model,
+      position: { x: e.clientX, y: e.clientY },
+      context
+    });
+  };
+
   const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === 'Delete' && selectedNode) {
       e.preventDefault();
@@ -221,9 +360,13 @@ export function FileTree({
     }
   };
 
-  if (files.length === 0 && !isCreating) {
+  if (files.length === 0 && !isCreating && !isCreatingFolder) {
     return (
-      <div className="file-tree empty-state-sidebar" style={{ padding: '20px', textAlign: 'center', color: 'var(--ln-muted)' }}>
+      <div
+        className="file-tree empty-state-sidebar"
+        onContextMenu={handleEmptySpaceContextMenu}
+        style={{ padding: '20px', textAlign: 'center', color: 'var(--ln-muted)' }}
+      >
         <p style={{ margin: "0 0 15px 0", fontStyle: 'italic' }}>This vault is empty.</p>
         {onStartCreate && (
            <button
@@ -240,6 +383,14 @@ export function FileTree({
              Create Note
            </button>
         )}
+        {contextMenu && (
+          <ContextMenu
+            model={contextMenu.model}
+            position={contextMenu.position}
+            onClose={() => setContextMenu(null)}
+            onItemClick={handleMenuItemClick}
+          />
+        )}
       </div>
     );
   }
@@ -247,23 +398,74 @@ export function FileTree({
   return (
     <>
       <div
-        className="file-tree"
+        className={`file-tree ${isRootDropTarget ? 'root-drop-active' : ''}`}
         tabIndex={0}
         onKeyDown={handleKeyDown}
+        onContextMenu={handleEmptySpaceContextMenu}
+        onDragOver={(e) => {
+          if (!draggingPath || !canDropPathToRoot(draggingPath)) return;
+          const targetEl = e.target as HTMLElement | null;
+          const droppedInsideFolderZone = !!targetEl?.closest('[data-folder-drop-zone="true"]');
+          const hoveredRootRow = targetEl?.closest('[data-root-drop-row="true"]') as HTMLElement | null;
+          e.preventDefault();
+          setIsRootDropTarget(!droppedInsideFolderZone);
+          setRootHoverPath(!droppedInsideFolderZone ? hoveredRootRow?.getAttribute('data-path') ?? null : null);
+          e.dataTransfer.dropEffect = 'move';
+        }}
+        onDragEnter={(e) => {
+          if (!draggingPath || !canDropPathToRoot(draggingPath)) return;
+          setIsRootDropTarget(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            setIsRootDropTarget(false);
+            setRootHoverPath(null);
+          }
+        }}
+        onDrop={async (e) => {
+          if (!draggingPath || !canDropPathToRoot(draggingPath)) return;
+          const targetEl = e.target as HTMLElement | null;
+          const droppedInsideFolderZone = !!targetEl?.closest('[data-folder-drop-zone="true"]');
+          if (droppedInsideFolderZone) return;
+          e.preventDefault();
+          e.stopPropagation();
+          setIsRootDropTarget(false);
+          setRootHoverPath(null);
+          setDraggingPath(null);
+          await onMoveToRoot?.(draggingPath);
+        }}
       >
-        {tree.map(node => (
-          <TreeNode
-            key={node.path}
-            node={node}
-            onFileSelect={onFileSelect}
-            editingPath={editingPath}
-            onRename={onRename}
-            onCreate={onCreate}
-            onCancel={onCancel}
-            onContextMenu={handleNodeContextMenu}
-            onSelect={setSelectedNode}
-          />
-        ))}
+        {draggingPath && canDropPathToRoot(draggingPath) && (
+          <div className={`tree-root-drop-zone ${isRootDropTarget ? 'active' : ''}`}>
+            Drop here to move to vault root
+          </div>
+        )}
+        <div className={`tree-root-list ${isRootDropTarget ? 'active' : ''}`}>
+          {tree.map(node => (
+            <TreeNode
+              key={node.path}
+              node={node}
+              onFileSelect={onFileSelect}
+              editingPath={editingPath}
+              onRename={onRename}
+              onCreate={onCreate}
+              onCreateFolder={onCreateFolder}
+              onCancel={onCancel}
+              onContextMenu={handleNodeContextMenu}
+              onSelect={setSelectedNode}
+              draggingPath={draggingPath}
+              onDragStart={setDraggingPath}
+              onDragEnd={() => setDraggingPath(null)}
+              onMoveIntoFolder={onMoveIntoFolder}
+              isRootHoverTarget={!!(rootHoverPath === node.path && !node.isDir)}
+            />
+          ))}
+        </div>
+        {draggingPath && canDropPathToRoot(draggingPath) && (
+          <div className={`tree-root-drop-zone ${isRootDropTarget ? 'active' : ''}`}>
+            Drop here to move to vault root
+          </div>
+        )}
       </div>
       {contextMenu && (
         <ContextMenu
@@ -283,9 +485,15 @@ interface TreeNodeProps {
   editingPath?: string | null;
   onRename?: (oldPath: string, newName: string) => void;
   onCreate?: (name: string) => void;
+  onCreateFolder?: (name: string) => void;
   onCancel?: () => void;
   onContextMenu: (e: React.MouseEvent, node: DisplayNode) => void;
   onSelect: (node: DisplayNode) => void;
+  draggingPath: string | null;
+  onDragStart: (path: string) => void;
+  onDragEnd: () => void;
+  onMoveIntoFolder?: (sourcePath: string, targetFolderPath: string) => Promise<void> | void;
+  isRootHoverTarget?: boolean;
 }
 
 function getExtension(filename: string): string {
@@ -315,10 +523,42 @@ function stripExtension(filename: string): string {
     return filename;
 }
 
-function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCancel, onContextMenu, onSelect }: TreeNodeProps) {
+function TreeNode({
+  node,
+  onFileSelect,
+  editingPath,
+  onRename,
+  onCreate,
+  onCreateFolder,
+  onCancel,
+  onContextMenu,
+  onSelect,
+  draggingPath,
+  onDragStart,
+  onDragEnd,
+  onMoveIntoFolder,
+  isRootHoverTarget
+}: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const isEditing = editingPath === node.path;
   const isTemp = node.isTemp;
+  const canAcceptDrop = !!(node.isDir && draggingPath && canDropPathIntoDirectory(draggingPath, node.path));
+  const handleDragStart = (e: React.DragEvent<HTMLElement>) => {
+    e.stopPropagation();
+    onDragStart(node.path);
+    try {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', node.path);
+    } catch (err) {
+      console.warn('File tree drag start failed', err);
+    }
+  };
+  const handleDragEnd = (e: React.DragEvent<HTMLElement>) => {
+    e.stopPropagation();
+    setIsDragOver(false);
+    onDragEnd();
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -352,7 +592,8 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
                 isDir={node.isDir}
                 originalExtension={isEditing ? getExtension(node.name) : undefined}
                 onSubmit={(val) => {
-                    if (isTemp && onCreate) onCreate(val);
+                    if (isTemp && node.isDir && onCreateFolder) onCreateFolder(val);
+                    else if (isTemp && onCreate) onCreate(val);
                     else if (isEditing && onRename) {
                         const originalExt = getExtension(node.name);
                         const newName = originalExt ? `${val}.${originalExt}` : val;
@@ -368,19 +609,77 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
   return (
     <div className="tree-node">
       <div
-        className={`node-label ${node.isDir ? "folder" : "file"}`}
         onClick={handleClick}
         onContextMenu={(e) => onContextMenu(e, node)}
-        style={{ cursor: "pointer", userSelect: "none", display: 'flex', alignItems: 'center' }}
+        draggable={!isTemp}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={(e) => {
+          if (!canAcceptDrop) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = 'move';
+        }}
+        onDragEnter={(e) => {
+          if (!canAcceptDrop) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(true);
+          setExpanded(true);
+        }}
+        onDragLeave={(e) => {
+          e.stopPropagation();
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            setIsDragOver(false);
+          }
+        }}
+        onDrop={async (e) => {
+          if (!canAcceptDrop) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(false);
+          onDragEnd();
+          await onMoveIntoFolder?.(draggingPath, node.path);
+        }}
+        className={`node-label ${node.isDir ? "folder" : "file"} ${isDragOver ? 'drop-target' : ''} ${isRootHoverTarget ? 'root-drop-hover' : ''}`}
+        data-folder-drop-zone={node.isDir ? 'true' : undefined}
+        data-root-drop-row={node.isDir ? undefined : 'true'}
+        data-path={node.path}
+        style={{
+          cursor: "pointer",
+          userSelect: "none",
+          display: 'flex',
+          alignItems: 'center'
+        }}
       >
-        <span style={{ marginRight: "6px", display: 'flex', color: 'var(--ln-muted)' }}>
+        <span
+          draggable={!isTemp}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          style={{ marginRight: "6px", display: 'flex', color: 'var(--ln-muted)' }}
+        >
           <IconComponent size={16} />
         </span>
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span
+          draggable={!isTemp}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
             {stripExtension(node.name)}
         </span>
         {!node.isDir && !isMd && extension && (
-            <span style={{
+            <span
+              draggable={!isTemp}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              style={{
                 fontSize: '0.7em',
                 color: 'var(--ln-muted)',
                 marginLeft: '8px',
@@ -394,7 +693,38 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
         )}
       </div>
       {node.isDir && expanded && node.children && (
-        <div className="node-children" style={{ paddingLeft: "20px" }}>
+        <div
+          className={`node-children ${isDragOver ? 'drop-target-area' : ''}`}
+          data-folder-drop-zone="true"
+          style={{ paddingLeft: "20px" }}
+          onDragOver={(e) => {
+            if (!canAcceptDrop) return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'move';
+          }}
+          onDragEnter={(e) => {
+            if (!canAcceptDrop) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(true);
+          }}
+          onDragLeave={(e) => {
+            if (!canAcceptDrop) return;
+            e.stopPropagation();
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+              setIsDragOver(false);
+            }
+          }}
+          onDrop={async (e) => {
+            if (!canAcceptDrop || !draggingPath) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(false);
+            onDragEnd();
+            await onMoveIntoFolder?.(draggingPath, node.path);
+          }}
+        >
           {node.children.map(child => (
             <TreeNode
                 key={child.path}
@@ -403,9 +733,15 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
                 editingPath={editingPath}
                 onRename={onRename}
                 onCreate={onCreate}
+                onCreateFolder={onCreateFolder}
                 onCancel={onCancel}
                 onContextMenu={onContextMenu}
                 onSelect={onSelect}
+                draggingPath={draggingPath}
+                onDragStart={onDragStart}
+                onDragEnd={onDragEnd}
+                onMoveIntoFolder={onMoveIntoFolder}
+                isRootHoverTarget={false}
             />
           ))}
         </div>
@@ -417,6 +753,7 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
 function NodeInput({ initialValue, isDir, originalExtension, onSubmit, onCancel }: { initialValue: string, isDir: boolean, originalExtension?: string, onSubmit: (val: string) => void, onCancel: () => void }) {
     const [val, setVal] = useState(initialValue);
     const inputRef = useRef<HTMLInputElement>(null);
+    const didSubmitRef = useRef(false);
 
     useEffect(() => {
         if (inputRef.current) {
@@ -428,8 +765,13 @@ function NodeInput({ initialValue, isDir, originalExtension, onSubmit, onCancel 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.stopPropagation();
-            if (val.trim()) onSubmit(val.trim());
-            else onCancel();
+            const next = val.trim();
+            if (next) {
+                didSubmitRef.current = true;
+                onSubmit(next);
+            } else {
+                onCancel();
+            }
         } else if (e.key === 'Escape') {
             e.stopPropagation();
             onCancel();
@@ -451,7 +793,14 @@ function NodeInput({ initialValue, isDir, originalExtension, onSubmit, onCancel 
                 onKeyDown={handleKeyDown}
                 onBlur={(e) => {
                     e.stopPropagation();
-                    setTimeout(() => onCancel(), 100);
+                    if (didSubmitRef.current) return;
+                    const next = val.trim();
+                    if (next) {
+                        didSubmitRef.current = true;
+                        onSubmit(next);
+                    } else {
+                        onCancel();
+                    }
                 }}
                 style={{
                     fontFamily: 'inherit',

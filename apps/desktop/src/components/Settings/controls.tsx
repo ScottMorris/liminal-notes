@@ -14,12 +14,13 @@ function useSettingValue<T = any>(key?: string) {
 
 export const ToggleSwitch: React.FC<{ def: SettingControlDef }> = ({ def }) => {
     const [value, setValue] = useSettingValue<boolean>(def.key);
+    const current = value ?? (typeof def.defaultValue === 'boolean' ? def.defaultValue : false);
 
     return (
         <label className="toggle-switch" title={def.label}>
             <input
                 type="checkbox"
-                checked={!!value}
+                checked={current}
                 onChange={(e) => setValue(e.target.checked)}
             />
             <span className="slider"></span>
@@ -177,7 +178,8 @@ export const NumberInput: React.FC<{ def: SettingControlDef }> = ({ def }) => {
 
 export const Slider: React.FC<{ def: SettingControlDef }> = ({ def }) => {
     const [value, setValue] = useSettingValue<number>(def.key);
-    const val = value ?? def.min ?? 0;
+    const defaultValue = typeof def.defaultValue === 'number' ? def.defaultValue : undefined;
+    const val = value ?? defaultValue ?? def.min ?? 0;
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

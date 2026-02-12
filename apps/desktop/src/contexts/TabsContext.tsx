@@ -10,6 +10,7 @@ type TabsAction =
   | { type: 'UPDATE_TAB_STATE'; tabId: string; editorState: string }
   | { type: 'UPDATE_TAB_TITLE'; tabId: string; title: string }
   | { type: 'UPDATE_TAB_PATH'; tabId: string; path: string; isUnsaved: boolean }
+  | { type: 'RENAME_TAB'; tabId: string; newId: string; path: string; title: string }
   | { type: 'UPDATE_TAB_AI_STATE'; tabId: string; aiState: AiState }
   | { type: 'LOAD_TABS'; tabs: OpenTab[]; activeTabId: string | null }
   | { type: 'REORDER_TABS'; fromIndex: number; toIndex: number };
@@ -106,6 +107,48 @@ export function tabsReducer(state: TabsState, action: TabsAction): TabsState {
          )
       };
     }
+    case 'RENAME_TAB': {
+      const sourceTab = state.openTabs.find(t => t.id === action.tabId);
+      if (!sourceTab) {
+        return state;
+      }
+
+      // If target ID already exists, merge the renamed tab state onto the existing slot.
+      const hasConflict = action.newId !== action.tabId && state.openTabs.some(t => t.id === action.newId);
+      if (hasConflict) {
+        const nextTabs = state.openTabs
+          .filter(t => t.id !== action.tabId)
+          .map(t => t.id === action.newId
+            ? {
+                ...t,
+                path: action.path,
+                title: action.title,
+                isDirty: sourceTab.isDirty,
+                isLoading: sourceTab.isLoading,
+                isUnsaved: sourceTab.isUnsaved,
+                isPreview: sourceTab.isPreview,
+                editorState: sourceTab.editorState,
+                aiState: sourceTab.aiState
+              }
+            : t
+          );
+
+        const nextActive = state.activeTabId === action.tabId ? action.newId : state.activeTabId;
+        return {
+          ...state,
+          openTabs: nextTabs,
+          activeTabId: nextActive
+        };
+      }
+
+      return {
+        ...state,
+        openTabs: state.openTabs.map(t =>
+          t.id === action.tabId ? { ...t, id: action.newId, path: action.path, title: action.title } : t
+        ),
+        activeTabId: state.activeTabId === action.tabId ? action.newId : state.activeTabId,
+      };
+    }
     case 'UPDATE_TAB_AI_STATE': {
       return {
         ...state,
@@ -149,6 +192,7 @@ interface TabsContextValue extends TabsState {
   updateTabState: (tabId: string, editorState: string) => void;
   updateTabTitle: (tabId: string, title: string) => void;
   updateTabPath: (tabId: string, path: string, isUnsaved: boolean) => void;
+  renameTab: (tabId: string, newId: string, path: string, title: string) => void;
   updateTabAiState: (tabId: string, aiState: AiState) => void;
   reorderTabs: (fromIndex: number, toIndex: number) => void;
 }
@@ -222,6 +266,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const updateTabState = (tabId: string, editorState: string) => dispatch({ type: 'UPDATE_TAB_STATE', tabId, editorState });
   const updateTabTitle = (tabId: string, title: string) => dispatch({ type: 'UPDATE_TAB_TITLE', tabId, title });
   const updateTabPath = (tabId: string, path: string, isUnsaved: boolean) => dispatch({ type: 'UPDATE_TAB_PATH', tabId, path, isUnsaved });
+  const renameTab = (tabId: string, newId: string, path: string, title: string) => dispatch({ type: 'RENAME_TAB', tabId, newId, path, title });
   const updateTabAiState = (tabId: string, aiState: AiState) => dispatch({ type: 'UPDATE_TAB_AI_STATE', tabId, aiState });
   const reorderTabs = (fromIndex: number, toIndex: number) => dispatch({ type: 'REORDER_TABS', fromIndex, toIndex });
 
@@ -236,6 +281,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
     updateTabState,
     updateTabTitle,
     updateTabPath,
+    renameTab,
     updateTabAiState,
     reorderTabs
   };

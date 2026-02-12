@@ -7,14 +7,16 @@ interface TabProps {
   onSelect: () => void;
   onClose: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
-export function Tab({ tab, isActive, onSelect, onClose, onDoubleClick }: TabProps) {
+export function Tab({ tab, isActive, onSelect, onClose, onDoubleClick, onContextMenu }: TabProps) {
   return (
     <div
       className={`tab ${isActive ? 'active' : ''} ${tab.isDirty ? 'dirty' : ''} ${tab.isPreview ? 'preview' : ''}`}
       onClick={onSelect}
       onDoubleClick={onDoubleClick}
+      onContextMenu={onContextMenu}
       onMouseDown={(e) => {
         if (e.button === 1) { // Middle click
           e.preventDefault();

@@ -1,5 +1,5 @@
 import React from 'react';
-import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon, DictionaryIcon, BanIcon, RefreshIcon, DuplicateIcon, FolderOpenIcon, ClipboardIcon, PlusSquareIcon, WindowRestoreIcon, WindowMaximizeIcon, WindowMinimizeIcon, WindowCloseIcon, CheckIcon, MoveIcon } from '../../Icons';
+import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon, DictionaryIcon, BanIcon, RefreshIcon, DuplicateIcon, FolderOpenIcon, ClipboardIcon, PlusSquareIcon, WindowRestoreIcon, WindowMaximizeIcon, WindowMinimizeIcon, WindowCloseIcon, CheckIcon, MoveIcon, CheckboxEmptyIcon, CheckboxCheckedIcon } from '../../Icons';
 
 // Simple SVG paths for common editor actions
 const LinkIcon = () => (
@@ -256,6 +256,8 @@ export function getIconByName(name?: string): React.ReactNode {
     case 'callout': return <CalloutIcon />;
     case 'clear': return <TextClearIcon />;
     case 'selection': return <SelectionIcon />;
+    case 'checkbox-empty': return <CheckboxEmptyIcon size={16} />;
+    case 'checkbox-checked': return <CheckboxCheckedIcon size={16} />;
 
     // Spellcheck
     case 'Dictionary': return <DictionaryIcon size={16} />;
@@ -275,6 +277,8 @@ export function getIconByName(name?: string): React.ReactNode {
     case 'WindowCloseIcon': return <WindowCloseIcon size={16} />;
     case 'CheckIcon': return <CheckIcon size={16} />;
     case 'MoveIcon': return <MoveIcon size={16} />;
+    case 'CheckboxEmptyIcon': return <CheckboxEmptyIcon size={16} />;
+    case 'CheckboxCheckedIcon': return <CheckboxCheckedIcon size={16} />;
 
     default: return null;
   }

@@ -1,12 +1,21 @@
-import { SettingsSectionDef } from './types';
+import { SettingRowDef, SettingsSectionDef } from './types';
 import { Theme } from '../../theme/types';
 import { builtInPlugins } from '../../plugins/registry';
+import { DEFAULT_FONT_SIZE } from '../../settings/defaults';
 
 export const getSections = (
     availableThemes: Theme[],
     appVersion: string,
-    enabledPlugins: Set<string>
+    enabledPlugins: Set<string>,
+    isLinux: boolean
 ): SettingsSectionDef[] => {
+    const systemAccentRow: SettingRowDef = {
+        id: 'system-accent',
+        label: 'Use system accent colour',
+        description: 'Sync the accent colour with your desktop environment.',
+        controls: [{ kind: 'boolean', key: 'appearance.useSystemAccent' }]
+    };
+
     // Sort themes: System, then Light themes, then Dark themes
     const lightThemes = availableThemes
         .filter(t => t.category === 'light')
@@ -83,7 +92,21 @@ export const getSections = (
                         id: 'show-line-numbers',
                         label: 'Show line numbers',
                         description: 'Show line numbers in the gutter.',
-                        controls: [{ kind: 'boolean', key: 'editor.showLineNumbers' }]
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'editor.showLineNumbers',
+                            defaultValue: false
+                        }]
+                    },
+                    {
+                        id: 'highlight-active-line',
+                        label: 'Highlight active line',
+                        description: 'Highlight the line where your cursor is currently placed.',
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'editor.highlightActiveLine',
+                            defaultValue: false
+                        }]
                     },
                     {
                         id: 'readable-line-length',
@@ -95,7 +118,11 @@ export const getSections = (
                         id: 'word-wrap',
                         label: 'Word wrap',
                         description: 'Wrap long lines to fit the window.',
-                        controls: [{ kind: 'boolean', key: 'editor.wordWrap' }]
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'editor.wordWrap',
+                            defaultValue: true
+                        }]
                     }
                 ]
             },
@@ -106,7 +133,11 @@ export const getSections = (
                     {
                         id: 'spellcheck-enabled',
                         label: 'Enable spellcheck',
-                        controls: [{ kind: 'boolean', key: 'editor.spellcheck.enabled' }]
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'editor.spellcheck.enabled',
+                            defaultValue: true
+                        }]
                     },
                     {
                         id: 'spellcheck-language',
@@ -145,12 +176,7 @@ export const getSections = (
                             options: themeOptions
                         }]
                     },
-                    {
-                        id: 'system-accent',
-                        label: 'Use system accent color',
-                        description: 'Sync the accent color with your desktop environment (Linux only).',
-                        controls: [{ kind: 'boolean', key: 'appearance.useSystemAccent' }]
-                    },
+                    ...(isLinux ? [systemAccentRow] : []),
                     {
                         id: 'native-decorations',
                         label: 'Use native window decorations',
@@ -160,7 +186,14 @@ export const getSections = (
                     {
                         id: 'font-size',
                         label: 'Font size',
-                        controls: [{ kind: 'slider', key: 'appearance.fontSize', min: 10, max: 30, step: 1 }]
+                        controls: [{
+                            kind: 'slider',
+                            key: 'appearance.fontSize',
+                            min: 10,
+                            max: 30,
+                            step: 1,
+                            defaultValue: DEFAULT_FONT_SIZE
+                        }]
                     },
                     {
                         id: 'time-format',
@@ -173,6 +206,27 @@ export const getSections = (
                                 { value: '12h', label: '12-hour' },
                                 { value: '24h', label: '24-hour' }
                             ]
+                        }]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'developer',
+        title: 'Developer',
+        groups: [
+            {
+                id: 'developer-visibility',
+                rows: [
+                    {
+                        id: 'show-frontmatter',
+                        label: 'Show front matter',
+                        description: 'Display YAML front matter in notes and preview.',
+                        controls: [{
+                            kind: 'boolean',
+                            key: 'developer.showFrontmatter',
+                            defaultValue: false
                         }]
                     }
                 ]

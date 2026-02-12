@@ -34,6 +34,21 @@ fn configure_linux_env() {
         }
     }
 
+    fn ensure_csv_env_flag(key: &str, flag: &str) {
+        let existing = env::var(key).unwrap_or_default();
+        let mut values: Vec<String> = existing
+            .split(',')
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .map(ToOwned::to_owned)
+            .collect();
+
+        if !values.iter().any(|v| v.eq_ignore_ascii_case(flag)) {
+            values.push(flag.to_string());
+            env::set_var(key, values.join(","));
+        }
+    }
+
     // Cinnamon and similar Linux desktops often lack an accessibility bus, which causes
     // GTK/Wry to spam errors and sometimes abort the launch. Force-disable the AT-SPI
     // bridge when it is not explicitly configured.
@@ -55,16 +70,20 @@ fn configure_linux_env() {
         set_env_if_unset("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
         set_env_if_unset("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
         set_env_if_unset("GDK_DISABLE_SHM", "1");
+        set_env_if_unset("GDK_DISABLE_XSHM", "1");
+        ensure_csv_env_flag("GDK_DISABLE", "shm");
         set_env_if_unset("WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS", "1");
     }
 
     println!(
-        "[liminal-notes bootstrap] session_type={session_type:?} inferred_x11={inferred_x11} in_container={is_container} DISPLAY={display:?} WAYLAND_DISPLAY={wayland_display:?} NO_AT_BRIDGE={:?} WEBKIT_DISABLE_COMPOSITING_MODE={:?} WEBKIT_DISABLE_DMABUF_RENDERER={:?} WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS={:?} GDK_DISABLE_SHM={:?} LIBGL_ALWAYS_SOFTWARE={:?}",
+        "[liminal-notes bootstrap] session_type={session_type:?} inferred_x11={inferred_x11} in_container={is_container} DISPLAY={display:?} WAYLAND_DISPLAY={wayland_display:?} NO_AT_BRIDGE={:?} WEBKIT_DISABLE_COMPOSITING_MODE={:?} WEBKIT_DISABLE_DMABUF_RENDERER={:?} WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS={:?} GDK_DISABLE_SHM={:?} GDK_DISABLE_XSHM={:?} GDK_DISABLE={:?} LIBGL_ALWAYS_SOFTWARE={:?}",
         env::var("NO_AT_BRIDGE").ok(),
         env::var("WEBKIT_DISABLE_COMPOSITING_MODE").ok(),
         env::var("WEBKIT_DISABLE_DMABUF_RENDERER").ok(),
         env::var("WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS").ok(),
         env::var("GDK_DISABLE_SHM").ok(),
+        env::var("GDK_DISABLE_XSHM").ok(),
+        env::var("GDK_DISABLE").ok(),
         env::var("LIBGL_ALWAYS_SOFTWARE").ok(),
     );
 }

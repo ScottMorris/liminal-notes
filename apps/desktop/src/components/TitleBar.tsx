@@ -1,90 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { WindowMinimizeIcon, WindowMaximizeIcon, WindowCloseIcon, WindowRestoreIcon } from './Icons';
 import { ContextMenu } from './Editor/ContextMenu/ContextMenu';
 import { MenuModel } from './Editor/ContextMenu/types';
 import './TitleBar.css';
 
-export const TitleBar: React.FC = () => {
-    const [platform, setPlatform] = useState<'mac' | 'linux' | 'win'>('win');
-    const [isMaximized, setIsMaximized] = useState(false);
-    const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-
-    const appWindow = getCurrentWindow();
-
-    useEffect(() => {
-        const ua = navigator.userAgent;
-        if (ua.includes('Mac')) {
-            setPlatform('mac');
-        } else if (ua.includes('Linux')) {
-            setPlatform('linux');
-        } else {
-            setPlatform('win');
-        }
-
-        const updateState = async () => {
-             try {
-                setIsMaximized(await appWindow.isMaximized());
-                setIsAlwaysOnTop(await appWindow.isAlwaysOnTop());
-             } catch (e) {
-                 console.error("Failed to check window state", e);
-             }
-        };
-
-        updateState();
-
-        const unlistenPromise = appWindow.listen('tauri://resize', updateState);
-
-        return () => {
-             unlistenPromise.then(unlisten => unlisten());
-        };
-    }, []);
-
-    const minimize = () => appWindow.minimize();
-    const toggleMaximize = async () => {
-        await appWindow.toggleMaximize();
-        setIsMaximized(await appWindow.isMaximized());
-    };
-    const close = () => appWindow.close();
-
-    const handleContextMenu = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        try {
-            setIsMaximized(await appWindow.isMaximized());
-            setIsAlwaysOnTop(await appWindow.isAlwaysOnTop());
-        } catch(e) { console.error(e); }
-
-        setMenuPosition({ x: e.clientX, y: e.clientY });
-        setMenuOpen(true);
-    };
-
-    const handleMenuAction = async (itemId: string) => {
-        switch (itemId) {
-            case 'restore':
-            case 'maximize':
-                toggleMaximize();
-                break;
-            case 'minimize':
-                minimize();
-                break;
-            case 'move':
-                void appWindow.startDragging();
-                break;
-            case 'always-on-top':
-                const newState = !isAlwaysOnTop;
-                await appWindow.setAlwaysOnTop(newState);
-                setIsAlwaysOnTop(newState);
-                break;
-            case 'close':
-                close();
-                break;
-        }
-        setMenuOpen(false);
-    };
-
-    const menuModel: MenuModel = {
+export function createTitleBarMenuModel(isMaximized: boolean, isAlwaysOnTop: boolean): MenuModel {
+    return {
         sections: [
             {
                 items: [
@@ -113,6 +35,116 @@ export const TitleBar: React.FC = () => {
             }
         ]
     };
+}
+
+export const TitleBar: React.FC = () => {
+    const [platform, setPlatform] = useState<'mac' | 'linux' | 'win'>('win');
+    const [isMaximized, setIsMaximized] = useState(false);
+    const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false);
+    const [alwaysOnTopOverride, setAlwaysOnTopOverride] = useState<boolean | null>(null);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+
+    const appWindow = getCurrentWindow();
+    const effectiveAlwaysOnTop = alwaysOnTopOverride ?? isAlwaysOnTop;
+    const logAot = (...args: unknown[]) => {
+        console.info('[TitleBar/AOT]', ...args);
+    };
+    const syncWindowState = useCallback(async () => {
+        try {
+            const maximized = await appWindow.isMaximized();
+            const alwaysOnTop = await appWindow.isAlwaysOnTop();
+            setIsMaximized(maximized);
+            if (alwaysOnTopOverride !== null && alwaysOnTop !== alwaysOnTopOverride) {
+                setIsAlwaysOnTop(alwaysOnTopOverride);
+                logAot('syncWindowState mismatch (keeping override)', {
+                    maximized,
+                    alwaysOnTop,
+                    alwaysOnTopOverride
+                });
+            } else {
+                setIsAlwaysOnTop(alwaysOnTop);
+                if (alwaysOnTopOverride !== null && alwaysOnTop === alwaysOnTopOverride) {
+                    setAlwaysOnTopOverride(null);
+                }
+                logAot('syncWindowState', { maximized, alwaysOnTop, alwaysOnTopOverride: null });
+            }
+        } catch (e) {
+            console.error('[TitleBar/AOT] Failed to check window state', e);
+        }
+    }, [appWindow, alwaysOnTopOverride]);
+
+    useEffect(() => {
+        const ua = navigator.userAgent;
+        if (ua.includes('Mac')) {
+            setPlatform('mac');
+        } else if (ua.includes('Linux')) {
+            setPlatform('linux');
+        } else {
+            setPlatform('win');
+        }
+
+        void syncWindowState();
+
+        const unlistenResizePromise = appWindow.listen('tauri://resize', syncWindowState);
+        const unlistenFocusPromise = appWindow.listen('tauri://focus', syncWindowState);
+
+        return () => {
+             unlistenResizePromise.then(unlisten => unlisten());
+             unlistenFocusPromise.then(unlisten => unlisten());
+        };
+    }, [appWindow, syncWindowState]);
+
+    const minimize = () => appWindow.minimize();
+    const toggleMaximize = async () => {
+        await appWindow.toggleMaximize();
+        setIsMaximized(await appWindow.isMaximized());
+    };
+    const close = () => appWindow.close();
+
+    const handleContextMenu = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        logAot('context-menu open requested');
+        await syncWindowState();
+
+        setMenuPosition({ x: e.clientX, y: e.clientY });
+        setMenuOpen(true);
+    };
+
+    const handleMenuAction = async (itemId: string) => {
+        switch (itemId) {
+            case 'restore':
+            case 'maximize':
+                toggleMaximize();
+                break;
+            case 'minimize':
+                minimize();
+                break;
+            case 'move':
+                void appWindow.startDragging();
+                break;
+            case 'always-on-top':
+                const nextAlwaysOnTop = !effectiveAlwaysOnTop;
+                logAot('toggle requested', {
+                    uiState: isAlwaysOnTop,
+                    effectiveAlwaysOnTop,
+                    alwaysOnTopOverride,
+                    nextAlwaysOnTop
+                });
+                await appWindow.setAlwaysOnTop(nextAlwaysOnTop);
+                logAot('setAlwaysOnTop resolved', { nextAlwaysOnTop });
+                setIsAlwaysOnTop(nextAlwaysOnTop);
+                setAlwaysOnTopOverride(nextAlwaysOnTop);
+                await syncWindowState();
+                break;
+            case 'close':
+                close();
+                break;
+        }
+        setMenuOpen(false);
+    };
+
+    const menuModel: MenuModel = createTitleBarMenuModel(isMaximized, effectiveAlwaysOnTop);
 
     // Mac Traffic Lights
     const MacControls = () => (

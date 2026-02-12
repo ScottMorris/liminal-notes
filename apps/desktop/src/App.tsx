@@ -11,7 +11,7 @@ import { StatusBar } from "./components/StatusBar";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
 import { desktopVault } from "./adapters/DesktopVaultAdapter";
-import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon, BellIcon } from "./components/Icons";
+import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon, BellIcon, FolderIcon } from "./components/Icons";
 import { useTabs } from "./contexts/TabsContext";
 import { useNavigation } from "./contexts/NavigationContext";
 import { EditorPane } from "./components/Editor/EditorPane";
@@ -24,6 +24,7 @@ import { RemindersProvider } from "./contexts/RemindersContext";
 import { RemindersPanel } from "./features/reminders/RemindersPanel";
 import { ReminderSheet } from "./features/reminders/components/ReminderSheet";
 import { TitleBar } from "./components/TitleBar";
+import { DEFAULT_FONT_SIZE } from "./settings/defaults";
 
 function matchShortcut(e: KeyboardEvent, commandId: string): boolean {
   const cmd = commandRegistry.getCommand(commandId);
@@ -60,7 +61,7 @@ function AppContent() {
   } = useVault();
 
   // Use Tabs Context
-  const { openTab, switchTab, openTabs, closeTab, activeTabId, dispatch } = useTabs();
+  const { openTab, switchTab, openTabs, closeTab, activeTabId, dispatch, renameTab } = useTabs();
   // Use Navigation Context
   const { goBack, goForward } = useNavigation();
   // Use Settings Context
@@ -74,6 +75,7 @@ function AppContent() {
 
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'files' | 'tags'>('files');
 
   const useNativeDecorations = (settings['appearance.useNativeDecorations'] as boolean) ?? false;
@@ -96,8 +98,8 @@ function AppContent() {
         document.body.style.fontSize = `${size}px`;
     } else {
         // Default font size
-        document.documentElement.style.setProperty('--ln-font-size', '16px');
-        document.body.style.fontSize = '16px';
+        document.documentElement.style.setProperty('--ln-font-size', `${DEFAULT_FONT_SIZE}px`);
+        document.body.style.fontSize = `${DEFAULT_FONT_SIZE}px`;
     }
 
     if (settings['editor.spellcheck.enabled'] !== undefined) {
@@ -183,6 +185,8 @@ function AppContent() {
   };
 
   const handleStartCreate = useCallback(async () => {
+    setIsCreating(false);
+    setIsCreatingFolder(false);
     // New behavior: Immediately create "Untitled" file
     let title = 'Untitled';
     let path = 'Untitled.md';
@@ -219,14 +223,121 @@ function AppContent() {
 
   }, [openTab, resolvePath, refreshFiles]);
 
-  const handleCreateCommit = useCallback(async (_name: string) => {
-      // This is for the FileTree input if we still use it.
-  }, []);
+  const handleCreateCommit = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setIsCreating(false);
+      setIsCreatingFolder(false);
+      setEditingPath(null);
+      return;
+    }
+
+    const hasMarkdownExtension = /\.md$/i.test(trimmed);
+    const baseTitle = hasMarkdownExtension ? trimmed.replace(/\.md$/i, '') : trimmed;
+    let path = hasMarkdownExtension ? trimmed : `${trimmed}.md`;
+    let counter = 1;
+
+    while (resolvePath(path)) {
+      path = `${baseTitle} ${counter}.md`;
+      counter++;
+    }
+
+    try {
+      await desktopVault.writeNote(path, '');
+      openTab({
+        id: path,
+        path,
+        title: path.split('/').pop()?.replace(/\.md$/i, '') || baseTitle,
+        mode: 'source',
+        isDirty: false,
+        isLoading: false,
+        isUnsaved: false,
+        isPreview: false,
+        editorState: ''
+      });
+      await refreshFiles();
+    } catch (e) {
+      console.error("Failed to create note from file tree input", e);
+      alert("Failed to create note");
+    } finally {
+      setIsCreating(false);
+      setIsCreatingFolder(false);
+      setEditingPath(null);
+    }
+  }, [openTab, refreshFiles, resolvePath]);
 
   const handleCreateCancel = useCallback(() => {
     setIsCreating(false);
+    setIsCreatingFolder(false);
     setEditingPath(null);
   }, []);
+
+  const handleStartCreateFolder = useCallback(() => {
+    setIsCreating(false);
+    setIsCreatingFolder(true);
+    setEditingPath(null);
+  }, []);
+
+  const handleCreateFolder = useCallback(async (name: string) => {
+    const trimmed = name.trim().replace(/\/+$/g, '');
+    if (!trimmed) {
+      setIsCreatingFolder(false);
+      return;
+    }
+
+    try {
+      // Persist a hidden marker so empty folders are represented in the vault tree.
+      await desktopVault.writeNote(`${trimmed}/.keep`, '');
+      await refreshFiles();
+    } catch (e) {
+      console.error("Failed to create folder", e);
+      alert("Failed to create folder");
+    } finally {
+      setIsCreatingFolder(false);
+      setEditingPath(null);
+    }
+  }, [refreshFiles]);
+
+  const remapOpenTabsAfterMove = useCallback((sourcePath: string, destinationPath: string) => {
+    const movedTabs = openTabs
+      .filter(tab => tab.id === sourcePath || tab.id.startsWith(`${sourcePath}/`))
+      .sort((a, b) => a.path.length - b.path.length);
+
+    movedTabs.forEach((tab) => {
+      const suffix = tab.id.slice(sourcePath.length);
+      const nextPath = `${destinationPath}${suffix}`;
+      renameTab(tab.id, nextPath, nextPath, tab.title);
+    });
+  }, [openTabs, renameTab]);
+
+  const handleMoveIntoFolder = useCallback(async (sourcePath: string, targetFolderPath: string) => {
+    const sourceName = sourcePath.split('/').pop() ?? sourcePath;
+    const destinationPath = `${targetFolderPath}/${sourceName}`;
+
+    if (destinationPath === sourcePath) return;
+    if (targetFolderPath.startsWith(`${sourcePath}/`)) return;
+
+    try {
+      await desktopVault.rename(sourcePath, destinationPath);
+      await refreshFiles();
+      remapOpenTabsAfterMove(sourcePath, destinationPath);
+    } catch (e) {
+      alert("Failed to move item: " + String(e));
+    }
+  }, [refreshFiles, remapOpenTabsAfterMove]);
+
+  const handleMoveToRoot = useCallback(async (sourcePath: string) => {
+    const sourceName = sourcePath.split('/').pop() ?? sourcePath;
+    if (!sourcePath.includes('/')) return;
+
+    try {
+      await desktopVault.rename(sourcePath, sourceName);
+      await refreshFiles();
+      remapOpenTabsAfterMove(sourcePath, sourceName);
+    } catch (e) {
+      alert("Failed to move item: " + String(e));
+    }
+  }, [refreshFiles, remapOpenTabsAfterMove]);
 
   const handleRenameCommit = useCallback(async (oldPath: string, newName: string) => {
       if (!newName || !newName.trim()) {
@@ -254,20 +365,8 @@ function AppContent() {
           await desktopVault.rename(oldPath, newPath);
           await refreshFiles();
 
-          const oldTab = openTabs.find(t => t.id === oldPath); // Assuming ID=path
-          if (oldTab) {
-              closeTab(oldPath);
-              openTab({
-                  id: newPath,
-                  path: newPath,
-                  title: newFilename.replace('.md', ''),
-                  mode: 'source',
-                  isDirty: oldTab.isDirty,
-                  isLoading: false,
-                  isUnsaved: false,
-                  isPreview: oldTab.isPreview, // Preserve preview state? Or force permanent? Usually permanent on rename.
-                  editorState: oldTab.editorState
-              });
+          if (openTabs.some(t => t.id === oldPath)) {
+              renameTab(oldPath, newPath, newPath, newFilename.replace('.md', ''));
           }
 
       } catch (e) {
@@ -275,7 +374,7 @@ function AppContent() {
       } finally {
           setEditingPath(null);
       }
-  }, [refreshFiles, openTabs, closeTab, openTab]);
+  }, [refreshFiles, openTabs, renameTab]);
 
   const handleFileDelete = useCallback(async (path: string) => {
       try {
@@ -368,6 +467,15 @@ function AppContent() {
     };
   }, [handleStartCreate, selectedFile, goBack, goForward]);
 
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('contextmenu', handleContextMenu);
+    return () => window.removeEventListener('contextmenu', handleContextMenu);
+  }, []);
+
   // Listen for view change events
   useEffect(() => {
     const handleViewChange = (e: Event) => {
@@ -409,6 +517,9 @@ function AppContent() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
+            <button className="reset-btn" onClick={handleStartCreateFolder} title="New Folder">
+              <FolderIcon size={18} />
+            </button>
             <button className="reset-btn" onClick={handleStartCreate} title="New Note (Ctrl+N)"><PencilSquareIcon size={18} /></button>
             <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)"><SearchIcon size={18} /></button>
             <button className="reset-btn" onClick={() => setIsHelpOpen(true)} title="Help">?</button>
@@ -476,12 +587,20 @@ function AppContent() {
                     onFileSelect={(path, isDoubleClick) => handleFileSelect(path, isDoubleClick)}
                     editingPath={editingPath}
                     isCreating={isCreating} // We aren't using this for now via button, but prop required
+                    isCreatingFolder={isCreatingFolder}
                     onRename={handleRenameCommit}
                     onCreate={handleCreateCommit}
-                    onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
+                    onStartCreate={() => {
+                      setIsCreatingFolder(false);
+                      setIsCreating(true);
+                    }}
+                    onStartCreateFolder={handleStartCreateFolder}
+                    onCreateFolder={handleCreateFolder}
                     onCancel={handleCreateCancel}
                     onStartRename={(path) => setEditingPath(path)}
                     onDelete={handleFileDelete}
+                    onMoveIntoFolder={handleMoveIntoFolder}
+                    onMoveToRoot={handleMoveToRoot}
                     onRefresh={refreshFiles}
                 />
             ) : (

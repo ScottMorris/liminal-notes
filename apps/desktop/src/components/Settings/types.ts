@@ -29,6 +29,7 @@ export interface SettingControlDef {
   min?: number;
   max?: number;
   step?: number;
+  defaultValue?: boolean | number | string;
   intent?: "normal" | "danger";
   disabled?: boolean;
   actionId?: string; // identifier for action handlers

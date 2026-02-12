@@ -35,13 +35,15 @@ interface CodeMirrorEditorProps {
   getEditorContext: (view: EditorView) => EditorContext;
   onLinkClick?: (target: string) => void;
   showLineNumbers?: boolean;
+  showFrontmatter?: boolean;
+  highlightActiveLineEnabled?: boolean;
   readableLineLength?: boolean;
   wordWrap?: boolean;
   extensions?: Extension[];
 }
 
 export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
-  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick, showLineNumbers = true, readableLineLength = false, wordWrap = false, extensions: propExtensions = [] }, ref) => {
+  ({ value, initialState, onChange, onSave, onBlur, noteId, path, getEditorContext, onLinkClick, showLineNumbers = true, showFrontmatter = false, highlightActiveLineEnabled = false, readableLineLength = false, wordWrap = false, extensions: propExtensions = [] }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const onSaveRef = useRef(onSave);
@@ -51,6 +53,8 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
     const { themeId } = useTheme();
 
     const lineNumbersCompartment = useRef(new Compartment()).current;
+    const frontmatterCompartment = useRef(new Compartment()).current;
+    const highlightActiveLineCompartment = useRef(new Compartment()).current;
     const wordWrapCompartment = useRef(new Compartment()).current;
     const propExtensionsCompartment = useRef(new Compartment()).current;
 
@@ -149,12 +153,12 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
       const extensions = [
         lineNumbersCompartment.of(showLineNumbers ? lineNumbers() : []),
         wordWrapCompartment.of(wordWrap ? EditorView.lineWrapping : []),
-        highlightActiveLine(),
+        highlightActiveLineCompartment.of(highlightActiveLineEnabled ? highlightActiveLine() : []),
         history(),
         closeBrackets(),
         markdown({ extensions: [GFM] }),
         markdownDecorations,
-        frontmatterHider,
+        frontmatterCompartment.of(showFrontmatter ? [] : frontmatterHider),
         spellcheckExtension,
         createEditorTheme(),
         keymap.of([
@@ -233,18 +237,24 @@ export const CodeMirrorEditor = forwardRef<EditorHandle, CodeMirrorEditorProps>(
         if (viewRef.current) {
             viewRef.current.dispatch({
                 effects: [
-                    lineNumbersCompartment.reconfigure(showLineNumbers ? lineNumbers({
-                        formatNumber: (n) => {
-                            if (n <= frontmatterOffset) return "";
-                            return (n - frontmatterOffset).toString();
-                        }
-                    }) : []),
+                    lineNumbersCompartment.reconfigure(showLineNumbers ? (
+                        showFrontmatter
+                            ? lineNumbers()
+                            : lineNumbers({
+                                formatNumber: (n) => {
+                                    if (n <= frontmatterOffset) return "";
+                                    return (n - frontmatterOffset).toString();
+                                }
+                            })
+                    ) : []),
+                    frontmatterCompartment.reconfigure(showFrontmatter ? [] : frontmatterHider),
+                    highlightActiveLineCompartment.reconfigure(highlightActiveLineEnabled ? highlightActiveLine() : []),
                     wordWrapCompartment.reconfigure(wordWrap ? EditorView.lineWrapping : []),
                     propExtensionsCompartment.reconfigure(propExtensions)
                 ]
             });
         }
-    }, [showLineNumbers, wordWrap, frontmatterOffset, propExtensions]);
+    }, [showLineNumbers, showFrontmatter, highlightActiveLineEnabled, wordWrap, frontmatterOffset, propExtensions]);
 
     // Handle incoming value changes
     useEffect(() => {
