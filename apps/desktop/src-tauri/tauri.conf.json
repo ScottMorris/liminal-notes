@@ -26,8 +26,25 @@
   },
   "bundle": {
     "active": true,
+    "publisher": "Liminal Notes Contributors",
+    "homepage": "https://github.com/ScottMorris/liminal-notes",
+    "license": "MIT",
     "shortDescription": "Local-first Markdown notes with wikilinks and backlinks.",
     "longDescription": "Liminal Notes is a local-first Markdown note app focused on a single vault, fast editing, wikilinks, backlinks, and simple search. Notes stay as regular files on disk so your data remains portable.",
+    "windows": {
+      "allowDowngrades": false,
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "startMenuFolder": "Liminal Notes"
+      },
+      "wix": {
+        "upgradeCode": "1b504da7-be33-5318-a411-bff50bdfd267"
+      }
+    },
     "targets": "all",
     "icon": [
       "icons/32x32.png",
