@@ -53,6 +53,8 @@ This document describes the process for creating a new release of the desktop ap
     - Verify that Linux and Windows assets are present.
     - Confirm the generated release notes look correct.
       - Generated note categories are configured in `.github/release.yml`.
+      - PRs labelled `mobile` are excluded from desktop release notes.
+      - Keep PR labels accurate so generated notes remain platform-specific.
     - If needed, edit the release text with additional context.
 
 6.  **Optional Draft Mode**
