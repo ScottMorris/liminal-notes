@@ -402,24 +402,26 @@ export function FileTree({
             Drop here to move to vault root
           </div>
         )}
-        {tree.map(node => (
-          <TreeNode
-            key={node.path}
-            node={node}
-            onFileSelect={onFileSelect}
-            editingPath={editingPath}
-            onRename={onRename}
-            onCreate={onCreate}
-            onCreateFolder={onCreateFolder}
-            onCancel={onCancel}
-            onContextMenu={handleNodeContextMenu}
-            onSelect={setSelectedNode}
-            draggingPath={draggingPath}
-            onDragStart={setDraggingPath}
-            onDragEnd={() => setDraggingPath(null)}
-            onMoveIntoFolder={onMoveIntoFolder}
-          />
-        ))}
+        <div className={`tree-root-list ${isRootDropTarget ? 'active' : ''}`}>
+          {tree.map(node => (
+            <TreeNode
+              key={node.path}
+              node={node}
+              onFileSelect={onFileSelect}
+              editingPath={editingPath}
+              onRename={onRename}
+              onCreate={onCreate}
+              onCreateFolder={onCreateFolder}
+              onCancel={onCancel}
+              onContextMenu={handleNodeContextMenu}
+              onSelect={setSelectedNode}
+              draggingPath={draggingPath}
+              onDragStart={setDraggingPath}
+              onDragEnd={() => setDraggingPath(null)}
+              onMoveIntoFolder={onMoveIntoFolder}
+            />
+          ))}
+        </div>
         {draggingPath && canDropPathToRoot(draggingPath) && (
           <div className={`tree-root-drop-zone ${isRootDropTarget ? 'active' : ''}`}>
             Drop here to move to vault root

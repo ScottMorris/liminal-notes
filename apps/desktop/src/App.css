@@ -251,6 +251,12 @@ button:disabled {
   color: var(--ln-fg);
 }
 
+.tree-root-list.active {
+  background: color-mix(in srgb, var(--ln-accent) 8%, transparent);
+  outline: 1px dashed var(--ln-accent);
+  outline-offset: -1px;
+}
+
 .tree-node {
   font-size: 0.9rem;
 }
