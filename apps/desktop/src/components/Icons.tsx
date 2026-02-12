@@ -69,6 +69,25 @@ export const CheckIcon: React.FC<IconBaseProps> = (props) => (
   />
 );
 
+export const CheckboxEmptyIcon: React.FC<IconBaseProps> = (props) => (
+  <Icon
+    {...props}
+    path={<rect x="5" y="5" width="14" height="14" rx="2" ry="2" />}
+  />
+);
+
+export const CheckboxCheckedIcon: React.FC<IconBaseProps> = (props) => (
+  <Icon
+    {...props}
+    path={
+      <>
+        <rect x="5" y="5" width="14" height="14" rx="2" ry="2" />
+        <path d="M9 12.5l2.2 2.2L15.5 10.5" />
+      </>
+    }
+  />
+);
+
 export const MoveIcon: React.FC<IconBaseProps> = (props) => (
   <Icon
     {...props}

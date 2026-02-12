@@ -1,5 +1,5 @@
 import React from 'react';
-import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon, DictionaryIcon, BanIcon, RefreshIcon, DuplicateIcon, FolderOpenIcon, ClipboardIcon, PlusSquareIcon, WindowRestoreIcon, WindowMaximizeIcon, WindowMinimizeIcon, WindowCloseIcon, CheckIcon, MoveIcon } from '../../Icons';
+import { PencilSquareIcon, DocumentTextIcon, ShareIcon, SearchIcon, PuzzleIcon, DictionaryIcon, BanIcon, RefreshIcon, DuplicateIcon, FolderOpenIcon, ClipboardIcon, PlusSquareIcon, WindowRestoreIcon, WindowMaximizeIcon, WindowMinimizeIcon, WindowCloseIcon, CheckIcon, MoveIcon, CheckboxEmptyIcon, CheckboxCheckedIcon } from '../../Icons';
 
 // Simple SVG paths for common editor actions
 const LinkIcon = () => (
@@ -215,19 +215,6 @@ const SelectionIcon = () => (
   </svg>
 );
 
-const CheckboxEmptyIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect>
-  </svg>
-);
-
-const CheckboxCheckedIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect>
-    <path d="M9 12.5l2.2 2.2L15.5 10.5"></path>
-  </svg>
-);
-
 export function getIconByName(name?: string): React.ReactNode {
   if (!name) return null;
 
@@ -269,8 +256,8 @@ export function getIconByName(name?: string): React.ReactNode {
     case 'callout': return <CalloutIcon />;
     case 'clear': return <TextClearIcon />;
     case 'selection': return <SelectionIcon />;
-    case 'checkbox-empty': return <CheckboxEmptyIcon />;
-    case 'checkbox-checked': return <CheckboxCheckedIcon />;
+    case 'checkbox-empty': return <CheckboxEmptyIcon size={16} />;
+    case 'checkbox-checked': return <CheckboxCheckedIcon size={16} />;
 
     // Spellcheck
     case 'Dictionary': return <DictionaryIcon size={16} />;
@@ -290,6 +277,8 @@ export function getIconByName(name?: string): React.ReactNode {
     case 'WindowCloseIcon': return <WindowCloseIcon size={16} />;
     case 'CheckIcon': return <CheckIcon size={16} />;
     case 'MoveIcon': return <MoveIcon size={16} />;
+    case 'CheckboxEmptyIcon': return <CheckboxEmptyIcon size={16} />;
+    case 'CheckboxCheckedIcon': return <CheckboxCheckedIcon size={16} />;
 
     default: return null;
   }
