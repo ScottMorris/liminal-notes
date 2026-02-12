@@ -15,6 +15,7 @@ export function MenuItem({ item, onItemClick }: MenuItemProps) {
 
   const hasSubmenu = item.children && item.children.length > 0;
   const isDestructive = item.id === 'fileTree.delete';
+  const isCheckable = typeof item.checked === 'boolean';
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -100,14 +101,18 @@ export function MenuItem({ item, onItemClick }: MenuItemProps) {
         aria-expanded={hasSubmenu ? showSubmenu : undefined}
       >
         <span className="menu-item-icon">
-          {iconNode}
+          {isCheckable ? (
+            <span
+              className={`menu-item-checkbox ${item.checked ? 'checked' : ''}`}
+              aria-hidden="true"
+            />
+          ) : (
+            iconNode
+          )}
         </span>
         <span className="menu-item-label">{item.label}</span>
         {item.shortcut && (
           <span className="menu-item-shortcut">{item.shortcut}</span>
-        )}
-        {item.checked && (
-          <span className="menu-item-check" aria-hidden="true">✓</span>
         )}
         {hasSubmenu && (
           <span className="menu-item-chevron">›</span>

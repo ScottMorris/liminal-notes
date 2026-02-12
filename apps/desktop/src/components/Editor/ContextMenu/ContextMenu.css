@@ -132,11 +132,25 @@
   margin-left: 12px;
 }
 
-.menu-item-check {
-  flex-shrink: 0;
-  font-size: 0.9rem;
-  color: var(--ln-menu-fg);
-  margin-left: 10px;
+.menu-item-checkbox {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--ln-menu-muted);
+  border-radius: 2px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.menu-item-checkbox.checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border: solid var(--ln-menu-fg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .menu-item-chevron {
