@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildMovedPath,
   canDropPathIntoDirectory,
+  canDropPathToRoot,
   createEmptySpaceMenuModel,
   registerFileTreeRefreshListeners
 } from './FileTree';
@@ -98,5 +99,12 @@ describe('canDropPathIntoDirectory', () => {
   it('blocks dropping onto itself or a child folder', () => {
     expect(canDropPathIntoDirectory('notes', 'notes')).toBe(false);
     expect(canDropPathIntoDirectory('notes', 'notes/subfolder')).toBe(false);
+  });
+});
+
+describe('canDropPathToRoot', () => {
+  it('allows root drop only when source is nested', () => {
+    expect(canDropPathToRoot('notes/today.md')).toBe(true);
+    expect(canDropPathToRoot('today.md')).toBe(false);
   });
 });

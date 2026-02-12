@@ -298,6 +298,18 @@ function AppContent() {
     }
   }, [refreshFiles]);
 
+  const remapOpenTabsAfterMove = useCallback((sourcePath: string, destinationPath: string) => {
+    const movedTabs = openTabs
+      .filter(tab => tab.id === sourcePath || tab.id.startsWith(`${sourcePath}/`))
+      .sort((a, b) => a.path.length - b.path.length);
+
+    movedTabs.forEach((tab) => {
+      const suffix = tab.id.slice(sourcePath.length);
+      const nextPath = `${destinationPath}${suffix}`;
+      renameTab(tab.id, nextPath, nextPath, tab.title);
+    });
+  }, [openTabs, renameTab]);
+
   const handleMoveIntoFolder = useCallback(async (sourcePath: string, targetFolderPath: string) => {
     const sourceName = sourcePath.split('/').pop() ?? sourcePath;
     const destinationPath = `${targetFolderPath}/${sourceName}`;
@@ -308,20 +320,24 @@ function AppContent() {
     try {
       await desktopVault.rename(sourcePath, destinationPath);
       await refreshFiles();
-
-      const movedTabs = openTabs
-        .filter(tab => tab.id === sourcePath || tab.id.startsWith(`${sourcePath}/`))
-        .sort((a, b) => a.path.length - b.path.length);
-
-      movedTabs.forEach((tab) => {
-        const suffix = tab.id.slice(sourcePath.length);
-        const nextPath = `${destinationPath}${suffix}`;
-        renameTab(tab.id, nextPath, nextPath, tab.title);
-      });
+      remapOpenTabsAfterMove(sourcePath, destinationPath);
     } catch (e) {
       alert("Failed to move item: " + String(e));
     }
-  }, [openTabs, refreshFiles, renameTab]);
+  }, [refreshFiles, remapOpenTabsAfterMove]);
+
+  const handleMoveToRoot = useCallback(async (sourcePath: string) => {
+    const sourceName = sourcePath.split('/').pop() ?? sourcePath;
+    if (!sourcePath.includes('/')) return;
+
+    try {
+      await desktopVault.rename(sourcePath, sourceName);
+      await refreshFiles();
+      remapOpenTabsAfterMove(sourcePath, sourceName);
+    } catch (e) {
+      alert("Failed to move item: " + String(e));
+    }
+  }, [refreshFiles, remapOpenTabsAfterMove]);
 
   const handleRenameCommit = useCallback(async (oldPath: string, newName: string) => {
       if (!newName || !newName.trim()) {
@@ -584,6 +600,7 @@ function AppContent() {
                     onStartRename={(path) => setEditingPath(path)}
                     onDelete={handleFileDelete}
                     onMoveIntoFolder={handleMoveIntoFolder}
+                    onMoveToRoot={handleMoveToRoot}
                     onRefresh={refreshFiles}
                 />
             ) : (

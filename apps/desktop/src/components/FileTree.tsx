@@ -49,6 +49,7 @@ interface FileTreeProps {
   onDelete?: (path: string) => void;
   onStartRename?: (path: string) => void;
   onMoveIntoFolder?: (sourcePath: string, targetFolderPath: string) => Promise<void> | void;
+  onMoveToRoot?: (sourcePath: string) => Promise<void> | void;
   onRefresh?: () => Promise<void>;
 }
 
@@ -95,6 +96,10 @@ export function canDropPathIntoDirectory(sourcePath: string, targetFolderPath: s
   return true;
 }
 
+export function canDropPathToRoot(sourcePath: string): boolean {
+  return sourcePath.includes('/');
+}
+
 export function FileTree({
   files,
   onFileSelect,
@@ -110,11 +115,13 @@ export function FileTree({
   onDelete,
   onStartRename,
   onMoveIntoFolder,
+  onMoveToRoot,
   onRefresh
 }: FileTreeProps) {
   const { openTab } = useTabs();
   const [selectedNode, setSelectedNode] = useState<DisplayNode | null>(null);
   const [draggingPath, setDraggingPath] = useState<string | null>(null);
+  const [isRootDropTarget, setIsRootDropTarget] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
     model: MenuModel;
     position: MenuPosition;
@@ -353,11 +360,42 @@ export function FileTree({
   return (
     <>
       <div
-        className="file-tree"
+        className={`file-tree ${isRootDropTarget ? 'root-drop-active' : ''}`}
         tabIndex={0}
         onKeyDown={handleKeyDown}
         onContextMenu={handleEmptySpaceContextMenu}
+        onDragOver={(e) => {
+          if (!draggingPath || !canDropPathToRoot(draggingPath)) return;
+          e.preventDefault();
+          setIsRootDropTarget(true);
+          e.dataTransfer.dropEffect = 'move';
+        }}
+        onDragEnter={(e) => {
+          if (!draggingPath || !canDropPathToRoot(draggingPath)) return;
+          setIsRootDropTarget(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            setIsRootDropTarget(false);
+          }
+        }}
+        onDrop={async (e) => {
+          if (!draggingPath || !canDropPathToRoot(draggingPath)) return;
+          const targetEl = e.target as HTMLElement | null;
+          const droppedOnRootZone = !!targetEl?.closest('.tree-root-drop-zone');
+          if (!droppedOnRootZone && e.target !== e.currentTarget) return;
+          e.preventDefault();
+          e.stopPropagation();
+          setIsRootDropTarget(false);
+          setDraggingPath(null);
+          await onMoveToRoot?.(draggingPath);
+        }}
       >
+        {draggingPath && canDropPathToRoot(draggingPath) && (
+          <div className={`tree-root-drop-zone ${isRootDropTarget ? 'active' : ''}`}>
+            Drop here to move to vault root
+          </div>
+        )}
         {tree.map(node => (
           <TreeNode
             key={node.path}
@@ -501,7 +539,6 @@ function TreeNode({
   return (
     <div className="tree-node">
       <div
-        className={`node-label ${node.isDir ? "folder" : "file"}`}
         onClick={handleClick}
         onContextMenu={(e) => onContextMenu(e, node)}
         draggable={!isTemp}
@@ -553,12 +590,12 @@ function TreeNode({
           onDragEnd();
           await onMoveIntoFolder?.(draggingPath, node.path);
         }}
+        className={`node-label ${node.isDir ? "folder" : "file"} ${isDragOver ? 'drop-target' : ''}`}
         style={{
           cursor: "pointer",
           userSelect: "none",
           display: 'flex',
-          alignItems: 'center',
-          backgroundColor: isDragOver ? 'var(--ln-item-hover-bg)' : undefined
+          alignItems: 'center'
         }}
       >
         <span style={{ marginRight: "6px", display: 'flex', color: 'var(--ln-muted)' }}>

@@ -230,6 +230,27 @@ button:disabled {
   min-height: 100%;
 }
 
+.file-tree.root-drop-active {
+  background: color-mix(in srgb, var(--ln-accent) 8%, transparent);
+}
+
+.tree-root-drop-zone {
+  margin: 0 10px 8px;
+  padding: 6px 10px;
+  border: 1px dashed var(--ln-border);
+  border-radius: 6px;
+  color: var(--ln-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+.tree-root-drop-zone.active {
+  border-color: var(--ln-accent);
+  background: color-mix(in srgb, var(--ln-accent) 14%, transparent);
+  color: var(--ln-fg);
+}
+
 .tree-node {
   font-size: 0.9rem;
 }
@@ -244,6 +265,12 @@ button:disabled {
 
 .node-label:hover {
   background-color: var(--ln-item-hover-bg);
+}
+
+.node-label.drop-target {
+  background: color-mix(in srgb, var(--ln-accent) 16%, transparent);
+  outline: 1px solid var(--ln-accent);
+  outline-offset: -1px;
 }
 
 .node-label.file {
