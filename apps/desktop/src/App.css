@@ -282,6 +282,12 @@ button:disabled {
   outline-offset: -1px;
 }
 
+.node-label.root-drop-hover {
+  background: color-mix(in srgb, var(--ln-accent) 12%, transparent);
+  outline: 1px dashed var(--ln-accent);
+  outline-offset: -1px;
+}
+
 .node-children.drop-target-area {
   background: color-mix(in srgb, var(--ln-accent) 8%, transparent);
   outline: 1px dashed var(--ln-accent);
@@ -295,10 +301,6 @@ button:disabled {
 
 .node-label.folder {
     font-weight: 500;
-}
-
-.node-label > span {
-  pointer-events: none;
 }
 
 .error-banner {

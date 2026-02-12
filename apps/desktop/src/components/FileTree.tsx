@@ -122,6 +122,7 @@ export function FileTree({
   const [selectedNode, setSelectedNode] = useState<DisplayNode | null>(null);
   const [draggingPath, setDraggingPath] = useState<string | null>(null);
   const [isRootDropTarget, setIsRootDropTarget] = useState(false);
+  const [rootHoverPath, setRootHoverPath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     model: MenuModel;
     position: MenuPosition;
@@ -137,7 +138,38 @@ export function FileTree({
   useEffect(() => {
     if (!draggingPath) {
       setIsRootDropTarget(false);
+      setRootHoverPath(null);
     }
+  }, [draggingPath]);
+
+  useEffect(() => {
+    if (!draggingPath) return;
+
+    const clearDragUi = () => {
+      setDraggingPath(null);
+      setIsRootDropTarget(false);
+      setRootHoverPath(null);
+    };
+
+    const timeout = window.setTimeout(clearDragUi, 15000);
+    const onVisibilityChange = () => {
+      if (document.hidden) clearDragUi();
+    };
+
+    window.addEventListener('dragend', clearDragUi, true);
+    window.addEventListener('drop', clearDragUi, true);
+    window.addEventListener('blur', clearDragUi);
+    window.addEventListener('mouseup', clearDragUi, true);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener('dragend', clearDragUi, true);
+      window.removeEventListener('drop', clearDragUi, true);
+      window.removeEventListener('blur', clearDragUi);
+      window.removeEventListener('mouseup', clearDragUi, true);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [draggingPath]);
 
   // Listen for file events to refresh tree
@@ -372,8 +404,12 @@ export function FileTree({
         onContextMenu={handleEmptySpaceContextMenu}
         onDragOver={(e) => {
           if (!draggingPath || !canDropPathToRoot(draggingPath)) return;
+          const targetEl = e.target as HTMLElement | null;
+          const droppedInsideFolderZone = !!targetEl?.closest('[data-folder-drop-zone="true"]');
+          const hoveredRootRow = targetEl?.closest('[data-root-drop-row="true"]') as HTMLElement | null;
           e.preventDefault();
-          setIsRootDropTarget(true);
+          setIsRootDropTarget(!droppedInsideFolderZone);
+          setRootHoverPath(!droppedInsideFolderZone ? hoveredRootRow?.getAttribute('data-path') ?? null : null);
           e.dataTransfer.dropEffect = 'move';
         }}
         onDragEnter={(e) => {
@@ -383,6 +419,7 @@ export function FileTree({
         onDragLeave={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
             setIsRootDropTarget(false);
+            setRootHoverPath(null);
           }
         }}
         onDrop={async (e) => {
@@ -393,6 +430,7 @@ export function FileTree({
           e.preventDefault();
           e.stopPropagation();
           setIsRootDropTarget(false);
+          setRootHoverPath(null);
           setDraggingPath(null);
           await onMoveToRoot?.(draggingPath);
         }}
@@ -419,6 +457,7 @@ export function FileTree({
               onDragStart={setDraggingPath}
               onDragEnd={() => setDraggingPath(null)}
               onMoveIntoFolder={onMoveIntoFolder}
+              isRootHoverTarget={!!(rootHoverPath === node.path && !node.isDir)}
             />
           ))}
         </div>
@@ -454,6 +493,7 @@ interface TreeNodeProps {
   onDragStart: (path: string) => void;
   onDragEnd: () => void;
   onMoveIntoFolder?: (sourcePath: string, targetFolderPath: string) => Promise<void> | void;
+  isRootHoverTarget?: boolean;
 }
 
 function getExtension(filename: string): string {
@@ -496,14 +536,15 @@ function TreeNode({
   draggingPath,
   onDragStart,
   onDragEnd,
-  onMoveIntoFolder
+  onMoveIntoFolder,
+  isRootHoverTarget
 }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const isEditing = editingPath === node.path;
   const isTemp = node.isTemp;
   const canAcceptDrop = !!(node.isDir && draggingPath && canDropPathIntoDirectory(draggingPath, node.path));
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragStart = (e: React.DragEvent<HTMLElement>) => {
     e.stopPropagation();
     onDragStart(node.path);
     try {
@@ -512,6 +553,11 @@ function TreeNode({
     } catch (err) {
       console.warn('File tree drag start failed', err);
     }
+  };
+  const handleDragEnd = (e: React.DragEvent<HTMLElement>) => {
+    e.stopPropagation();
+    setIsDragOver(false);
+    onDragEnd();
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -567,11 +613,7 @@ function TreeNode({
         onContextMenu={(e) => onContextMenu(e, node)}
         draggable={!isTemp}
         onDragStart={handleDragStart}
-        onDragEnd={(e) => {
-          e.stopPropagation();
-          setIsDragOver(false);
-          onDragEnd();
-        }}
+        onDragEnd={handleDragEnd}
         onDragOver={(e) => {
           if (!canAcceptDrop) {
             return;
@@ -605,8 +647,10 @@ function TreeNode({
           onDragEnd();
           await onMoveIntoFolder?.(draggingPath, node.path);
         }}
-        className={`node-label ${node.isDir ? "folder" : "file"} ${isDragOver ? 'drop-target' : ''}`}
+        className={`node-label ${node.isDir ? "folder" : "file"} ${isDragOver ? 'drop-target' : ''} ${isRootHoverTarget ? 'root-drop-hover' : ''}`}
         data-folder-drop-zone={node.isDir ? 'true' : undefined}
+        data-root-drop-row={node.isDir ? undefined : 'true'}
+        data-path={node.path}
         style={{
           cursor: "pointer",
           userSelect: "none",
@@ -614,14 +658,28 @@ function TreeNode({
           alignItems: 'center'
         }}
       >
-        <span style={{ marginRight: "6px", display: 'flex', color: 'var(--ln-muted)' }}>
+        <span
+          draggable={!isTemp}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          style={{ marginRight: "6px", display: 'flex', color: 'var(--ln-muted)' }}
+        >
           <IconComponent size={16} />
         </span>
-        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span
+          draggable={!isTemp}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
             {stripExtension(node.name)}
         </span>
         {!node.isDir && !isMd && extension && (
-            <span style={{
+            <span
+              draggable={!isTemp}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              style={{
                 fontSize: '0.7em',
                 color: 'var(--ln-muted)',
                 marginLeft: '8px',
@@ -683,6 +741,7 @@ function TreeNode({
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
                 onMoveIntoFolder={onMoveIntoFolder}
+                isRootHoverTarget={false}
             />
           ))}
         </div>
