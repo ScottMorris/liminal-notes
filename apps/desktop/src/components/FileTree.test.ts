@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createEmptySpaceMenuModel, registerFileTreeRefreshListeners } from './FileTree';
+import {
+  buildMovedPath,
+  canDropPathIntoDirectory,
+  createEmptySpaceMenuModel,
+  registerFileTreeRefreshListeners
+} from './FileTree';
 
 describe('registerFileTreeRefreshListeners', () => {
   const callbacks = new Map<string, () => void>();
@@ -71,5 +76,27 @@ describe('createEmptySpaceMenuModel', () => {
 
     expect(onAddNote).toHaveBeenCalledTimes(1);
     expect(onAddFolder).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('buildMovedPath', () => {
+  it('builds destination path using source basename under target folder', () => {
+    expect(buildMovedPath('notes/today.md', 'archive')).toBe('archive/today.md');
+    expect(buildMovedPath('projects', 'archive')).toBe('archive/projects');
+  });
+});
+
+describe('canDropPathIntoDirectory', () => {
+  it('allows moving into a different folder', () => {
+    expect(canDropPathIntoDirectory('notes/today.md', 'archive')).toBe(true);
+  });
+
+  it('blocks dropping on same parent folder', () => {
+    expect(canDropPathIntoDirectory('notes/today.md', 'notes')).toBe(false);
+  });
+
+  it('blocks dropping onto itself or a child folder', () => {
+    expect(canDropPathIntoDirectory('notes', 'notes')).toBe(false);
+    expect(canDropPathIntoDirectory('notes', 'notes/subfolder')).toBe(false);
   });
 });

@@ -11,7 +11,7 @@ import { StatusBar } from "./components/StatusBar";
 import { HelpModal } from "./components/HelpModal";
 import { useVault } from "./hooks/useVault";
 import { desktopVault } from "./adapters/DesktopVaultAdapter";
-import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon, BellIcon } from "./components/Icons";
+import { SearchIcon, DocumentTextIcon, ShareIcon, PencilSquareIcon, CogIcon, BellIcon, FolderIcon } from "./components/Icons";
 import { useTabs } from "./contexts/TabsContext";
 import { useNavigation } from "./contexts/NavigationContext";
 import { EditorPane } from "./components/Editor/EditorPane";
@@ -75,6 +75,7 @@ function AppContent() {
 
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'files' | 'tags'>('files');
 
   const useNativeDecorations = (settings['appearance.useNativeDecorations'] as boolean) ?? false;
@@ -184,6 +185,8 @@ function AppContent() {
   };
 
   const handleStartCreate = useCallback(async () => {
+    setIsCreating(false);
+    setIsCreatingFolder(false);
     // New behavior: Immediately create "Untitled" file
     let title = 'Untitled';
     let path = 'Untitled.md';
@@ -224,6 +227,7 @@ function AppContent() {
     const trimmed = name.trim();
     if (!trimmed) {
       setIsCreating(false);
+      setIsCreatingFolder(false);
       setEditingPath(null);
       return;
     }
@@ -257,18 +261,29 @@ function AppContent() {
       alert("Failed to create note");
     } finally {
       setIsCreating(false);
+      setIsCreatingFolder(false);
       setEditingPath(null);
     }
   }, [openTab, refreshFiles, resolvePath]);
 
   const handleCreateCancel = useCallback(() => {
     setIsCreating(false);
+    setIsCreatingFolder(false);
+    setEditingPath(null);
+  }, []);
+
+  const handleStartCreateFolder = useCallback(() => {
+    setIsCreating(false);
+    setIsCreatingFolder(true);
     setEditingPath(null);
   }, []);
 
   const handleCreateFolder = useCallback(async (name: string) => {
     const trimmed = name.trim().replace(/\/+$/g, '');
-    if (!trimmed) return;
+    if (!trimmed) {
+      setIsCreatingFolder(false);
+      return;
+    }
 
     try {
       // Persist a hidden marker so empty folders are represented in the vault tree.
@@ -277,8 +292,36 @@ function AppContent() {
     } catch (e) {
       console.error("Failed to create folder", e);
       alert("Failed to create folder");
+    } finally {
+      setIsCreatingFolder(false);
+      setEditingPath(null);
     }
   }, [refreshFiles]);
+
+  const handleMoveIntoFolder = useCallback(async (sourcePath: string, targetFolderPath: string) => {
+    const sourceName = sourcePath.split('/').pop() ?? sourcePath;
+    const destinationPath = `${targetFolderPath}/${sourceName}`;
+
+    if (destinationPath === sourcePath) return;
+    if (targetFolderPath.startsWith(`${sourcePath}/`)) return;
+
+    try {
+      await desktopVault.rename(sourcePath, destinationPath);
+      await refreshFiles();
+
+      const movedTabs = openTabs
+        .filter(tab => tab.id === sourcePath || tab.id.startsWith(`${sourcePath}/`))
+        .sort((a, b) => a.path.length - b.path.length);
+
+      movedTabs.forEach((tab) => {
+        const suffix = tab.id.slice(sourcePath.length);
+        const nextPath = `${destinationPath}${suffix}`;
+        renameTab(tab.id, nextPath, nextPath, tab.title);
+      });
+    } catch (e) {
+      alert("Failed to move item: " + String(e));
+    }
+  }, [openTabs, refreshFiles, renameTab]);
 
   const handleRenameCommit = useCallback(async (oldPath: string, newName: string) => {
       if (!newName || !newName.trim()) {
@@ -458,6 +501,9 @@ function AppContent() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
+            <button className="reset-btn" onClick={handleStartCreateFolder} title="New Folder">
+              <FolderIcon size={18} />
+            </button>
             <button className="reset-btn" onClick={handleStartCreate} title="New Note (Ctrl+N)"><PencilSquareIcon size={18} /></button>
             <button className="reset-btn" onClick={() => setIsSearchOpen(true)} title="Search (Ctrl+Shift+F)"><SearchIcon size={18} /></button>
             <button className="reset-btn" onClick={() => setIsHelpOpen(true)} title="Help">?</button>
@@ -525,13 +571,19 @@ function AppContent() {
                     onFileSelect={(path, isDoubleClick) => handleFileSelect(path, isDoubleClick)}
                     editingPath={editingPath}
                     isCreating={isCreating} // We aren't using this for now via button, but prop required
+                    isCreatingFolder={isCreatingFolder}
                     onRename={handleRenameCommit}
                     onCreate={handleCreateCommit}
-                    onStartCreate={() => setIsCreating(true)} // Allow context menu creation if implemented?
+                    onStartCreate={() => {
+                      setIsCreatingFolder(false);
+                      setIsCreating(true);
+                    }}
+                    onStartCreateFolder={handleStartCreateFolder}
                     onCreateFolder={handleCreateFolder}
                     onCancel={handleCreateCancel}
                     onStartRename={(path) => setEditingPath(path)}
                     onDelete={handleFileDelete}
+                    onMoveIntoFolder={handleMoveIntoFolder}
                     onRefresh={refreshFiles}
                 />
             ) : (

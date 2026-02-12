@@ -39,13 +39,16 @@ interface FileTreeProps {
   onFileSelect: (path: string, isDoubleClick: boolean) => void;
   editingPath?: string | null;
   isCreating?: boolean;
+  isCreatingFolder?: boolean;
   onRename?: (oldPath: string, newName: string) => void;
   onCreate?: (name: string) => void;
   onCreateFolder?: (name: string) => void;
   onStartCreate?: () => void;
+  onStartCreateFolder?: () => void;
   onCancel?: () => void;
   onDelete?: (path: string) => void;
   onStartRename?: (path: string) => void;
+  onMoveIntoFolder?: (sourcePath: string, targetFolderPath: string) => Promise<void> | void;
   onRefresh?: () => Promise<void>;
 }
 
@@ -79,22 +82,39 @@ export function createEmptySpaceMenuModel(
   };
 }
 
+export function buildMovedPath(sourcePath: string, targetFolderPath: string): string {
+  const sourceName = sourcePath.split('/').pop() ?? sourcePath;
+  return `${targetFolderPath}/${sourceName}`;
+}
+
+export function canDropPathIntoDirectory(sourcePath: string, targetFolderPath: string): boolean {
+  const sourceParent = sourcePath.includes('/') ? sourcePath.slice(0, sourcePath.lastIndexOf('/')) : '';
+  if (sourcePath === targetFolderPath) return false;
+  if (sourceParent === targetFolderPath) return false;
+  if (targetFolderPath.startsWith(`${sourcePath}/`)) return false;
+  return true;
+}
+
 export function FileTree({
   files,
   onFileSelect,
   editingPath,
   isCreating,
+  isCreatingFolder,
   onRename,
   onCreate,
   onCreateFolder,
   onStartCreate,
+  onStartCreateFolder,
   onCancel,
   onDelete,
   onStartRename,
+  onMoveIntoFolder,
   onRefresh
 }: FileTreeProps) {
   const { openTab } = useTabs();
   const [selectedNode, setSelectedNode] = useState<DisplayNode | null>(null);
+  const [draggingPath, setDraggingPath] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     model: MenuModel;
     position: MenuPosition;
@@ -185,8 +205,17 @@ export function FileTree({
       });
     }
 
+    if (isCreatingFolder) {
+      root.unshift({
+        name: "",
+        path: "___creating_folder___",
+        isDir: true,
+        isTemp: true
+      });
+    }
+
     return root;
-  }, [files, isCreating]);
+  }, [files, isCreating, isCreatingFolder]);
 
   const buildContext = (node: DisplayNode): FileContext => ({
     type: 'FileTree',
@@ -250,9 +279,7 @@ export function FileTree({
         if (onStartCreate) onStartCreate();
       },
       () => {
-        const name = window.prompt('Folder name');
-        if (!name || !name.trim()) return;
-        if (onCreateFolder) onCreateFolder(name.trim());
+        if (onStartCreateFolder) onStartCreateFolder();
       }
     );
 
@@ -288,7 +315,7 @@ export function FileTree({
     }
   };
 
-  if (files.length === 0 && !isCreating) {
+  if (files.length === 0 && !isCreating && !isCreatingFolder) {
     return (
       <div
         className="file-tree empty-state-sidebar"
@@ -339,9 +366,14 @@ export function FileTree({
             editingPath={editingPath}
             onRename={onRename}
             onCreate={onCreate}
+            onCreateFolder={onCreateFolder}
             onCancel={onCancel}
             onContextMenu={handleNodeContextMenu}
             onSelect={setSelectedNode}
+            draggingPath={draggingPath}
+            onDragStart={setDraggingPath}
+            onDragEnd={() => setDraggingPath(null)}
+            onMoveIntoFolder={onMoveIntoFolder}
           />
         ))}
       </div>
@@ -363,9 +395,14 @@ interface TreeNodeProps {
   editingPath?: string | null;
   onRename?: (oldPath: string, newName: string) => void;
   onCreate?: (name: string) => void;
+  onCreateFolder?: (name: string) => void;
   onCancel?: () => void;
   onContextMenu: (e: React.MouseEvent, node: DisplayNode) => void;
   onSelect: (node: DisplayNode) => void;
+  draggingPath: string | null;
+  onDragStart: (path: string) => void;
+  onDragEnd: () => void;
+  onMoveIntoFolder?: (sourcePath: string, targetFolderPath: string) => Promise<void> | void;
 }
 
 function getExtension(filename: string): string {
@@ -395,8 +432,23 @@ function stripExtension(filename: string): string {
     return filename;
 }
 
-function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCancel, onContextMenu, onSelect }: TreeNodeProps) {
+function TreeNode({
+  node,
+  onFileSelect,
+  editingPath,
+  onRename,
+  onCreate,
+  onCreateFolder,
+  onCancel,
+  onContextMenu,
+  onSelect,
+  draggingPath,
+  onDragStart,
+  onDragEnd,
+  onMoveIntoFolder
+}: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const isEditing = editingPath === node.path;
   const isTemp = node.isTemp;
 
@@ -432,7 +484,8 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
                 isDir={node.isDir}
                 originalExtension={isEditing ? getExtension(node.name) : undefined}
                 onSubmit={(val) => {
-                    if (isTemp && onCreate) onCreate(val);
+                    if (isTemp && node.isDir && onCreateFolder) onCreateFolder(val);
+                    else if (isTemp && onCreate) onCreate(val);
                     else if (isEditing && onRename) {
                         const originalExt = getExtension(node.name);
                         const newName = originalExt ? `${val}.${originalExt}` : val;
@@ -451,7 +504,62 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
         className={`node-label ${node.isDir ? "folder" : "file"}`}
         onClick={handleClick}
         onContextMenu={(e) => onContextMenu(e, node)}
-        style={{ cursor: "pointer", userSelect: "none", display: 'flex', alignItems: 'center' }}
+        draggable={!isTemp}
+        onDragStart={(e) => {
+          e.stopPropagation();
+          onDragStart(node.path);
+          try {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', node.path);
+          } catch (err) {
+            console.warn('File tree drag start failed', err);
+          }
+        }}
+        onDragEnd={(e) => {
+          e.stopPropagation();
+          setIsDragOver(false);
+          onDragEnd();
+        }}
+        onDragOver={(e) => {
+          if (!node.isDir || !draggingPath || !canDropPathIntoDirectory(draggingPath, node.path)) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = 'move';
+        }}
+        onDragEnter={(e) => {
+          if (!node.isDir || !draggingPath || !canDropPathIntoDirectory(draggingPath, node.path)) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(true);
+          setExpanded(true);
+        }}
+        onDragLeave={(e) => {
+          e.stopPropagation();
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            setIsDragOver(false);
+          }
+        }}
+        onDrop={async (e) => {
+          if (!node.isDir || !draggingPath || !canDropPathIntoDirectory(draggingPath, node.path)) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(false);
+          onDragEnd();
+          await onMoveIntoFolder?.(draggingPath, node.path);
+        }}
+        style={{
+          cursor: "pointer",
+          userSelect: "none",
+          display: 'flex',
+          alignItems: 'center',
+          backgroundColor: isDragOver ? 'var(--ln-item-hover-bg)' : undefined
+        }}
       >
         <span style={{ marginRight: "6px", display: 'flex', color: 'var(--ln-muted)' }}>
           <IconComponent size={16} />
@@ -483,9 +591,14 @@ function TreeNode({ node, onFileSelect, editingPath, onRename, onCreate, onCance
                 editingPath={editingPath}
                 onRename={onRename}
                 onCreate={onCreate}
+                onCreateFolder={onCreateFolder}
                 onCancel={onCancel}
                 onContextMenu={onContextMenu}
                 onSelect={onSelect}
+                draggingPath={draggingPath}
+                onDragStart={onDragStart}
+                onDragEnd={onDragEnd}
+                onMoveIntoFolder={onMoveIntoFolder}
             />
           ))}
         </div>
