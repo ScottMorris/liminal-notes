@@ -215,6 +215,19 @@ const SelectionIcon = () => (
   </svg>
 );
 
+const CheckboxEmptyIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect>
+  </svg>
+);
+
+const CheckboxCheckedIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect>
+    <path d="M9 12.5l2.2 2.2L15.5 10.5"></path>
+  </svg>
+);
+
 export function getIconByName(name?: string): React.ReactNode {
   if (!name) return null;
 
@@ -256,6 +269,8 @@ export function getIconByName(name?: string): React.ReactNode {
     case 'callout': return <CalloutIcon />;
     case 'clear': return <TextClearIcon />;
     case 'selection': return <SelectionIcon />;
+    case 'checkbox-empty': return <CheckboxEmptyIcon />;
+    case 'checkbox-checked': return <CheckboxCheckedIcon />;
 
     // Spellcheck
     case 'Dictionary': return <DictionaryIcon size={16} />;

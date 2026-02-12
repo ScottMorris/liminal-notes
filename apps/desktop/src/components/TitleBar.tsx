@@ -27,7 +27,7 @@ export function createTitleBarMenuModel(isMaximized: boolean, isAlwaysOnTop: boo
                 items: [{
                     id: 'always-on-top',
                     label: 'Always on Top',
-                    checked: isAlwaysOnTop
+                    icon: isAlwaysOnTop ? 'checkbox-checked' : 'checkbox-empty'
                 }]
             },
             {
