@@ -388,8 +388,8 @@ export function FileTree({
         onDrop={async (e) => {
           if (!draggingPath || !canDropPathToRoot(draggingPath)) return;
           const targetEl = e.target as HTMLElement | null;
-          const droppedOnRootZone = !!targetEl?.closest('.tree-root-drop-zone');
-          if (!droppedOnRootZone && e.target !== e.currentTarget) return;
+          const droppedInsideFolderZone = !!targetEl?.closest('[data-folder-drop-zone="true"]');
+          if (droppedInsideFolderZone) return;
           e.preventDefault();
           e.stopPropagation();
           setIsRootDropTarget(false);
@@ -603,6 +603,7 @@ function TreeNode({
           await onMoveIntoFolder?.(draggingPath, node.path);
         }}
         className={`node-label ${node.isDir ? "folder" : "file"} ${isDragOver ? 'drop-target' : ''}`}
+        data-folder-drop-zone={node.isDir ? 'true' : undefined}
         style={{
           cursor: "pointer",
           userSelect: "none",
@@ -633,6 +634,7 @@ function TreeNode({
       {node.isDir && expanded && node.children && (
         <div
           className={`node-children ${isDragOver ? 'drop-target-area' : ''}`}
+          data-folder-drop-zone="true"
           style={{ paddingLeft: "20px" }}
           onDragOver={(e) => {
             if (!canAcceptDrop) return;
