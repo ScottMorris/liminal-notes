@@ -10,7 +10,7 @@ on:
       release_draft:
         description: Create/keep this release as draft
         required: false
-        default: false
+        default: true
         type: boolean
   push:
     tags:
@@ -59,7 +59,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ steps.meta.outputs.tag_name }}
           RELEASE_NAME: ${{ steps.meta.outputs.release_name }}
-          RELEASE_DRAFT: ${{ github.event_name == 'workflow_dispatch' && inputs.release_draft || false }}
+          RELEASE_DRAFT: ${{ github.event_name == 'workflow_dispatch' ? inputs.release_draft : true }}
         run: |
           set -euo pipefail
 
@@ -78,6 +78,7 @@ jobs:
                 -f target_commitish="${GITHUB_SHA}" \
                 -f name="${RELEASE_NAME}" \
                 -f body='See assets below to download and install.' \
+                -F generate_release_notes=true \
                 -F draft="${RELEASE_DRAFT}" \
                 -F prerelease=false \
                 --jq '.id'
@@ -96,7 +97,7 @@ jobs:
 
           echo "release_id=${RELEASE_ID}" >> "${GITHUB_OUTPUT}"
 
-  publish-tauri:
+  publish-linux:
     needs: prepare-release
     permissions:
       contents: write
@@ -164,3 +165,94 @@ jobs:
           releaseId: ${{ needs.prepare-release.outputs.release_id }}
           includeUpdaterJson: false
           tauriScript: "cargo tauri"
+
+  publish-windows:
+    needs: prepare-release
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+          - arch: arm64
+            target: aarch64-pc-windows-msvc
+
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Resolve Rust toolchain
+        id: rust_toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLCHAIN="$(awk -F '\"' '/^[[:space:]]*channel[[:space:]]*=/ { print $2; exit }' rust-toolchain.toml)"
+          if [[ -z "${TOOLCHAIN}" ]]; then
+            echo "Unable to resolve Rust toolchain from rust-toolchain.toml" >&2
+            exit 1
+          fi
+          echo "toolchain=${TOOLCHAIN}" >> "${GITHUB_OUTPUT}"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ steps.rust_toolchain.outputs.toolchain }}
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri -> target
+
+      - name: Install JS deps
+        run: pnpm run ci:install
+
+      - name: Build + attach to GitHub Release
+        uses: tauri-apps/tauri-action@v0.6.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          releaseId: ${{ needs.prepare-release.outputs.release_id }}
+          includeUpdaterJson: false
+          tauriScript: "cargo tauri"
+          args: --target ${{ matrix.target }}
+
+      - name: Generate Windows checksums
+        shell: pwsh
+        run: |
+          $bundleDir = "apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle"
+          $checksumPath = "apps/desktop/src-tauri/target/${{ matrix.target }}/release/checksums-windows-${{ matrix.arch }}.txt"
+
+          $installerFiles = Get-ChildItem -Path $bundleDir -File -Recurse -Include *.msi,*setup*.exe
+          if ($installerFiles.Count -eq 0) {
+            throw "No Windows installers found in $bundleDir"
+          }
+
+          $lines = foreach ($file in $installerFiles | Sort-Object FullName) {
+            $hash = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($file.Name)"
+          }
+
+          $lines | Set-Content -Path $checksumPath -Encoding ASCII
+
+      - name: Attach Windows checksums to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag_name }}
+          files: |
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/checksums-windows-${{ matrix.arch }}.txt
