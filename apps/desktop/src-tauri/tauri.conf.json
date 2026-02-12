@@ -26,7 +26,7 @@
   },
   "bundle": {
     "active": true,
-    "publisher": "Liminal Notes Contributors",
+    "publisher": "Liminal HQ",
     "homepage": "https://github.com/ScottMorris/liminal-notes",
     "license": "MIT",
     "shortDescription": "Local-first Markdown notes with wikilinks and backlinks.",
