@@ -273,6 +273,12 @@ button:disabled {
   outline-offset: -1px;
 }
 
+.node-children.drop-target-area {
+  background: color-mix(in srgb, var(--ln-accent) 8%, transparent);
+  outline: 1px dashed var(--ln-accent);
+  outline-offset: -1px;
+}
+
 .node-label.file {
     color: var(--ln-sidebar-fg);
     opacity: 0.9;

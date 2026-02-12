@@ -134,6 +134,12 @@ export function FileTree({
     return () => window.removeEventListener('click', closeMenu);
   }, []);
 
+  useEffect(() => {
+    if (!draggingPath) {
+      setIsRootDropTarget(false);
+    }
+  }, [draggingPath]);
+
   // Listen for file events to refresh tree
   useEffect(() => {
       return registerFileTreeRefreshListeners(listen, onRefresh);
@@ -414,6 +420,11 @@ export function FileTree({
             onMoveIntoFolder={onMoveIntoFolder}
           />
         ))}
+        {draggingPath && canDropPathToRoot(draggingPath) && (
+          <div className={`tree-root-drop-zone ${isRootDropTarget ? 'active' : ''}`}>
+            Drop here to move to vault root
+          </div>
+        )}
       </div>
       {contextMenu && (
         <ContextMenu
@@ -489,6 +500,7 @@ function TreeNode({
   const [isDragOver, setIsDragOver] = useState(false);
   const isEditing = editingPath === node.path;
   const isTemp = node.isTemp;
+  const canAcceptDrop = !!(node.isDir && draggingPath && canDropPathIntoDirectory(draggingPath, node.path));
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -558,7 +570,7 @@ function TreeNode({
           onDragEnd();
         }}
         onDragOver={(e) => {
-          if (!node.isDir || !draggingPath || !canDropPathIntoDirectory(draggingPath, node.path)) {
+          if (!canAcceptDrop) {
             return;
           }
           e.preventDefault();
@@ -566,7 +578,7 @@ function TreeNode({
           e.dataTransfer.dropEffect = 'move';
         }}
         onDragEnter={(e) => {
-          if (!node.isDir || !draggingPath || !canDropPathIntoDirectory(draggingPath, node.path)) {
+          if (!canAcceptDrop) {
             return;
           }
           e.preventDefault();
@@ -581,7 +593,7 @@ function TreeNode({
           }
         }}
         onDrop={async (e) => {
-          if (!node.isDir || !draggingPath || !canDropPathIntoDirectory(draggingPath, node.path)) {
+          if (!canAcceptDrop) {
             return;
           }
           e.preventDefault();
@@ -619,7 +631,37 @@ function TreeNode({
         )}
       </div>
       {node.isDir && expanded && node.children && (
-        <div className="node-children" style={{ paddingLeft: "20px" }}>
+        <div
+          className={`node-children ${isDragOver ? 'drop-target-area' : ''}`}
+          style={{ paddingLeft: "20px" }}
+          onDragOver={(e) => {
+            if (!canAcceptDrop) return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'move';
+          }}
+          onDragEnter={(e) => {
+            if (!canAcceptDrop) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(true);
+          }}
+          onDragLeave={(e) => {
+            if (!canAcceptDrop) return;
+            e.stopPropagation();
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+              setIsDragOver(false);
+            }
+          }}
+          onDrop={async (e) => {
+            if (!canAcceptDrop || !draggingPath) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(false);
+            onDragEnd();
+            await onMoveIntoFolder?.(draggingPath, node.path);
+          }}
+        >
           {node.children.map(child => (
             <TreeNode
                 key={child.path}
