@@ -37,6 +37,24 @@ Examples:
 
 ---
 
+## Pull Request Guidelines
+
+- PR titles should be plain-language summaries, not Conventional Commit subjects.
+
+  - ✅ `Publish desktop releases for Windows x64/arm64 with checksums`
+  - ❌ `feat(ci): publish desktop releases for Windows x64/arm64 with checksums`
+
+- Start PR titles with a leading capital letter.
+- Keep PR titles descriptive and scoped to the delivered change.
+- Apply relevant labels to every PR before requesting review.
+
+  - Use at least one surface/area label when available (for example `desktop`, `mobile`, `core`).
+  - Add delivery labels when applicable (for example `deployment`, `build`, `documentation`).
+
+- PR descriptions should use clear Markdown sections (`Summary`, `Validation`, `Notes`) so reviewers can quickly assess behaviour changes and risk.
+
+---
+
 ## Tips for Agents & Contributors
 
 - **Sync docs with behaviour**:
