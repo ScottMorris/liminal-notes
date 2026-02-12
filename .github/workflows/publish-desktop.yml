@@ -59,7 +59,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ steps.meta.outputs.tag_name }}
           RELEASE_NAME: ${{ steps.meta.outputs.release_name }}
-          RELEASE_DRAFT: ${{ github.event_name == 'workflow_dispatch' ? inputs.release_draft : false }}
+          RELEASE_DRAFT: "${{ github.event_name == 'workflow_dispatch' ? inputs.release_draft : false }}"
         run: |
           set -euo pipefail
 
