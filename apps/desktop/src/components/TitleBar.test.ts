@@ -14,7 +14,7 @@ describe('createTitleBarMenuModel', () => {
     }
 
     expect(alwaysOnTop.id).toBe('always-on-top');
-    expect(alwaysOnTop.icon).toBe('CheckboxCheckedIcon');
+    expect(alwaysOnTop.icon).toBe('CheckIcon');
   });
 
   it('uses empty checkbox icon when Always on Top is disabled', () => {
@@ -28,6 +28,6 @@ describe('createTitleBarMenuModel', () => {
       throw new Error('Expected menu item, found separator');
     }
 
-    expect(alwaysOnTop.icon).toBe('CheckboxEmptyIcon');
+    expect(alwaysOnTop.icon).toBeUndefined();
   });
 });
