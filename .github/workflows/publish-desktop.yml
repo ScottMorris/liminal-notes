@@ -59,9 +59,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ steps.meta.outputs.tag_name }}
           RELEASE_NAME: ${{ steps.meta.outputs.release_name }}
-          RELEASE_DRAFT: "${{ github.event_name == 'workflow_dispatch' ? inputs.release_draft : false }}"
+          MANUAL_RELEASE_DRAFT: ${{ inputs.release_draft }}
         run: |
           set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            RELEASE_DRAFT="${MANUAL_RELEASE_DRAFT:-false}"
+          else
+            RELEASE_DRAFT="false"
+          fi
 
           RELEASE_MATCH="$(
             gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
