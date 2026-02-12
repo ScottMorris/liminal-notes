@@ -170,7 +170,7 @@ jobs:
           projectPath: apps/desktop
           releaseId: ${{ needs.prepare-release.outputs.release_id }}
           includeUpdaterJson: false
-          tauriScript: "cargo tauri"
+          tauriScript: "pnpm tauri"
 
   publish-windows:
     needs: prepare-release
@@ -235,7 +235,7 @@ jobs:
           projectPath: apps/desktop
           releaseId: ${{ needs.prepare-release.outputs.release_id }}
           includeUpdaterJson: false
-          tauriScript: "cargo tauri"
+          tauriScript: "pnpm tauri"
           args: --target ${{ matrix.target }}
 
       - name: Generate Windows checksums
