@@ -162,6 +162,7 @@ jobs:
         run: pnpm run ci:install
 
       - name: Build + attach to GitHub Release
+        id: build_release
         uses: tauri-apps/tauri-action@v0.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -171,6 +172,23 @@ jobs:
           releaseId: ${{ needs.prepare-release.outputs.release_id }}
           includeUpdaterJson: false
           tauriScript: "pnpm tauri"
+
+      - name: Summarise Linux publish job
+        if: always()
+        shell: bash
+        env:
+          BUILD_RESULT: ${{ steps.build_release.conclusion }}
+          TAG_NAME: ${{ needs.prepare-release.outputs.tag_name }}
+        run: |
+          {
+            echo "## Linux Publish Summary"
+            echo ""
+            echo "- Platform: \`${{ matrix.platform }}\`"
+            echo "- Build and upload: \`${BUILD_RESULT}\`"
+            echo "- Release tag: \`${TAG_NAME}\`"
+            echo "- Release URL: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${TAG_NAME}"
+            echo "- Run URL: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
   publish-windows:
     needs: prepare-release
@@ -228,6 +246,7 @@ jobs:
         run: pnpm run ci:install
 
       - name: Build + attach to GitHub Release
+        id: build_release
         uses: tauri-apps/tauri-action@v0.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -239,6 +258,7 @@ jobs:
           args: --target ${{ matrix.target }}
 
       - name: Generate Windows checksums
+        id: generate_checksums
         shell: pwsh
         run: |
           $bundleDir = "apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle"
@@ -257,8 +277,31 @@ jobs:
           $lines | Set-Content -Path $checksumPath -Encoding ASCII
 
       - name: Attach Windows checksums to release
+        id: attach_checksums
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare-release.outputs.tag_name }}
           files: |
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/checksums-windows-${{ matrix.arch }}.txt
+
+      - name: Summarise Windows publish job
+        if: always()
+        shell: pwsh
+        env:
+          BUILD_RESULT: ${{ steps.build_release.conclusion }}
+          CHECKSUM_RESULT: ${{ steps.generate_checksums.conclusion }}
+          ATTACH_RESULT: ${{ steps.attach_checksums.conclusion }}
+          TAG_NAME: ${{ needs.prepare-release.outputs.tag_name }}
+        run: |
+          @(
+            '## Windows Publish Summary'
+            ''
+            "- Architecture: `${{ matrix.arch }}`"
+            "- Target triple: `${{ matrix.target }}`"
+            "- Build and upload: `$env:BUILD_RESULT`"
+            "- Generate checksums: `$env:CHECKSUM_RESULT`"
+            "- Attach checksums: `$env:ATTACH_RESULT`"
+            "- Release tag: `$env:TAG_NAME`"
+            "- Release URL: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases/tag/$env:TAG_NAME"
+            "- Run URL: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
