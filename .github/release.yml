@@ -1,4 +1,7 @@
 changelog:
+  exclude:
+    labels:
+      - mobile
   categories:
     - title: Features
       labels:
