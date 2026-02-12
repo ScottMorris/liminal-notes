@@ -26,6 +26,8 @@
   },
   "bundle": {
     "active": true,
+    "shortDescription": "Local-first Markdown notes with wikilinks and backlinks.",
+    "longDescription": "Liminal Notes is a local-first Markdown note app focused on a single vault, fast editing, wikilinks, backlinks, and simple search. Notes stay as regular files on disk so your data remains portable.",
     "targets": "all",
     "icon": [
       "icons/32x32.png",

@@ -1,7 +1,7 @@
 [package]
 name = "appsdesktop"
 version = "0.1.0"
-description = "A Tauri App"
+description = "Local-first Markdown notes with wikilinks and backlinks"
 authors = ["you"]
 edition = "2021"
 
