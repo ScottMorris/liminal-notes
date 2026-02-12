@@ -105,7 +105,7 @@ textarea,
 }
 
 .sidebar {
-  width: 250px;
+  width: 276px;
   background-color: var(--ln-sidebar-bg);
   border-right: 1px solid var(--ln-border);
   display: flex;
@@ -261,6 +261,9 @@ button:disabled {
   align-items: center;
   color: var(--ln-sidebar-fg);
   cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-user-drag: element;
 }
 
 .node-label:hover {
@@ -286,6 +289,10 @@ button:disabled {
 
 .node-label.folder {
     font-weight: 500;
+}
+
+.node-label > span {
+  pointer-events: none;
 }
 
 .error-banner {

@@ -501,6 +501,16 @@ function TreeNode({
   const isEditing = editingPath === node.path;
   const isTemp = node.isTemp;
   const canAcceptDrop = !!(node.isDir && draggingPath && canDropPathIntoDirectory(draggingPath, node.path));
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    onDragStart(node.path);
+    try {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', node.path);
+    } catch (err) {
+      console.warn('File tree drag start failed', err);
+    }
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -554,16 +564,7 @@ function TreeNode({
         onClick={handleClick}
         onContextMenu={(e) => onContextMenu(e, node)}
         draggable={!isTemp}
-        onDragStart={(e) => {
-          e.stopPropagation();
-          onDragStart(node.path);
-          try {
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', node.path);
-          } catch (err) {
-            console.warn('File tree drag start failed', err);
-          }
-        }}
+        onDragStart={handleDragStart}
         onDragEnd={(e) => {
           e.stopPropagation();
           setIsDragOver(false);
