@@ -10,7 +10,7 @@ on:
       release_draft:
         description: Create/keep this release as draft
         required: false
-        default: true
+        default: false
         type: boolean
   push:
     tags:
@@ -59,7 +59,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ steps.meta.outputs.tag_name }}
           RELEASE_NAME: ${{ steps.meta.outputs.release_name }}
-          RELEASE_DRAFT: ${{ github.event_name == 'workflow_dispatch' ? inputs.release_draft : true }}
+          RELEASE_DRAFT: ${{ github.event_name == 'workflow_dispatch' ? inputs.release_draft : false }}
         run: |
           set -euo pipefail
 
