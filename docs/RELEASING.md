@@ -52,6 +52,7 @@ This document describes the process for creating a new release of the desktop ap
     - Go to the "Releases" section.
     - Verify that Linux and Windows assets are present.
     - Confirm the generated release notes look correct.
+      - Generated note categories are configured in `.github/release.yml`.
     - If needed, edit the release text with additional context.
 
 6.  **Optional Draft Mode**
