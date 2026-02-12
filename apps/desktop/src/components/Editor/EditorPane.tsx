@@ -83,6 +83,7 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
 
   // Dirty Confirm Modal State
   const [closingTabId, setClosingTabId] = useState<string | null>(null);
+  const closePromptResolverRef = useRef<((shouldContinue: boolean) => void) | null>(null);
 
   const editorRef = useRef<EditorHandle>(null);
   const contentRef = useRef(content);
@@ -91,6 +92,13 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
   useEffect(() => {
     contentRef.current = content;
   }, [content]);
+
+  useEffect(() => {
+    return () => {
+      closePromptResolverRef.current?.(false);
+      closePromptResolverRef.current = null;
+    };
+  }, []);
 
   const reminderCount = useMemo(() => {
     if (!activeTab || !activeTab.path) return 0;
@@ -394,26 +402,45 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
     switchTab(newTabId);
   };
 
-  const handleCloseTab = async (tabId: string) => {
+  const handleCloseTab = async (tabId: string): Promise<boolean> => {
     const tab = openTabs.find(t => t.id === tabId);
-    if (!tab) return;
+    if (!tab) return false;
 
     if (tab.isDirty) {
-        setClosingTabId(tabId);
+        if (closingTabId && closingTabId !== tabId) {
+            return false;
+        }
+
+        if (closingTabId === tabId) {
+            return false;
+        }
+
+        return await new Promise<boolean>((resolve) => {
+            closePromptResolverRef.current = resolve;
+            setClosingTabId(tabId);
+        });
     } else {
         closeTabContext(tabId);
+        return true;
     }
   };
 
   const confirmClose = async (choice: 'Save' | 'Don\'t Save' | 'Cancel') => {
     if (!closingTabId) return;
     const tab = openTabs.find(t => t.id === closingTabId);
+    const currentClosingTabId = closingTabId;
+    const resolveClosePrompt = closePromptResolverRef.current;
+    closePromptResolverRef.current = null;
     setClosingTabId(null);
 
-    if (choice === 'Cancel') return;
+    if (choice === 'Cancel') {
+        resolveClosePrompt?.(false);
+        return;
+    }
 
     if (choice === 'Don\'t Save') {
-        closeTabContext(closingTabId);
+        closeTabContext(currentClosingTabId);
+        resolveClosePrompt?.(true);
         return;
     }
 
@@ -437,10 +464,15 @@ export function EditorPane({ onRefreshFiles }: EditorPaneProps) {
             }
             closeTabContext(tab.id);
             notify("Note saved and closed", 'success');
+            resolveClosePrompt?.(true);
         } catch (e) {
             notify("Failed to save: " + String(e), 'error');
+            resolveClosePrompt?.(false);
         }
+        return;
     }
+
+    resolveClosePrompt?.(false);
   };
 
   // Listen for global save event

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createTabContextMenuModel } from './TabBar';
+import { closeTabsSequential, createTabContextMenuModel } from './TabBar';
 import type { OpenTab } from '../../types/tabs';
 
 describe('createTabContextMenuModel', () => {
@@ -46,5 +46,20 @@ describe('createTabContextMenuModel', () => {
     const model = createTabContextMenuModel('c.md', 'c.md', tabs, actions);
     const closeRight = model.sections[1]?.items[2];
     expect(closeRight && 'disabled' in closeRight ? closeRight.disabled : undefined).toBe(true);
+  });
+});
+
+describe('closeTabsSequential', () => {
+  it('closes tabs in order and stops when a close is cancelled', async () => {
+    const calls: string[] = [];
+    const onTabClose = vi.fn(async (id: string) => {
+      calls.push(id);
+      return id !== 'b.md';
+    });
+
+    await closeTabsSequential(['a.md', 'b.md', 'c.md'], onTabClose);
+
+    expect(calls).toEqual(['a.md', 'b.md']);
+    expect(onTabClose).toHaveBeenCalledTimes(2);
   });
 });

@@ -16,8 +16,20 @@ interface TabBarProps {
   tabs: OpenTab[];
   activeTabId: string | null;
   onTabSwitch: (tabId: string) => void;
-  onTabClose: (tabId: string) => void;
+  onTabClose: (tabId: string) => Promise<boolean | void> | boolean | void;
   onKeepTab: (tabId: string) => void;
+}
+
+export async function closeTabsSequential(
+  ids: string[],
+  onTabClose: (tabId: string) => Promise<boolean | void> | boolean | void
+): Promise<void> {
+  for (const id of ids) {
+    const shouldContinue = await onTabClose(id);
+    if (shouldContinue === false) {
+      break;
+    }
+  }
 }
 
 export function createTabContextMenuModel(
@@ -210,7 +222,7 @@ export function TabBar({ tabs, activeTabId, onTabSwitch, onTabClose, onKeepTab }
   };
 
   const closeTabs = (ids: string[]) => {
-    ids.forEach((id) => onTabClose(id));
+    void closeTabsSequential(ids, onTabClose);
   };
 
   const handleTabContextMenu = (e: React.MouseEvent, tab: OpenTab) => {
