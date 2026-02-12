@@ -63,6 +63,19 @@ The built artifacts will be available in `apps/desktop/src-tauri/target/release/
 
 **Note:** Binaries are currently unsigned. You may see OS warnings when installing.
 
+## Windows Installation
+
+Windows may show a SmartScreen warning because the installer is not currently code-signed.
+
+1. Select `More info`.
+2. Select `Run anyway`.
+
+Before running the installer, verify its SHA256 hash against the release checksum assets (`checksums-windows-x64.txt` or `checksums-windows-arm64.txt`).
+
+```powershell
+Get-FileHash .\liminal-notes_<version>_x64_en-US.msi -Algorithm SHA256
+```
+
 ### Linux AppImage (portable format)
 
 To fix `EGL_BAD_PARAMETER` blank-screen failures on Arch/Fedora/Steam Deck, build with Tauri’s experimental portable AppImage runtime:
