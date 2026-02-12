@@ -296,12 +296,12 @@ jobs:
           @(
             '## Windows Publish Summary'
             ''
-            "- Architecture: `${{ matrix.arch }}`"
-            "- Target triple: `${{ matrix.target }}`"
-            "- Build and upload: `$env:BUILD_RESULT`"
-            "- Generate checksums: `$env:CHECKSUM_RESULT`"
-            "- Attach checksums: `$env:ATTACH_RESULT`"
-            "- Release tag: `$env:TAG_NAME`"
+            "- Architecture: ${{ matrix.arch }}"
+            "- Target triple: ${{ matrix.target }}"
+            "- Build and upload: $env:BUILD_RESULT"
+            "- Generate checksums: $env:CHECKSUM_RESULT"
+            "- Attach checksums: $env:ATTACH_RESULT"
+            "- Release tag: $env:TAG_NAME"
             "- Release URL: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases/tag/$env:TAG_NAME"
             "- Run URL: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
           ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
