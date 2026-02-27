@@ -194,36 +194,43 @@ export function FileTree({
 
   const tree = useMemo(() => {
     const root: DisplayNode[] = [];
+    const pathMap = new Map<string, DisplayNode>();
 
-    files.forEach(entry => {
-      const parts = entry.path.split("/");
-      let currentLevel = root;
+    for (const entry of files) {
+      const parts = entry.path.split('/');
+      let currentPath = '';
+      let parentNode: DisplayNode | undefined;
 
-      parts.forEach((part, index) => {
-        const isLast = index === parts.length - 1;
-        const isDir = isLast ? entry.is_dir : true;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        currentPath = i === 0 ? part : `${currentPath}/${part}`;
 
-        let existing = currentLevel.find(node => node.name === part);
+        let node = pathMap.get(currentPath);
 
-        if (!existing) {
-          existing = {
+        if (!node) {
+          const isLast = i === parts.length - 1;
+          const isDir = isLast ? entry.is_dir : true;
+
+          node = {
             name: part,
-            path: entry.path,
+            path: currentPath,
             isDir: isDir,
             children: isDir ? [] : undefined,
           };
-          if (!isLast) {
-             existing.path = parts.slice(0, index + 1).join("/");
+          pathMap.set(currentPath, node);
+
+          if (i === 0) {
+            root.push(node);
+          } else {
+            if (parentNode && parentNode.children) {
+              parentNode.children.push(node);
+            }
           }
-
-          currentLevel.push(existing);
         }
 
-        if (isDir && existing.children) {
-          currentLevel = existing.children as DisplayNode[];
-        }
-      });
-    });
+        parentNode = node;
+      }
+    }
 
     const sortNodes = (nodes: DisplayNode[]) => {
       nodes.sort((a, b) => {
