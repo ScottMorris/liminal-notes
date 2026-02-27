@@ -1,5 +1,6 @@
 import React from 'react';
 import { OpenTab } from '../../types/tabs';
+import { XMarkIcon } from '../Icons';
 
 interface TabProps {
   tab: OpenTab;
@@ -34,8 +35,9 @@ export function Tab({ tab, isActive, onSelect, onClose, onDoubleClick, onContext
           onClose(e);
         }}
         title="Close Tab"
+        aria-label="Close tab"
       >
-        ×
+        <XMarkIcon size={12} />
       </button>
     </div>
   );
